@@ -1,5 +1,0 @@
-{
-  "caption": "{{Mesmer}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Blur|https://wiki.guildwars2.com/images/2/22/Distortion.png]] |! [img width=24 [Distortion|https://wiki.guildwars2.com/images/2/22/Distortion.png]] |! [img width=24 [Illusionary Leap|https://render.guildwars2.com/file/D7202F9A1D73AAF4D478B892BDEE017AAFA93EFB/103722.png]] |h\n| 2 |Time Turned Fragile | {{Mesmer}} |Uriah.7082 | 242.62| <div class=\"xtooltip\"> 1.58% <span class=\"xtooltiptext\">5 state changes</span></div> | <div class=\"xtooltip\"> 2.04% <span class=\"xtooltiptext\">4 state changes</span></div> | <div class=\"xtooltip\"> 12.32% <span class=\"xtooltiptext\">6 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202504070027-Personal-Buffs-Mesmer"
-}

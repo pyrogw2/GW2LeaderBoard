@@ -1,5 +1,0 @@
-{
-  "caption": "{{Scrapper}}",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|![img width=24 [Object in Motion|https://render.guildwars2.com/file/FA6A0040D703B2FBF19B4592A63F3D7C2555FE02/2175049.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|h\n| 1 |<span data-tooltip=\"limbrose.3079\">Limbrose Taylor</span> | Scrapper | 691.31| <div class=\"xtooltip\"> 5.66% <span class=\"xtooltiptext\">17 of 19 (89.47% hits)<br>Damage Gained: 353<br></span></div>| <div class=\"xtooltip\"> 7.52% <span class=\"xtooltiptext\">32 of 32 (100.00% hits)<br>Damage Gained: 631<br></span></div>| <div class=\"xtooltip\"> -4.44% <span class=\"xtooltiptext\">395 of 747 (52.88% hits)<br>Damage Gained: -29,811<br></span></div>|",
-  "title": "202506022317-Damage-Modifiers-Scrapper"
-}

@@ -1,6 +1,0 @@
-{
-  "caption": "{{Tempest}} - <span data-tooltip='Wootzies.3574'>Tia Melusine       </span>",
-  "tags": "202505272244",
-  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Soothing Mist|https://render.guildwars2.com/file/09D12A6041622A94409F276CEEEB2C17AF35A8ED/1012327.png]]-Soothing Mist | 4 | 908| 227| 227| 100.00%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|I O Divino I | 908 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
-  "title": "202505272244-Healers-Tempest-Tia Melusine-Wootzies.3574"
-}

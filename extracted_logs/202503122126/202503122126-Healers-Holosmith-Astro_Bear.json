@@ -1,6 +1,0 @@
-{
-  "caption": "{{Holosmith}} - Astro Bear",
-  "tags": "202503122126",
-  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Vampiric Aura|https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png]]-Vampiric Aura | 4 | 362| 90| 120| 26.01%|\n|[img width=24 [Big Boomer|https://wiki.guildwars2.com/images/8/83/Big_Boomer.png]]-Big Boomer | 3 | 234| 78| 103| 16.81%|\n|[img width=24 [Heat Therapy|https://wiki.guildwars2.com/images/3/34/Heat_Therapy.png]]-Heat Therapy | 3 | 796| 265| 398| 57.18%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Astro Bear | 1,392 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
-  "title": "202503122126-Healers-Holosmith-Astro Bear"
-}

@@ -1,5 +1,0 @@
-{
-  "caption": "{{Specter}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Endless Night|https://wiki.guildwars2.com/images/9/9e/Endless_Night.png]] |! [img width=24 [Lead Attacks|https://render.guildwars2.com/file/0E204D3ECBE43544E2366F250C3AEDDFC3A051FA/1012773.png]] |! [img width=24 [Shrouded Ally|https://wiki.guildwars2.com/images/3/3a/Siphon.png]] |! [img width=24 [Shadow Shroud|https://wiki.guildwars2.com/images/f/f3/Enter_Shadow_Shroud.png]] |h\n| 4 |Eve Grim | {{Specter}} |Johnny.5478 | 1419.05| <div class=\"xtooltip\"> 19.78% <span class=\"xtooltiptext\">107 state changes</span></div> | <div class=\"xtooltip\"> 76.10% <span class=\"xtooltiptext\">291 state changes</span></div> | <div class=\"xtooltip\"> 81.99% <span class=\"xtooltiptext\">15 state changes</span></div> | <div class=\"xtooltip\"> 5.50% <span class=\"xtooltiptext\">29 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202504072331-Personal-Buffs-Specter"
-}

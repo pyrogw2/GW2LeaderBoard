@@ -1,5 +1,0 @@
-{
-  "caption": "Tag Summary",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Summary by Command Tag |c\n| | | | | Enemy |<| Squad|<| |h\n|Name |Account | Prof | Fights | {{DownedEnemy}} | {{killed}} | {{DownedAlly}} | {{DeadAlly}} | KDR |h\n|Interpretor |Interpretor.3091 | {{Spellbreaker}} | 54 | 518 | 322 | 686 | 526 | 0.61|\n|Totals |<|<| 54 | 518 | 322 | 686 | 526 | 0.61|f\n\n\n</div>",
-  "title": "202504070027-Tag_Stats"
-}

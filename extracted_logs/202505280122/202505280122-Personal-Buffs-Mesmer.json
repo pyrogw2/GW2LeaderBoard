@@ -1,5 +1,0 @@
-{
-  "caption": "{{Mesmer}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Signet of the Ether|https://wiki.guildwars2.com/images/7/7a/Signet_of_the_Ether.png]] |! [img width=24 [Distortion|https://wiki.guildwars2.com/images/2/22/Distortion.png]] |! [img width=24 [Echo|https://wiki.guildwars2.com/images/c/ce/Echo.png]] |h\n| 1 |<span data-tooltip=\"merytogo.1365\">Rosenrot Sc</span> | {{Mesmer}} | 59.18| <div class=\"xtooltip\"> 61.63% <span class=\"xtooltiptext\">2 state changes</span></div> | <div class=\"xtooltip\"> 1.67% <span class=\"xtooltiptext\">1 state changes</span></div> | <div class=\"xtooltip\"> 0.35% <span class=\"xtooltiptext\">1 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202505280122-Personal-Buffs-Mesmer"
-}

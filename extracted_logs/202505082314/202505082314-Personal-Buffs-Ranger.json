@@ -1,5 +1,0 @@
-{
-  "caption": "{{Ranger}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Strength of the Pack!|https://wiki.guildwars2.com/images/4/4b/%22Strength_of_the_Pack%21%22.png]] |! [img width=24 [Ancestral Grace|https://wiki.guildwars2.com/images/4/4b/Ancestral_Grace.png]] |h\n| 7 |<span data-tooltip=\"ReiTigre.5289\">Rei Gato</span> | {{Ranger}} | 436.40| <div class=\"xtooltip\"> 13.56% <span class=\"xtooltiptext\">6 state changes</span></div> | <div class=\"xtooltip\"> 1.16% <span class=\"xtooltiptext\">4 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202505082314-Personal-Buffs-Ranger"
-}

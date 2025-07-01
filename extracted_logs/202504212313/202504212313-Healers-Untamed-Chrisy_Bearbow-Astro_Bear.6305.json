@@ -1,6 +1,0 @@
-{
-  "caption": "{{Untamed}} - <span data-tooltip='Astro Bear.6305'>Chrisy Bearbow       </span>",
-  "tags": "202504212313",
-  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Ravager's Abandon|https://render.guildwars2.com/file/100EF926B3F04A73719E7CD531C8ABC81938CF19/3379182.png]]-Ravager's Abandon | 1 | 496| 496| 496| 100.00%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Chrisy Bearbow | 496 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
-  "title": "202504212313-Healers-Untamed-Chrisy Bearbow-Astro Bear.6305"
-}

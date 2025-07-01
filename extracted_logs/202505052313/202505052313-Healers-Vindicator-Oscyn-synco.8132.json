@@ -1,6 +1,0 @@
-{
-  "caption": "{{Vindicator}} - <span data-tooltip='synco.8132'>Oscyn       </span>",
-  "tags": "202505052313",
-  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Balance in Discord|https://render.guildwars2.com/file/0E49C9069C055B4FC23E02DC1E1271CB426F430A/2491541.png]]-Balance in Discord | 1 | 19| 19| 19| 100.00%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Oscyn | 19 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
-  "title": "202505052313-Healers-Vindicator-Oscyn-synco.8132"
-}

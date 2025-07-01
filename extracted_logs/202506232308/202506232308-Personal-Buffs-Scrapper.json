@@ -1,5 +1,0 @@
-{
-  "caption": "{{Scrapper}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Explosive Entrance|https://render.guildwars2.com/file/61510F0752BC696F210F92CA0E13AD290F13AD33/2261507.png]] |! [img width=24 [Big Boomer|https://render.guildwars2.com/file/0122FE72473C12BA0661EABA18F5B83022066EDB/2261506.png]] |h\n| 3 |<span data-tooltip=\"Pieswithattitude.2357\">Its Fool On Cool</span> | {{Scrapper}} | 519.2| <div class=\"xtooltip\"> 7.54% <span class=\"xtooltiptext\">14 state changes</span></div> | <div class=\"xtooltip\"> 74.23% <span class=\"xtooltiptext\">41 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202506232308-Personal-Buffs-Scrapper"
-}

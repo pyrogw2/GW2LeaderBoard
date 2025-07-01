@@ -1,5 +1,0 @@
-{
-  "caption": "{{Guardian}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Virtue of Justice|https://wiki.guildwars2.com/images/1/10/Virtue_of_Justice.png]] |! [img width=24 [Virtue of Courage|https://wiki.guildwars2.com/images/a/a9/Virtue_of_Courage.png]] |! [img width=24 [Virtue of Resolve|https://wiki.guildwars2.com/images/b/b2/Virtue_of_Resolve.png]] |h\n| 1 |<span data-tooltip=\"IllusiveMind.6470\">Khail Tetnelle</span> | {{Guardian}} | 19.35| <div class=\"xtooltip\"> 69.69% <span class=\"xtooltiptext\">2 state changes</span></div> | <div class=\"xtooltip\"> 69.69% <span class=\"xtooltiptext\">2 state changes</span></div> | <div class=\"xtooltip\"> 69.69% <span class=\"xtooltiptext\">2 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202505192236-Personal-Buffs-Guardian"
-}

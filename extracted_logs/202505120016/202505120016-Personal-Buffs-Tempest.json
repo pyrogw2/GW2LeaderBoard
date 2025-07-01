@@ -1,5 +1,0 @@
-{
-  "caption": "{{Tempest}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Water Attunement|https://wiki.guildwars2.com/images/3/31/Water_Attunement.png]] |! [img width=24 [Earth Attunement|https://wiki.guildwars2.com/images/a/a8/Earth_Attunement.png]] |! [img width=24 [Air Attunement|https://wiki.guildwars2.com/images/9/91/Air_Attunement.png]] |! [img width=24 [Fire Attunement|https://wiki.guildwars2.com/images/b/b4/Fire_Attunement.png]] |h\n| 5 |<span data-tooltip=\"Aromapaloma.3194\">Shea Butter</span> | {{Tempest}} | 1186.44| <div class=\"xtooltip\"> 28.19% <span class=\"xtooltiptext\">20 state changes</span></div> | <div class=\"xtooltip\"> 31.67% <span class=\"xtooltiptext\">25 state changes</span></div> | <div class=\"xtooltip\"> 20.62% <span class=\"xtooltiptext\">16 state changes</span></div> | <div class=\"xtooltip\"> 13.54% <span class=\"xtooltiptext\">5 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202505120016-Personal-Buffs-Tempest"
-}

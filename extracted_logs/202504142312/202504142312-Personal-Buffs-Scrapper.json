@@ -1,5 +1,0 @@
-{
-  "caption": "{{Scrapper}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Explosive Entrance|https://render.guildwars2.com/file/61510F0752BC696F210F92CA0E13AD290F13AD33/2261507.png]] |! [img width=24 [Big Boomer|https://render.guildwars2.com/file/0122FE72473C12BA0661EABA18F5B83022066EDB/2261506.png]] |h\n| 7 |<span data-tooltip=\"CaptainKnightfall.4378\">Maximilian Irontail</span> | {{Scrapper}} | 365.50| <div class=\"xtooltip\"> 30.07% <span class=\"xtooltiptext\">16 state changes</span></div> | <div class=\"xtooltip\"> 6.15% <span class=\"xtooltiptext\">8 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202504142312-Personal-Buffs-Scrapper"
-}

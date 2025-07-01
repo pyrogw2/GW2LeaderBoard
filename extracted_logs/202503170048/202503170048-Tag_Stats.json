@@ -1,5 +1,0 @@
-{
-  "caption": "Tag Summary",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Summary by Command Tag |c\n| | | | | Enemy |<| Squad|<| |h\n|Name |Account | Prof | Fights | {{DownedEnemy}} | {{killed}} | {{DownedAlly}} | {{DeadAlly}} | KDR |h\n|Uncle Donk |Dadonk.7514 | {{Dragonhunter}} | 32 | 538 | 400 | 55 | 27 | 14.81|\n| |No Tag |  | 1 | 0 | 0 | 5 | 4 | 0.00|\n|Totals |<|<| 33 | 538 | 400 | 60 | 31 | 12.90|f\n\n\n</div>",
-  "title": "202503170048-Tag_Stats"
-}

@@ -1,5 +1,0 @@
-{
-  "caption": "{{Mirage}}-Mirage",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Skill Usage |c\n|!Name | !Prof |!Account | !{{FightTime}} |! <div class=\"xtooltip\"> APM <span class=\"xtooltiptext\">Total Actions per Minute /<br>APM without Autos</span></div>|![img width=24 class=\"tc-test-case-wrapper\" [Winds of Chaos|https://render.guildwars2.com/file/0C9C043BFFC0773E390D19462444ABEB02FD4C01/103100.png]]|![img width=24 [Mirage Cloak|https://wiki.guildwars2.com/images/a/a5/Mirage_Cloak_%28effect%29.png]]|![img width=24 [Weapon Swap|https://wiki.guildwars2.com/images/c/ce/Weapon_Swap_Button.png]]|![img width=24 [Chaos Vortex|https://render.guildwars2.com/file/0E2D7DB6FB4C0A9F681759099DE5D794A04914BF/1770510.png]]|![img width=24 [Blink or Phase Retreat|https://i.imgur.com/yxMF7D1.png]]|h\n|Chicaina Mallcrawlr | {{Mirage}} |lauri.4873 |96.72| 19/7 | 11.17| 3.72| 1.24| 1.24| 1.24|\n|Skill Usage / Minute|c\n\n\n</div>",
-  "title": "202505280122-Skill-Usage-Mirage"
-}

@@ -1,6 +1,0 @@
-{
-  "caption": "{{Tempest}} - Aelin Celebrant",
-  "tags": "202504142312",
-  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Frost Aura|https://render.guildwars2.com/file/719B80E35C276D68EF0AABB79126CF4CD42E3AF6/2261522.png]]-Frost Aura | 1 | 1,430| 1,430| 1,430| 100.00%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Aelin Celebrant | 1,430 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
-  "title": "202504142312-Healers-Tempest-Aelin Celebrant"
-}

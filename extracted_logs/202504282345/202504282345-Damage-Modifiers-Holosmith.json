@@ -1,5 +1,0 @@
-{
-  "caption": "{{Holosmith}}",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|![img width=24 [Light Density Amplifier|https://render.guildwars2.com/file/3994F02CE07262B156C90E9143F2720ADF2DB0FD/1769927.png]]|h\n| 4 |<span data-tooltip=\"Bother.9415\">Phaytall</span> | Holosmith | 372.97| <div class=\"xtooltip\"> 2.69% <span class=\"xtooltiptext\">372 of 1285 (28.95% hits)<br>Damage Gained: 37,087<br></span></div>| <div class=\"xtooltip\"> -3.33% <span class=\"xtooltiptext\">427 of 803 (53.18% hits)<br>Damage Gained: -27,828<br></span></div>| <div class=\"xtooltip\"> -4.35% <span class=\"xtooltiptext\">341 of 803 (42.47% hits)<br>Damage Gained: -36,285<br></span></div>|",
-  "title": "202504282345-Damage-Modifiers-Holosmith"
-}

@@ -1,5 +1,0 @@
-{
-  "caption": "{{Scourge}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |h\n| 2 |Frozen Delirious | {{Scourge}} |FrozenDelicious.3690 | 981.16| <div class=\"xtooltip\"> 11.41% <span class=\"xtooltiptext\">23 state changes</span></div> |\n| 4 |Flaudgîn | {{Scourge}} |FlawedDjinn.3217 | 1525.68| <div class=\"xtooltip\"> 11.34% <span class=\"xtooltiptext\">37 state changes</span></div> |\n| 2 |Elgar The Necro | {{Scourge}} |Elgar.2091 | 1135.43| <div class=\"xtooltip\"> 0.88% <span class=\"xtooltiptext\">2 state changes</span></div> |\n| 5 |S T E P M O M | {{Scourge}} |TigerSpirit.2194 | 667.50| <div class=\"xtooltip\"> 6.96% <span class=\"xtooltiptext\">11 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202503312312-Personal-Buffs-Scourge"
-}

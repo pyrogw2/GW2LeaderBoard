@@ -1,6 +1,0 @@
-{
-  "caption": "{{Scourge}}-Minions",
-  "tags": "202505292229",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top-left table-hover sortable freeze-col|k\n|,!Player |, Fights|, Fight Time| !Bone Minion |<|<| !Blood Fiend |<|<| !Jagged Horror |<|<| Total Minion Data |<|<|h\n|~|~|~| !Count | !{{damageTaken}}| {{Healing}}| !Count | !{{damageTaken}}| {{Healing}}| !Count | !{{damageTaken}}| {{Healing}}| !Count | !{{damageTaken}}| {{Healing}}|h\n|<span data-tooltip=\"Nero.6195\">Neural Necro</span>| 7| 2,594.3| 40 | 327.5K| 43.6K| 20 | 537.3K| 163.1K| 31 | 323.9K| 113.3K| 91 | 1,188.7K| 320.0K|\n|<span data-tooltip=\"Mellis.8451\">Mellis N</span>| 6| 2,569.5| 95 | 802.4K| 141.6K| 52 | 1,151.7K| 276.7K| 59 | 755.2K| 195.6K| 206 | 2,709.4K| 613.9K|\n|<span data-tooltip=\"Havocus.3682\">Havada Kedavra</span>| 5| 2,486.6| 39 | 332.4K| 57.7K| 15 | 331.8K| 70.6K| 59 | 793.0K| 187.2K| 113 | 1,457.3K| 315.5K|\n|<span data-tooltip=\"Luke.9108\">Luck N</span>| 5| 2,485.0| 159 | 1,375.7K| 278.6K| 68 | 1,448.5K| 319.2K| 77 | 1,003.2K| 282.5K| 304 | 3,827.3K| 880.3K|\n\n\n</div>\n\n",
-  "title": "202505292229-Minions-Scourge"
-}

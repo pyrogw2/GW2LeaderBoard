@@ -1,5 +1,0 @@
-{
-  "caption": "{{Ranger}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Strength of the Pack!|https://wiki.guildwars2.com/images/4/4b/%22Strength_of_the_Pack%21%22.png]] |h\n| 1 |<span data-tooltip=\"Marinho.9387\">Hawkeye Wanted</span> | {{Ranger}} | 647.14| <div class=\"xtooltip\"> 4.63% <span class=\"xtooltiptext\">3 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202504202003-Personal-Buffs-Ranger"
-}
