@@ -19,6 +19,7 @@ from typing import Dict, List, Set, Optional
 from datetime import datetime
 from urllib.parse import urljoin, urlparse
 import subprocess
+from bs4 import BeautifulSoup
 
 # Configuration
 DEFAULT_CONFIG = {
@@ -31,6 +32,13 @@ DEFAULT_CONFIG = {
 }
 
 CONFIG_FILE = "sync_config.json"
+
+# Global cache for TiddlyWiki content to avoid multiple downloads per sync run
+_tiddlywiki_cache = {
+    'url': None,
+    'content': None,
+    'tiddlers': None
+}
 
 
 def load_config() -> Dict:
@@ -208,8 +216,8 @@ def download_and_extract_log(log_info: Dict, extracted_logs_dir: str) -> bool:
         extract_dir.mkdir(parents=True, exist_ok=True)
         
         if log_info.get('is_tiddlywiki', False):
-            # This is a TiddlyWiki tiddler - need special handling
-            return extract_tiddlywiki_tiddler(log_info, str(extract_dir))
+            # This is a TiddlyWiki tiddler - use new BeautifulSoup-based extraction
+            return extract_tiddlywiki_tiddler_new(log_info, str(extract_dir))
         
         # Regular file download
         response = requests.get(url, timeout=60, stream=True)
@@ -272,6 +280,103 @@ def download_and_extract_log(log_info: Dict, extracted_logs_dir: str) -> bool:
     except Exception as e:
         print(f"❌ Failed to process {filename}: {e}")
         return False
+
+
+def get_tiddlywiki_tiddlers(base_url: str) -> Optional[List[Dict]]:
+    """Download and parse TiddlyWiki tiddlers with caching."""
+    global _tiddlywiki_cache
+    
+    # Check cache first
+    if _tiddlywiki_cache['url'] == base_url and _tiddlywiki_cache['tiddlers'] is not None:
+        print("📋 Using cached TiddlyWiki data")
+        return _tiddlywiki_cache['tiddlers']
+    
+    print(f"🌐 Downloading TiddlyWiki from {base_url}...")
+    
+    try:
+        response = requests.get(base_url, timeout=60)
+        response.raise_for_status()
+        content = response.text
+        
+        # Parse with BeautifulSoup (same method as extract_logs.py)
+        soup = BeautifulSoup(content, 'html.parser')
+        tiddler_store = soup.find('script', {'class': 'tiddlywiki-tiddler-store'})
+        
+        if not tiddler_store:
+            print("❌ Could not find tiddler store in TiddlyWiki HTML")
+            return None
+        
+        # Parse the JSON data
+        tiddler_data = json.loads(tiddler_store.string)
+        print(f"📋 Found {len(tiddler_data)} tiddlers in TiddlyWiki")
+        
+        # Update cache
+        _tiddlywiki_cache['url'] = base_url
+        _tiddlywiki_cache['content'] = content
+        _tiddlywiki_cache['tiddlers'] = tiddler_data
+        
+        return tiddler_data
+        
+    except Exception as e:
+        print(f"❌ Failed to download or parse TiddlyWiki: {e}")
+        return None
+
+
+def extract_tiddlywiki_tiddler_new(log_info: Dict, extract_dir: str) -> bool:
+    """Extract data from a specific TiddlyWiki tiddler using BeautifulSoup."""
+    timestamp = log_info['timestamp']
+    base_url = log_info['source_page']
+    
+    print(f"📜 Extracting TiddlyWiki tiddlers for timestamp: {timestamp}")
+    
+    # Get all tiddlers from TiddlyWiki
+    tiddlers = get_tiddlywiki_tiddlers(base_url)
+    if not tiddlers:
+        return False
+    
+    # Find all tiddlers related to this timestamp
+    related_tiddlers = []
+    for tiddler in tiddlers:
+        title = tiddler.get('title', '')
+        if title.startswith(timestamp):
+            related_tiddlers.append(tiddler)
+    
+    if not related_tiddlers:
+        print(f"❌ No tiddlers found for timestamp {timestamp}")
+        return False
+    
+    print(f"✅ Found {len(related_tiddlers)} tiddlers for {timestamp}")
+    
+    # Create extraction directory
+    extract_path = Path(extract_dir)
+    extract_path.mkdir(parents=True, exist_ok=True)
+    
+    # Save each related tiddler as a separate JSON file
+    for tiddler in related_tiddlers:
+        tiddler_title = tiddler.get('title', '')
+        # Clean filename (same logic as extract_logs.py)
+        filename = re.sub(r'[^\w\-_.]', '_', tiddler_title) + '.json'
+        
+        file_path = extract_path / filename
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(tiddler, f, indent=2, ensure_ascii=False)
+    
+    # Create a summary info file (same as extract_logs.py)
+    main_tiddler = next((t for t in related_tiddlers if t.get('title', '').endswith('-Log-Summary')), related_tiddlers[0])
+    summary_info = {
+        'timestamp': timestamp,
+        'main_tiddler': main_tiddler.get('title'),
+        'tiddler_count': len(related_tiddlers),
+        'tiddler_titles': [t.get('title') for t in related_tiddlers],
+        'created': main_tiddler.get('created'),
+        'modified': main_tiddler.get('modified')
+    }
+    
+    with open(extract_path / 'summary.json', 'w', encoding='utf-8') as f:
+        json.dump(summary_info, f, indent=2, ensure_ascii=False)
+    
+    print(f"✅ Successfully extracted {len(related_tiddlers)} tiddlers")
+    return True
 
 
 def extract_tiddlywiki_tiddler(log_info: Dict, extract_dir: str) -> bool:
