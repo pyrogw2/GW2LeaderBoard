@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scrapper}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Med Kit|https://render.guildwars2.com/file/206FCC2A05035FDB306AB5136E5F3AC0FC6467F3/103395.png]] |h\n| 6 |<span data-tooltip=\"Freelanced.6084\">Hammarian</span> | {{Scrapper}} | 474.1| <div class=\"xtooltip\"> 40.98% <span class=\"xtooltiptext\">25 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202506262310-Personal-Buffs-Scrapper"
+}

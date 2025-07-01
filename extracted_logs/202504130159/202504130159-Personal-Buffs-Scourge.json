@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scourge}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Death's Carapace|https://render.guildwars2.com/file/DC38F4623BFE773E681E37A0EAE11A364D52AACE/1012567.png]] |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |h\n| 5 |<span data-tooltip=\"steelrage.2904\">Goblin Slayer Steel</span> | {{Scourge}} | 786.56| <div class=\"xtooltip\"> 62.87% <span class=\"xtooltiptext\">254 state changes</span></div> | - |\n| 3 |<span data-tooltip=\"Daasen.3719\">Saenad</span> | {{Scourge}} | 430.07| - | - |\n| 7 |<span data-tooltip=\"shakey.6384\">Controversial S</span> | {{Scourge}} | 1425.68| - | <div class=\"xtooltip\"> 5.57% <span class=\"xtooltiptext\">16 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504130159-Personal-Buffs-Scourge"
+}

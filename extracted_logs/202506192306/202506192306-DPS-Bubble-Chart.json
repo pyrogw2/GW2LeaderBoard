@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Candy Glazed', 'Weaver', 2134, 16.13, 34.0, '#F18783'], ['Falyn Angel', 'Reaper', 574, 22.22, 67.0, '#50A77B'], ['Flaw Djinn', 'Vindicator', 63, 16.5, 49.0, '#E1A593'], ['Nortonsine', 'Harbinger', 267, 15.06, 84.0, '#8AC4A7'], ['Paralda', 'Dragonhunter', 284, 24.89, 36.0, '#50A7D3'], ['Shot Across The Bow', 'Untamed', 532, 14.44, 65.0, '#A7E18A'], ['Ghost Bunny Girl', 'Scourge', 111, 21.58, 55.0, '#6DB691'], ['Nôè', 'Holosmith', 1310, 18.8, 44.0, '#B6916D'], ['Interpretor R', 'Untamed', 1915, 24.82, 38.0, '#A7E18A'], ['Mellis N', 'Scourge', 1002, 24.9, 27.0, '#6DB691'], ['Nammes', 'Chronomancer', 95, 17.54, 45.0, '#A750A7'], ['Shot Across The Bow', 'Druid', 91, 17.85, 54.0, '#7BD350'], ['Bounciness', 'Vindicator', 2303, 19.46, 36.0, '#E1A593'], ['Graven Illeniel', 'Chronomancer', 59, 17.45, 46.0, '#A750A7'], ['Hiraldo Iii', 'Druid', 42, 18.24, 55.0, '#7BD350'], ['Kotton Kandy Randy', 'Reaper', 985, 19.3, 51.0, '#50A77B'], ['Boonbræker', 'Spellbreaker', 167, 19.74, 38.0, '#FFB66D'], ['Havacado', 'Catalyst', 1490, 19.27, 38.0, '#F49F9C'], ['Smiles Phantom', 'Chronomancer', 46, 30.21, 41.0, '#A750A7'], ['Zeeb Rah', 'Firebrand', 236, 15.37, 30.0, '#6DB6DA'], ['Chrisy Bearbow', 'Druid', 10, 18.47, 65.0, '#7BD350'], ['Harg Gardfur', 'Firebrand', 797, 20.46, 32.0, '#6DB6DA'], ['Neural Necro', 'Scourge', 670, 27.64, 30.0, '#6DB691'], ['Strawberty', 'Scourge', 489, 28.35, 43.0, '#6DB691'], ['Umi No Kingyo', 'Reaper', 2023, 26.24, 37.0, '#50A77B'], ['Escäñör', 'Spellbreaker', 315, 22.42, 33.0, '#FFB66D'], ['Im An Alt', 'Druid', 9, 26.22, 43.0, '#7BD350'], ['Too Huge', 'Dragonhunter', 2188, 24.24, 31.0, '#50A7D3'], ['Dare Devilz', 'Firebrand', 141, 24.62, 31.0, '#6DB6DA'], ['Too Huge', 'Willbender', 348, 13.25, 56.0, '#8AC4E1'], ['Bruceleap', 'Vindicator', 0, 0.0, 0.0, '#E1A593'], ['Coileddarknight', 'Spellbreaker', 234, 18.74, 43.0, '#FFB66D'], ['Roombas Biggest Fan', 'Druid', 20, 43.27, 18.0, '#7BD350'], ['Dis Vanish', 'Mirage', 305, 34.29, 36.0, '#B66DB6'], ['Dis Vanish', 'Chronomancer', 54, 14.63, 38.0, '#A750A7'], ['Mimi Who', 'Chronomancer', 1448, 26.99, 19.0, '#A750A7'], ['Synco E', 'Catalyst', 1893, 29.5, 15.0, '#F49F9C']",
+  "max": "84.0",
+  "min": "0.0",
+  "tags": "202506192306",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202506192306-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506192306-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

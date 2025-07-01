@@ -1,0 +1,6 @@
+{
+  "caption": "{{Firebrand}} - <span data-tooltip='Mellis.8451'>M E L Li S       </span>",
+  "tags": "202505120016",
+  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Tome of Resolve|https://wiki.guildwars2.com/images/a/a9/Tome_of_Resolve.png]]-Tome of Resolve | 26 | 2,065| 79| 93| 94.42%|\n|[img width=24 [Vampiric Aura|https://render.guildwars2.com/file/22B370D754AC1D69A8FE66DCCB36BE940455E5EA/1012539.png]]-Vampiric Aura | 3 | 122| 41| 42| 5.58%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|M E L Li S | 2,187 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
+  "title": "202505120016-Healers-Firebrand-M E L Li S-Mellis.8451"
+}

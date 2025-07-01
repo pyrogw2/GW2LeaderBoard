@@ -1,0 +1,5 @@
+{
+  "caption": "{{Holosmith}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Light Density Amplifier|https://render.guildwars2.com/file/3994F02CE07262B156C90E9143F2720ADF2DB0FD/1769927.png]]|h\n| 1 |<span data-tooltip=\"Cavalier.4015\">Helioscythe</span> | Holosmith | 81.17| <div class=\"xtooltip\"> -7.21% <span class=\"xtooltiptext\">14 of 34 (41.18% hits)<br>Damage Gained: -5,531<br></span></div>|",
+  "title": "202505040253-Damage-Modifiers-Holosmith"
+}

@@ -1,0 +1,5 @@
+{
+  "caption": "{{Mirage}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Mirage Cloak|https://wiki.guildwars2.com/images/a/a5/Mirage_Cloak_%28effect%29.png]] |! [img width=24 [False Oasis|https://wiki.guildwars2.com/images/3/32/False_Oasis.png]] |! [img width=24 [Signet of Humility|https://wiki.guildwars2.com/images/b/b5/Signet_of_Humility.png]] |h\n| 1 |<span data-tooltip=\"lauri.4873\">Chicaina Mallcrawlr</span> | {{Mirage}} | 887.88| <div class=\"xtooltip\"> 2.98% <span class=\"xtooltiptext\">34 state changes</span></div> | <div class=\"xtooltip\"> 1.85% <span class=\"xtooltiptext\">4 state changes</span></div> | <div class=\"xtooltip\"> 8.55% <span class=\"xtooltiptext\">2 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202505272244-Personal-Buffs-Mirage"
+}

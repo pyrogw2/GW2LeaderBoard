@@ -1,0 +1,13 @@
+{
+  "caption": "Utility Bubble Chart",
+  "data": "['Name', 'Profession', 'Condition Score', 'Strips/Sec', 'Boon Score', 'color'], ['Candy Glazed', 'Weaver', 0.0, 0.43, 1.5, '#F18783'], ['Modus R', 'Druid', 0.0, 0.09, 26.93, '#7BD350'], ['Prióri', 'Firebrand', 0.0, 0.93, 15.6, '#6DB6DA'], ['Smiles Phantom', 'Chronomancer', 0.05, 0.23, 16.77, '#A750A7'], ['Councillor Stash', 'Catalyst', 0.0, 0.35, 2.01, '#F49F9C'], ['Lellinya', 'Firebrand', 0.0, 1.63, 11.59, '#6DB6DA'], ['Neural Necro', 'Scourge', 0.12, 1.63, 1.71, '#6DB691'], ['Paralda', 'Dragonhunter', 0.02, 0.38, 14.2, '#50A7D3'], ['Peewee Stability', 'Firebrand', 0.0, 1.25, 12.41, '#6DB6DA'], ['Pewwwwwwwwwwwwwwwww', 'Chronomancer', 0.02, 0.43, 12.55, '#A750A7'], ['Primgar', 'Firebrand', 0.0, 1.22, 9.84, '#6DB6DA'], ['Time Turned Fragile', 'Chronomancer', 0.02, 0.5, 23.79, '#A750A7'], ['Varda Grenths Hand', 'Reaper', 0.23, 1.14, 0.0, '#50A77B'], ['Aki Yuya', 'Catalyst', 0.0, 0.3, 0.62, '#F49F9C'], ['Chrisy Bearbow', 'Druid', 0.0, 0.08, 36.09, '#7BD350'], ['Elite Dobby', 'Druid', 0.0, 0.14, 7.99, '#7BD350'], ['Johnny Da Reaper', 'Reaper', 0.26, 0.73, 0.69, '#50A77B'], ['Mellis N', 'Scourge', 0.16, 1.57, 1.24, '#6DB691'], ['Supp A', 'Druid', 0.0, 0.07, 28.0, '#7BD350'], ['Havada Kedavra', 'Scourge', 0.1, 1.47, 2.02, '#6DB691'], ['Interpretor R', 'Untamed', 0.08, 0.32, 1.28, '#A7E18A'], ['Lightbeam Jack', 'Holosmith', 0.0, 0.37, 1.54, '#B6916D'], ['Leblanc Veil', 'Chronomancer', 0.05, 0.34, 11.52, '#A750A7'], ['Guars Conhuevo', 'Druid', 0.0, 0.11, 31.69, '#7BD350'], ['Luck N', 'Scourge', 0.18, 1.84, 2.06, '#6DB691'], ['Boombmarley', 'Druid', 0.0, 0.02, 8.56, '#7BD350'], ['Tytluf Fierceclaw', 'Firebrand', 0.0, 0.78, 18.91, '#6DB6DA'], ['Brokmirror', 'Chronomancer', 0.0, 0.22, 10.27, '#A750A7'], ['Escäñör', 'Spellbreaker', 0.17, 0.13, 46.26, '#FFB66D'], ['Bounciness', 'Vindicator', 0.0, 0.51, 1.7, '#E1A593'], ['Pie Ele', 'Catalyst', 0.0, 0.37, 8.47, '#F49F9C'], ['Kïm Sïeghart', 'Catalyst', 0.0, 0.24, 5.52, '#F49F9C'], ['Jenasty', 'Chronomancer', 0.01, 0.17, 10.06, '#A750A7'], ['Kawaii Chill', 'Chronomancer', 0.01, 0.1, 20.86, '#A750A7'], ['Lady Stéfany', 'Catalyst', 0.0, 0.2, 2.29, '#F49F9C'], ['Mirielnetta', 'Catalyst', 0.0, 0.19, 7.56, '#F49F9C'], ['Radburne', 'Firebrand', 0.0, 0.15, 19.76, '#6DB6DA'], ['Too Huge', 'Willbender', 0.0, 0.31, 2.7, '#8AC4E1'], ['Pie Ele', 'Tempest', 0.0, 0.36, 64.31, '#EE6F6A']",
+  "max": "64.31",
+  "min": "0.0",
+  "tags": "202505292229",
+  "text": "__''Utility Bubble Chart''__\n\n,,Bubble size based on boon score,,\n\n{{202505292229-Utility-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202505292229-Utility-Bubble-Chart",
+  "xAxis": "Strips/Sec",
+  "xData": "Strips/Sec",
+  "yAxis": "Condition Score",
+  "yData": "Condition Score"
+}

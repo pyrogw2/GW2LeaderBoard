@@ -1,0 +1,5 @@
+{
+  "caption": "{{Thief}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Lead Attacks|https://render.guildwars2.com/file/0E204D3ECBE43544E2366F250C3AEDDFC3A051FA/1012773.png]] |! [img width=24 [Shadow Portal (Prepared)|https://wiki.guildwars2.com/images/e/e3/Prepare_Shadow_Portal.png]] |h\n| 5 |Candy Guzzler | {{Thief}} |Dextra.8162 | 33.71| <div class=\"xtooltip\"> 82.81% <span class=\"xtooltiptext\">7 state changes</span></div> | <div class=\"xtooltip\"> 48.86% <span class=\"xtooltiptext\">1 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504070027-Personal-Buffs-Thief"
+}

@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Too Huge', 'Dragonhunter', 1251, 16.05, 24.0, '#50A7D3'], ['Flawed Jinn', 'Chronomancer', 82, 20.92, 28.0, '#A750A7'], ['Im An Alt', 'Druid', 29, 21.11, 46.0, '#7BD350'], ['My Boon Remover', 'Scourge', 736, 16.98, 22.0, '#6DB691'], ['Synco E', 'Catalyst', 3549, 16.66, 17.0, '#F49F9C'], ['Falyn Angel', 'Reaper', 1226, 17.37, 32.0, '#50A77B'], ['Havacado', 'Catalyst', 2809, 14.19, 25.0, '#F49F9C'], ['Nammes', 'Chronomancer', 68, 15.88, 36.0, '#A750A7'], ['Smol Lozen', 'Druid', 21, 17.95, 29.0, '#7BD350'], ['Zeeb Rah', 'Firebrand', 569, 14.4, 26.0, '#6DB6DA'], ['Elena Mazzara', 'Chronomancer', 123, 16.58, 32.0, '#A750A7'], ['Luck Beastbane', 'Untamed', 2014, 19.78, 24.0, '#A7E18A'], ['M E L Li S', 'Firebrand', 997, 16.89, 29.0, '#6DB6DA'], ['Neural Necro', 'Scourge', 1006, 17.69, 16.0, '#6DB691'], ['Aki Yuya', 'Catalyst', 1729, 17.58, 34.0, '#F49F9C'], ['Bounciness', 'Vindicator', 1017, 17.71, 29.0, '#E1A593'], ['Candy Glazed', 'Weaver', 1444, 11.54, 43.0, '#F18783'], ['Harg Gardfur', 'Firebrand', 165, 19.19, 40.0, '#6DB6DA'], ['Interpretor R', 'Untamed', 1499, 19.3, 36.0, '#A7E18A'], ['Paralda', 'Dragonhunter', 273, 15.64, 26.0, '#50A7D3'], ['Eve Grim', 'Specter', 119, 13.84, 33.0, '#E1A7A7'], ['Baleyen Arturius', 'Chronomancer', 102, 16.4, 29.0, '#A750A7'], ['Too Huge', 'Willbender', 3676, 27.48, 36.0, '#8AC4E1'], ['Hiraldo Iii', 'Druid', 48, 15.48, 34.0, '#7BD350'], ['Aki Yuya', 'Weaver', 1903, 12.39, 21.0, '#F18783'], ['Hammarian', 'Holosmith', 1693, 17.63, 33.0, '#B6916D'], ['Envious Visit', 'Scourge', 1374, 15.9, 18.0, '#6DB691'], ['Darkness Devilz', 'Scourge', 551, 18.59, 40.0, '#6DB691'], ['Serial Experimentts', 'Chronomancer', 45, 18.5, 34.0, '#A750A7'], ['Arronn', 'Chronomancer', 155, 13.88, 30.0, '#A750A7'], ['Lastsuper Hulk', 'Berserker', 666, 21.11, 7.0, '#FFA750'], ['Dare Devilz', 'Firebrand', 240, 17.24, 34.0, '#6DB6DA'], ['Lastsuperman', 'Guardian', 2663, 20.14, 38.0, '#3399cc'], ['Interpretor', 'Spellbreaker', 3379, 15.76, 18.0, '#FFB66D'], ['Hammarian', 'Scrapper', 141, 13.62, 26.0, '#A77B50'], ['Lastsuperman', 'Willbender', 1871, 11.43, 2.0, '#8AC4E1'], ['Foofoopig', 'Druid', 33, 18.5, 39.0, '#7BD350'], ['Bäqir', 'Firebrand', 593, 18.69, 33.0, '#6DB6DA'], ['Lastsuperman', 'Dragonhunter', 2413, 17.28, 28.0, '#50A7D3']",
+  "max": "46.0",
+  "min": "2.0",
+  "tags": "202506262310",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202506262310-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506262310-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

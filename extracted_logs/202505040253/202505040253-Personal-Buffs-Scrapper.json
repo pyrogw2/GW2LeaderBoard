@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scrapper}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Big Boomer|https://render.guildwars2.com/file/0122FE72473C12BA0661EABA18F5B83022066EDB/2261506.png]] |! [img width=24 [Explosive Entrance|https://render.guildwars2.com/file/61510F0752BC696F210F92CA0E13AD290F13AD33/2261507.png]] |h\n| 8 |<span data-tooltip=\"willsi.7035\">Squirrel Eternal</span> | {{Scrapper}} | 987.66| <div class=\"xtooltip\"> 19.82% <span class=\"xtooltiptext\">46 state changes</span></div> | <div class=\"xtooltip\"> 11.86% <span class=\"xtooltiptext\">57 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202505040253-Personal-Buffs-Scrapper"
+}

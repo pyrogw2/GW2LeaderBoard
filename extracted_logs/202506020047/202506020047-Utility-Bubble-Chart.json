@@ -1,0 +1,13 @@
+{
+  "caption": "Utility Bubble Chart",
+  "data": "['Name', 'Profession', 'Condition Score', 'Strips/Sec', 'Boon Score', 'color'], ['Arronn', 'Chronomancer', 0.0, 0.6, 12.76, '#A750A7'], ['Elemucalist', 'Catalyst', 0.0, 1.05, 3.89, '#F49F9C'], ['Escäñör', 'Spellbreaker', 0.38, 0.37, 71.99, '#FFB66D'], ['Neurotic Ending', 'Reaper', 0.63, 3.56, 0.0, '#50A77B'], ['Paraldä', 'Catalyst', 0.0, 1.41, 7.29, '#F49F9C'], ['Synco E', 'Catalyst', 0.0, 1.51, 5.96, '#F49F9C'], ['Xhillabella', 'Firebrand', 0.0, 4.31, 16.7, '#6DB6DA'], ['Candy Glazed', 'Catalyst', 0.0, 0.98, 5.17, '#F49F9C'], ['Healing Surge', 'Druid', 0.0, 0.21, 19.6, '#7BD350'], ['Peewee Stability', 'Dragonhunter', 0.01, 1.19, 7.65, '#50A7D3'], ['Scowel', 'Catalyst', 0.0, 1.4, 8.72, '#F49F9C'], ['Time Turned Fragile', 'Chronomancer', 0.05, 1.06, 29.48, '#A750A7'], ['Stiloris', 'Tempest', 0.0, 2.69, 10.55, '#EE6F6A'], ['Stiloris', 'Catalyst', 0.0, 0.87, 5.46, '#F49F9C'], ['Arwen Sieghart', 'Druid', 0.0, 0.09, 30.96, '#7BD350'], ['Luck N', 'Scourge', 0.46, 5.79, 3.02, '#6DB691'], ['Xxkslayer', 'Reaper', 0.28, 1.97, 0.01, '#50A77B'], ['Dont Trust Bäqir', 'Spellbreaker', 0.25, 0.23, 22.42, '#FFB66D'], ['Zeeb Rah', 'Firebrand', 0.0, 0.99, 16.95, '#6DB6DA'], ['Pie Ele', 'Catalyst', 0.0, 0.93, 6.51, '#F49F9C'], ['Mellís', 'Chronomancer', 0.0, 0.55, 17.18, '#A750A7'], ['Null Maiden', 'Firebrand', 0.0, 4.44, 18.94, '#6DB6DA'], ['Folicity Smoke', 'Druid', 0.0, 0.16, 19.93, '#7BD350'], ['Pello Vello', 'Catalyst', 0.0, 0.58, 3.48, '#F49F9C'], ['Pello Vello', 'Tempest', 0.01, 1.52, 18.02, '#EE6F6A']",
+  "max": "71.98999999999998",
+  "min": "0.0",
+  "tags": "202506020047",
+  "text": "__''Utility Bubble Chart''__\n\n,,Bubble size based on boon score,,\n\n{{202506020047-Utility-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506020047-Utility-Bubble-Chart",
+  "xAxis": "Strips/Sec",
+  "xData": "Strips/Sec",
+  "yAxis": "Condition Score",
+  "yData": "Condition Score"
+}

@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Artämir', 'Dragonhunter', 762, 8.18, 40.0, '#50A7D3'], ['Elgar The Necro', 'Scourge', 511, 16.05, 29.0, '#6DB691'], ['Madam Vox', 'Chronomancer', 66, 15.03, 25.0, '#A750A7'], ['Paralda', 'Dragonhunter', 1622, 20.66, 22.0, '#50A7D3'], ['T A R Ancalimë', 'Dragonhunter', 3272, 20.33, 25.0, '#50A7D3'], ['Katsu Nami', 'Scrapper', 153, 17.38, 21.0, '#A77B50'], ['Nammes', 'Chronomancer', 110, 14.22, 24.0, '#A750A7'], ['Niffuries', 'Firebrand', 201, 15.34, 26.0, '#6DB6DA'], ['Prez Ashton', 'Dragonhunter', 1868, 17.45, 22.0, '#50A7D3'], ['Dies On Tag', 'Dragonhunter', 1801, 18.34, 23.0, '#50A7D3'], ['Flaudgîn', 'Scourge', 1286, 13.42, 15.0, '#6DB691'], ['Holly Penner', 'Spellbreaker', 177, 19.52, 18.0, '#FFB66D'], ['Ïnterpretor', 'Reaper', 1842, 17.58, 25.0, '#50A77B'], ['Smiles Phantom', 'Chronomancer', 70, 15.42, 15.0, '#A750A7'], ['Bailyen Arturius', 'Dragonhunter', 2028, 18.7, 18.0, '#50A7D3'], ['Candie Cat', 'Dragonhunter', 1405, 16.27, 27.0, '#50A7D3'], ['Havocus Imperator', 'Firebrand', 675, 15.66, 19.0, '#6DB6DA'], ['Too Huge', 'Dragonhunter', 1203, 13.63, 22.0, '#50A7D3'], ['Eve Grim', 'Specter', 94, 17.94, 23.0, '#E1A7A7'], ['Kyra Orpheus', 'Reaper', 1232, 16.67, 27.0, '#50A77B'], ['Hunhildr', 'Firebrand', 174, 11.25, 21.0, '#6DB6DA'], ['Tia Melusine', 'Tempest', 151, 12.75, 25.0, '#EE6F6A'], ['Chrisy Bearbow', 'Druid', 41, 19.05, 25.0, '#7BD350'], ['Oscyn', 'Vindicator', 86, 6.92, 6.0, '#E1A593'], ['Red Irís Flower', 'Druid', 72, 16.21, 21.0, '#7BD350'], ['Ty Ger Lilly', 'Tempest', 55, 23.78, 19.0, '#EE6F6A'], ['Myriad Slashes', 'Vindicator', 235, 14.66, 35.0, '#E1A593'], ['Dies On Tag', 'Firebrand', 245, 9.54, 13.0, '#6DB6DA'], ['M E L Li S', 'Firebrand', 83, 8.59, 5.0, '#6DB6DA'], ['Selvaria The Valk', 'Dragonhunter', 522, 33.62, 14.0, '#50A7D3']",
+  "max": "40.0",
+  "min": "5.0",
+  "tags": "202504072331",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202504072331-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202504072331-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

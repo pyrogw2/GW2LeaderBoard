@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scourge}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |! [img width=24 [Dark Stalker|https://render.guildwars2.com/file/1D55D34FB4EE20B1962E315245E40CA5E1042D0E/62248.png]] |! [img width=24 [Path Uses|https://wiki.guildwars2.com/images/2/20/Sand_Swell.png]] |h\n| 4 |<span data-tooltip=\"FrozenDelicious.3690\">Frozen Delirious</span> | {{Scourge}} | 3098.07| <div class=\"xtooltip\"> 8.04% <span class=\"xtooltiptext\">52 state changes</span></div> | - | - |\n| 2 |<span data-tooltip=\"Degothia.7394\">Deggu</span> | {{Scourge}} | 3090.37| <div class=\"xtooltip\"> 8.67% <span class=\"xtooltiptext\">54 state changes</span></div> | <div class=\"xtooltip\"> 0.13% <span class=\"xtooltiptext\">2 state changes</span></div> | <div class=\"xtooltip\"> 0.78% <span class=\"xtooltiptext\">4 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504242313-Personal-Buffs-Scourge"
+}

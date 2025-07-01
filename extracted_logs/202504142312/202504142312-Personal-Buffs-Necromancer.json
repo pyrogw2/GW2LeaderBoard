@@ -1,0 +1,5 @@
+{
+  "caption": "{{Necromancer}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Signet of Vampirism|https://wiki.guildwars2.com/images/7/73/Signet_of_Vampirism.png]] |! [img width=24 [Soul Barbs|https://render.guildwars2.com/file/59A0DA7819F43F1B5E689B14CE0D0ABCC0EF3173/1012585.png]] |! [img width=24 [Death Shroud|https://wiki.guildwars2.com/images/f/f5/Death_Shroud.png]] |h\n| 1 |<span data-tooltip=\"ceras.9513\">Were Us</span> | {{Necromancer}} | 1384.83| <div class=\"xtooltip\"> 55.20% <span class=\"xtooltiptext\">57 state changes</span></div> | <div class=\"xtooltip\"> 33.64% <span class=\"xtooltiptext\">43 state changes</span></div> | <div class=\"xtooltip\"> 20.64% <span class=\"xtooltiptext\">27 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504142312-Personal-Buffs-Necromancer"
+}

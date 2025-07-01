@@ -1,0 +1,5 @@
+{
+  "caption": "{{Necromancer}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Death Shroud|https://wiki.guildwars2.com/images/f/f5/Death_Shroud.png]] |! [img width=24 [Vampiric Mark|https://wiki.guildwars2.com/images/7/73/Signet_of_Vampirism.png]] |h\n| 3 |<span data-tooltip=\"Daasen.3719\">Saenad</span> | {{Necromancer}} | 395.58| <div class=\"xtooltip\"> 22.31% <span class=\"xtooltiptext\">9 state changes</span></div> | <div class=\"xtooltip\"> 1.52% <span class=\"xtooltiptext\">3 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504130159-Personal-Buffs-Necromancer"
+}

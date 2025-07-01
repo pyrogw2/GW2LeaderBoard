@@ -1,0 +1,5 @@
+{
+  "caption": "{{Mirage}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Nomad's Endurance|https://render.guildwars2.com/file/EC4E5BEAD50EC6A5A91C312EE521B7C6EC56393B/1769961.png]]|h\n| 1 |<span data-tooltip=\"lauri.4873\">Chicaina Mallcrawlr</span> | Mirage | 96.72| <div class=\"xtooltip\"> 2.70% <span class=\"xtooltiptext\">8 of 35 (22.86% hits)<br>Damage Gained: 64<br></span></div>|",
+  "title": "202505280122-Damage-Modifiers-Mirage"
+}

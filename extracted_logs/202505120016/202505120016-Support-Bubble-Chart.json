@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Too Huge', 'Willbender', 0, 0.03, 1.66, '#8AC4E1'], ['Chrisy Bearbow', 'Druid', 0, 0.62, 27.94, '#7BD350'], ['Elgar The Necro', 'Reaper', 0, 0.0, 0, '#50A77B'], ['Flaudgîn', 'Scourge', 63, 0.02, 1.53, '#6DB691'], ['Luck Beastbane', 'Untamed', 96, 0.01, 3.29, '#A7E18A'], ['Paralda', 'Firebrand', 24, 0.22, 15.51, '#6DB6DA'], ['Ill Eat Yer Boons', 'Scourge', 78, 0.05, 3.21, '#6DB691'], ['Null Maiden', 'Firebrand', 0, 0.12, 13.77, '#6DB6DA'], ['Sappy Treeussy', 'Renegade', 0, 0.03, 3.37, '#DA8F78'], ['Space Groove Chill', 'Druid', 1138, 0.72, 15.07, '#7BD350'], ['Candy Guzzler', 'Thief', 0, 0.04, 1.84, '#CC6666'], ['Midosaki', 'Scourge', 75, 0.04, 2.66, '#6DB691'], ['Necro Something', 'Scourge', 83, 0.03, 1.32, '#6DB691'], ['Xhillah', 'Druid', 1228, 0.51, 14.71, '#7BD350'], ['Zeeb Rah', 'Firebrand', 0, 0.12, 10.39, '#6DB6DA'], ['O Divino', 'Warrior', 1549, 0.25, 15.64, '#FF9933'], ['Havocus Prime', 'Vindicator', 45, 0.02, 3.14, '#E1A593'], ['Blood Ebola', 'Firebrand', 0, 0.03, 14.64, '#6DB6DA'], ['Muted Girl', 'Chronomancer', 805, 0.51, 12.96, '#A750A7'], ['Prez Ashton', 'Dragonhunter', 118, 0.03, 2.14, '#50A7D3'], ['Too Huge', 'Dragonhunter', 0, 0.05, 5.69, '#50A7D3'], ['Dis Engage', 'Scrapper', 0, 0.41, 12.27, '#A77B50'], ['Dont Trust Bäqir', 'Spellbreaker', 503, 0.24, 15.0, '#FFB66D'], ['Shea Butter', 'Tempest', 0, 0.5, 6.38, '#EE6F6A'], ['Peppermint Drops', 'Druid', 1246, 0.56, 19.98, '#7BD350'], ['Mini Fluxbender', 'Chronomancer', 576, 0.21, 16.65, '#A750A7'], ['M E L Li S', 'Firebrand', 9, 0.11, 12.97, '#6DB6DA']",
+  "max": "27.94",
+  "min": "0",
+  "tags": "202505120016",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202505120016-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202505120016-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

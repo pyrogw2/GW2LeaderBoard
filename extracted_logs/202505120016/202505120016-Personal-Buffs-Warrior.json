@@ -1,0 +1,5 @@
+{
+  "caption": "{{Warrior}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Soldier's Focus|https://wiki.guildwars2.com/images/2/29/Soldier%27s_Focus.png]] |! [img width=24 [Shield Stance|https://wiki.guildwars2.com/images/d/de/Shield_Stance.png]] |! [img width=24 [Dolyak Signet|https://wiki.guildwars2.com/images/6/60/Dolyak_Signet.png]] |! [img width=24 [Defiant Stance|https://wiki.guildwars2.com/images/d/db/Defiant_Stance.png]] |h\n| 5 |<span data-tooltip=\"montjusk.9671\">O Divino</span> | {{Warrior}} | 1753.88| <div class=\"xtooltip\"> 71.85% <span class=\"xtooltiptext\">50 state changes</span></div> | <div class=\"xtooltip\"> 1.55% <span class=\"xtooltiptext\">10 state changes</span></div> | <div class=\"xtooltip\"> 6.13% <span class=\"xtooltiptext\">1 state changes</span></div> | <div class=\"xtooltip\"> 0.23% <span class=\"xtooltiptext\">1 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202505120016-Personal-Buffs-Warrior"
+}

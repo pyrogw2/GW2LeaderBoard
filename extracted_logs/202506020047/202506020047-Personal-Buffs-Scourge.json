@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scourge}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Death's Carapace|https://render.guildwars2.com/file/DC38F4623BFE773E681E37A0EAE11A364D52AACE/1012567.png]] |! [img width=24 [Desert / Sandstorm Shroud|https://i.imgur.com/e0IXt8w.png]] |h\n| 2 |<span data-tooltip=\"Luke.9108\">Luck N</span> | {{Scourge}} | 695.07| <div class=\"xtooltip\"> 79.35% <span class=\"xtooltiptext\">261 state changes</span></div> | <div class=\"xtooltip\"> 16.40% <span class=\"xtooltiptext\">19 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202506020047-Personal-Buffs-Scourge"
+}

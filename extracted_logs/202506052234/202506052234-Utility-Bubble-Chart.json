@@ -1,0 +1,13 @@
+{
+  "caption": "Utility Bubble Chart",
+  "data": "['Name', 'Profession', 'Condition Score', 'Strips/Sec', 'Boon Score', 'color'], ['Candy Glazed', 'Catalyst', 0.0, 0.79, 0.86, '#F49F9C'], ['Nammes', 'Chronomancer', 0.05, 0.76, 14.74, '#A750A7'], ['Paralda', 'Dragonhunter', 0.01, 0.62, 8.54, '#50A7D3'], ['Varda Grenths Hand', 'Reaper', 0.28, 1.48, 0.0, '#50A77B'], ['Havada Kedavra', 'Scourge', 0.22, 3.11, 1.31, '#6DB691'], ['Paralda', 'Firebrand', 0.01, 6.18, 18.82, '#6DB6DA'], ['Synco Rev', 'Vindicator', 0.0, 0.35, 12.05, '#E1A593'], ['Candy Glazed', 'Weaver', 0.0, 0.55, 1.7, '#F18783'], ['Boonbræker', 'Spellbreaker', 0.26, 0.19, 55.33, '#FFB66D'], ['Johnjamin', 'Druid', 0.0, 0.07, 18.36, '#7BD350'], ['Kyra Orpheus', 'Reaper', 0.22, 1.37, 0.29, '#50A77B'], ['Modus R', 'Druid', 0.0, 0.07, 23.32, '#7BD350'], ['Neural Necro', 'Scourge', 0.18, 2.51, 1.77, '#6DB691'], ['Terp Jr', 'Vindicator', 0.0, 1.11, 0.86, '#E1A593'], ['Zeeb Rah', 'Firebrand', 0.0, 1.19, 15.24, '#6DB6DA'], ['Bounciness', 'Vindicator', 0.0, 1.32, 1.89, '#E1A593'], ['M E L Li S', 'Firebrand', 0.0, 0.62, 17.95, '#6DB6DA'], ['Riley Sven Paradöx', 'Druid', 0.0, 0.07, 9.6, '#7BD350'], ['Too Huge', 'Dragonhunter', 0.0, 0.63, 5.52, '#50A7D3'], ['Bruce Almighty', 'Spellbreaker', 1.23, 2.22, 3.23, '#FFB66D'], ['Xhillabella', 'Firebrand', 0.0, 0.29, 19.14, '#6DB6DA'], ['Hydrafar', 'Chronomancer', 0.04, 0.38, 8.22, '#A750A7'], ['Wee Lil Mee Mee', 'Chronomancer', 0.0, 0.16, 6.16, '#A750A7'], ['Midosaki', 'Scourge', 0.01, 0.35, 1.94, '#6DB691'], ['Aredith', 'Vindicator', 0.0, 0.19, 0, '#E1A593'], ['Im An Alt', 'Druid', 0.0, 0.0, 22.31, '#7BD350'], ['Fläùdgin', 'Druid', 0.0, 0.02, 15.11, '#7BD350']",
+  "max": "55.32999999999999",
+  "min": "0.0",
+  "tags": "202506052234",
+  "text": "__''Utility Bubble Chart''__\n\n,,Bubble size based on boon score,,\n\n{{202506052234-Utility-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506052234-Utility-Bubble-Chart",
+  "xAxis": "Strips/Sec",
+  "xData": "Strips/Sec",
+  "yAxis": "Condition Score",
+  "yData": "Condition Score"
+}

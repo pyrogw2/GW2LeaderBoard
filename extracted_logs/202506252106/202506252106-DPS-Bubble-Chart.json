@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Arrascä', 'Scourge', 1416, 15.03, 17.0, '#6DB691'], ['Beneco Holosmilf', 'Holosmith', 3807, 15.2, 21.0, '#B6916D'], ['Grëgo', 'Herald', 420, 17.03, 31.0, '#D3795D'], ['Oh Thats So Good', 'Chronomancer', 135, 12.56, 14.0, '#A750A7'], ['Sabaax Guardian', 'Firebrand', 162, 14.17, 21.0, '#6DB6DA'], ['Vxjipdvnsdkjdvfbghn', 'Specter', 262, 17.82, 27.0, '#E1A7A7'], ['Avvie Patron', 'Dragonhunter', 3442, 16.77, 24.0, '#50A7D3'], ['Chakkka Terror', 'Catalyst', 4012, 16.65, 18.0, '#F49F9C'], ['Leo Tenebrosus', 'Scourge', 1473, 15.58, 19.0, '#6DB691'], ['O Souzaa', 'Chronomancer', 167, 17.32, 26.0, '#A750A7'], ['Xhopzz', 'Specter', 240, 19.63, 26.0, '#E1A7A7'], ['Bayushii', 'Firebrand', 1004, 17.62, 23.0, '#6DB6DA'], ['Mini Nenho', 'Scourge', 660, 14.03, 23.0, '#6DB691'], ['P O L A R T', 'Chronomancer', 68, 10.38, 29.0, '#A750A7'], ['Supp A', 'Druid', 31, 11.14, 39.0, '#7BD350'], ['Z A L K', 'Dragonhunter', 2487, 18.17, 30.0, '#50A7D3'], ['Bath Kol Guardian', 'Firebrand', 280, 15.62, 26.0, '#6DB6DA'], ['Boombmarley', 'Druid', 12, 14.4, 16.0, '#7BD350'], ['O Cara Do Mal', 'Scourge', 873, 18.96, 17.0, '#6DB691'], ['Prez Ashton', 'Dragonhunter', 4954, 16.79, 24.0, '#50A7D3'], ['Sayuri Mashiro', 'Firebrand', 1319, 14.41, 25.0, '#6DB6DA'], ['Henrique Volkihar', 'Scourge', 777, 15.11, 23.0, '#6DB691'], ['Mini Poplar', 'Druid', 52, 14.06, 25.0, '#7BD350'], ['Nôè', 'Holosmith', 5182, 16.51, 23.0, '#B6916D'], ['Prióri', 'Firebrand', 962, 14.39, 21.0, '#6DB6DA'], ['Undying Millian', 'Chronomancer', 245, 17.89, 23.0, '#A750A7'], ['Coxinha Astral', 'Dragonhunter', 3605, 15.35, 20.0, '#50A7D3'], ['Dare Devilz', 'Firebrand', 257, 16.02, 29.0, '#6DB6DA'], ['Nennius Furry Guard', 'Firebrand', 1434, 17.1, 25.0, '#6DB6DA'], ['Páraldá', 'Druid', 56, 18.89, 26.0, '#7BD350'], ['Sharp Ravenna', 'Catalyst', 2627, 14.21, 21.0, '#F49F9C'], ['Tiodosuco', 'Druid', 51, 17.03, 30.0, '#7BD350']",
+  "max": "39.0",
+  "min": "14.0",
+  "tags": "202506252106",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202506252106-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506252106-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

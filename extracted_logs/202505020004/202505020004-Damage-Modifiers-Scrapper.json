@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scrapper}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Object in Motion|https://render.guildwars2.com/file/FA6A0040D703B2FBF19B4592A63F3D7C2555FE02/2175049.png]]|![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|h\n| 3 |<span data-tooltip=\"Freelanced.6084\">Hammarian</span> | Scrapper | 618.69| <div class=\"xtooltip\"> 9.34% <span class=\"xtooltiptext\">781 of 798 (97.87% hits)<br>Damage Gained: 16,312<br></span></div>| <div class=\"xtooltip\"> 5.22% <span class=\"xtooltiptext\">530 of 695 (76.26% hits)<br>Damage Gained: 7,984<br></span></div>| <div class=\"xtooltip\"> -4.42% <span class=\"xtooltiptext\">712 of 1002 (71.06% hits)<br>Damage Gained: -41,490<br></span></div>|",
+  "title": "202505020004-Damage-Modifiers-Scrapper"
+}

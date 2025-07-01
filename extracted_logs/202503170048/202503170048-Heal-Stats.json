@@ -1,0 +1,5 @@
+{
+  "caption": "Heal Stats",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} | !{{Healing}} | !{{HealingPS}} | !{{Barrier}} | !{{BarrierPS}} | !{{DownedHealing}} | !{{DownedHealingPS}} |h\n|Heal Stats Table|c\n\n\n</div>",
+  "title": "202503170048-Heal-Stats"
+}

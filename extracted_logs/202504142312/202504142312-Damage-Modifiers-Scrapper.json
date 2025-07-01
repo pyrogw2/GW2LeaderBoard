@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scrapper}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|![img width=24 [Object in Motion|https://render.guildwars2.com/file/FA6A0040D703B2FBF19B4592A63F3D7C2555FE02/2175049.png]]|![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|h\n| 7 |<span data-tooltip=\"CaptainKnightfall.4378\">Maximilian Irontail</span> | Scrapper | 365.50| <div class=\"xtooltip\"> -7.61% <span class=\"xtooltiptext\">226 of 279 (81.00% hits)<br>Damage Gained: -21,349<br></span></div>| <div class=\"xtooltip\"> 8.31% <span class=\"xtooltiptext\">246 of 279 (88.17% hits)<br>Damage Gained: 16,046<br></span></div>| <div class=\"xtooltip\"> 3.05% <span class=\"xtooltiptext\">60 of 252 (23.81% hits)<br>Damage Gained: 5,590<br></span></div>|",
+  "title": "202504142312-Damage-Modifiers-Scrapper"
+}

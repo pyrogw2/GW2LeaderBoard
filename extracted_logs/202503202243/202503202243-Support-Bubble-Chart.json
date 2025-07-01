@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Asumi Maki', 'Druid', 0, 3.07, 20.01, '#7BD350'], ['Paralda', 'Firebrand', 243, 0.26, 32.51, '#6DB6DA'], ['Thaaww', 'Berserker', 0, 0.17, 6.92, '#FFA750'], ['Uncle Donk', 'Dragonhunter', 366, 0.13, 7.9, '#50A7D3'], ['Varda Lyssas Cursed', 'Chronomancer', 1655, 1.36, 17.17, '#A750A7'], ['I B L O W Bubbles', 'Holosmith', 94, 0.29, 2.05, '#B6916D'], ['Iobtesr', 'Chronomancer', 0, 0.36, 21.79, '#A750A7'], ['King Modus', 'Firebrand', 886, 0.36, 33.64, '#6DB6DA'], ['Onysc', 'Spellbreaker', 1847, 1.27, 28.34, '#FFB66D'], ['Shot Across The Bow', 'Druid', 0, 2.61, 19.37, '#7BD350'], ['Degothi Everild', 'Druid', 3924, 3.02, 19.24, '#7BD350'], ['Elgar The Necro', 'Scourge', 0, 1.01, 21.84, '#6DB691'], ['Havocus Rex', 'Berserker', 0, 0.14, 9.19, '#FFA750'], ['Nammes', 'Chronomancer', 1576, 1.66, 18.9, '#A750A7'], ['Ookla The Mök', 'Firebrand', 736, 0.37, 31.57, '#6DB6DA'], ['Biogg', 'Chronomancer', 0, 1.29, 12.52, '#A750A7'], ['Cllarovee', 'Firebrand', 506, 0.27, 26.76, '#6DB6DA'], ['Foofoopig', 'Druid', 4054, 2.88, 17.77, '#7BD350'], ['Interpretor', 'Warrior', 0, 0.36, 10.5, '#FF9933'], ['Möranà', 'Scourge', 289, 0.09, 4.33, '#6DB691'], ['Interpretor', 'Spellbreaker', 0, 0.77, 24.18, '#FFB66D'], ['Tia Melusine', 'Tempest', 0, 0.0, 0, '#EE6F6A'], ['T A R Ancalimë', 'Dragonhunter', 285, 0.25, 4.09, '#50A7D3'], ['Havocus Imperator', 'Dragonhunter', 0, 0.2, 6.74, '#50A7D3'], ['Madmmeaty', 'Reaper', 0, 0.1, 0.0, '#50A77B'], ['Paralda', 'Dragonhunter', 717, 0.18, 13.81, '#50A7D3'], ['Necro Something', 'Scourge', 1292, 0.55, 18.17, '#6DB691'], ['Zeeb Rah', 'Firebrand', 0, 0.14, 15.71, '#6DB6DA'], ['Hit N N Run', 'Reaper', 0, 0.14, 0, '#50A77B']",
+  "max": "33.64",
+  "min": "0",
+  "tags": "202503202243",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202503202243-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202503202243-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

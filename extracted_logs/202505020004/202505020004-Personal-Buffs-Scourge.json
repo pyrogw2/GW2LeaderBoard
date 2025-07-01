@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scourge}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |h\n| 4 |<span data-tooltip=\"Freelanced.6084\">Midosaki</span> | {{Scourge}} | 364.87| - |\n| 4 |<span data-tooltip=\"Mellis.8451\">Mellis N</span> | {{Scourge}} | 846.99| - |\n| 5 |<span data-tooltip=\"Elgar.2091\">Elgar The Necro</span> | {{Scourge}} | 220.87| <div class=\"xtooltip\"> 9.04% <span class=\"xtooltiptext\">4 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202505020004-Personal-Buffs-Scourge"
+}

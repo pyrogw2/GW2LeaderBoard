@@ -1,0 +1,5 @@
+{
+  "caption": "Tag Summary",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Summary by Command Tag |c\n| | | | Enemy |<| Squad|<| |h\n|Name | Prof | Fights | {{DownedEnemy}} | {{killed}} | {{DownedAlly}} | {{DeadAlly}} | KDR |h\n|<span data-tooltip=\"synco.8132\">Synco W</span> | {{Spellbreaker}} | 15 | 257 | 160 | 253 | 185 | 0.86|\n|Totals |<| 15 | 257 | 160 | 253 | 185 | 0.86|f\n\n\n</div>",
+  "title": "202504202003-Tag_Stats"
+}

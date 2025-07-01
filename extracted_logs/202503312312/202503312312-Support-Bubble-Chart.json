@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['O Divino', 'Warrior', 1727, 0.53, 15.47, '#FF9933'], ['Frozen Delirious', 'Scourge', 0, 1.14, 26.51, '#6DB691'], ['Paralda', 'Dragonhunter', 610, 0.11, 14.52, '#50A7D3'], ['Peewee Mesmer', 'Chronomancer', 1461, 1.39, 18.9, '#A750A7'], ['T A R Ancalimë', 'Dragonhunter', 311, 0.25, 6.06, '#50A7D3'], ['Varda Argel', 'Druid', 1849, 1.37, 13.31, '#7BD350'], ['Flaudgîn', 'Scourge', 0, 1.18, 21.28, '#6DB691'], ['Ïnterpretor', 'Reaper', 0, 0.11, 0.01, '#50A77B'], ['King Modus', 'Firebrand', 669, 0.3, 28.99, '#6DB6DA'], ['Nammes', 'Chronomancer', 1381, 1.56, 20.02, '#A750A7'], ['Shot Across The Bow', 'Druid', 0, 2.0, 17.32, '#7BD350'], ['Biogg', 'Chronomancer', 0, 1.04, 11.86, '#A750A7'], ['Chrisy Bearbow', 'Druid', 0, 1.94, 21.37, '#7BD350'], ['Kyra Orpheus', 'Reaper', 0, 0.05, 0.0, '#50A77B'], ['Onysc', 'Spellbreaker', 1113, 0.4, 34.38, '#FFB66D'], ['Zeeb Rah', 'Firebrand', 0, 0.13, 24.73, '#6DB6DA'], ['Elgar The Necro', 'Scourge', 0, 0.64, 13.53, '#6DB691'], ['Havocus Imperator', 'Dragonhunter', 193, 0.2, 5.96, '#50A7D3'], ['Holly Penner', 'Spellbreaker', 0, 0.36, 25.22, '#FFB66D'], ['Madam Vox', 'Chronomancer', 1659, 1.31, 13.43, '#A750A7'], ['Ookla The Mök', 'Firebrand', 715, 0.34, 23.88, '#6DB6DA'], ['Hammarian', 'Holosmith', 0, 0.11, 1.82, '#B6916D'], ['S T E P M O M', 'Scourge', 974, 0.91, 14.12, '#6DB691'], ['Prez Ashton', 'Dragonhunter', 0, 0.13, 3.82, '#50A7D3'], ['Smiles Phantom', 'Chronomancer', 0, 1.27, 13.79, '#A750A7'], ['Niffuries', 'Firebrand', 0, 0.47, 32.85, '#6DB6DA'], ['Phaytall', 'Holosmith', 61, 0.1, 1.92, '#B6916D'], ['Too Huge', 'Willbender', 0, 0.0, 0, '#8AC4E1'], ['Bäqir', 'Firebrand', 0, 0.0, 0, '#6DB6DA'], ['Candie Cat', 'Dragonhunter', 0, 0.06, 1.54, '#50A7D3'], ['Prez Ashton', 'Willbender', 0, 0.0, 0, '#8AC4E1'], ['Too Huge', 'Dragonhunter', 0, 0.22, 6.41, '#50A7D3']",
+  "max": "34.379999999999995",
+  "min": "0.0",
+  "tags": "202503312312",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202503312312-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202503312312-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

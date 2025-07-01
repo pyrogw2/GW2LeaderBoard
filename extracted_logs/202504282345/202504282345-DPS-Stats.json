@@ -1,0 +1,7 @@
+{
+  "caption": "DPS Stats",
+  "creator": "Drevarr@github.com",
+  "tags": "202504282345",
+  "text": "!!!`Experimental DPS stats `\n* `Ch (t)s` = Damage/second done `t` seconds before an enemy goes down \n* `Bur (t)s` = Maximum damage/second done over any `t` second interval \n* `Ch5Ca (t)s` = Maximum Chunk(5) + Carrion damage/second done over any `t` second interval \n\n<<tabs '[[202504282345-DPS-Stats-Ch-Total]] [[202504282345-DPS-Stats-Ch-DPS]] [[202504282345-DPS-Stats-Bur-Total]] [[202504282345-DPS-Stats-Bur-DPS]] [[202504282345-DPS-Stats-Ch5Ca-Total]] [[202504282345-DPS-Stats-Ch5Ca-DPS]]' '202504282345-DPS-Stats-Ch-DPS' '$:/temp/tab1'>>",
+  "title": "202504282345-DPS-Stats"
+}

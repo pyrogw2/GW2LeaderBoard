@@ -1,0 +1,7 @@
+{
+  "caption": "Healer - Outgoing",
+  "creator": "Drevarr@github.com",
+  "tags": "202504212313",
+  "text": "<$macrocall $name=\"tabs\" tabsList=\"[prefix[202504212313-Healers-]]\" default={{{[prefix[202504212313-Healers-]first[]]}}} state=\"$:/temp/sel_healer\"/>",
+  "title": "202504212313-Healers"
+}

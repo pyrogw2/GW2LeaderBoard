@@ -1,0 +1,5 @@
+{
+  "caption": "{{Soulbeast}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Opening Strike|https://render.guildwars2.com/file/A537B362D8AC54BC7907E050B596BA93E4CBE5F2/1012627.png]] |! [img width=24 [Clarion Bond|https://wiki.guildwars2.com/images/d/d7/Clarion_Bond.png]] |! [img width=24 [Supportive|https://wiki.guildwars2.com/images/3/32/Supportive_%28Archetype%29.png]] |h\n| 6 |<span data-tooltip=\"Meltdown Manager.9051\">Meltdown Manager</span> | {{Soulbeast}} | 251.11| <div class=\"xtooltip\"> 41.11% <span class=\"xtooltiptext\">9 state changes</span></div> | <div class=\"xtooltip\"> 71.35% <span class=\"xtooltiptext\">8 state changes</span></div> | <div class=\"xtooltip\"> 60.53% <span class=\"xtooltiptext\">8 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504242313-Personal-Buffs-Soulbeast"
+}

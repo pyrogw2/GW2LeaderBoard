@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scourge}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Soul Shards|https://wiki.guildwars2.com/images/e/e3/Soul_Shards.png]] |! [img width=24 [Distress|https://wiki.guildwars2.com/images/b/b6/Distress.png]] |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |h\n| 2 |Elgar The Necro | {{Scourge}} |Elgar.2091 | 1615.50| <div class=\"xtooltip\"> 6.52% <span class=\"xtooltiptext\">18 state changes</span></div> | <div class=\"xtooltip\"> 1.46% <span class=\"xtooltiptext\">10 state changes</span></div> | <div class=\"xtooltip\"> 0.31% <span class=\"xtooltiptext\">1 state changes</span></div> |\n| 4 |Flaudgîn | {{Scourge}} |FlawedDjinn.3217 | 1584.68| - | - | <div class=\"xtooltip\"> 0.63% <span class=\"xtooltiptext\">2 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504072331-Personal-Buffs-Scourge"
+}

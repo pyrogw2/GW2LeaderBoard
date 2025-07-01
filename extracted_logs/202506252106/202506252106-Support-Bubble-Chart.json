@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Arrascä', 'Scourge', 259, 0.23, 6.9, '#6DB691'], ['Beneco Holosmilf', 'Holosmith', 0, 0.03, 3.59, '#B6916D'], ['Grëgo', 'Herald', 0, 0.0, 11.62, '#D3795D'], ['Oh Thats So Good', 'Chronomancer', 596, 0.09, 17.2, '#A750A7'], ['Sabaax Guardian', 'Firebrand', 0, 0.38, 29.4, '#6DB6DA'], ['Vxjipdvnsdkjdvfbghn', 'Specter', 3982, 1.51, 34.37, '#E1A7A7'], ['Avvie Patron', 'Dragonhunter', 0, 0.09, 5.99, '#50A7D3'], ['Chakkka Terror', 'Catalyst', 72, 0.04, 14.29, '#F49F9C'], ['Leo Tenebrosus', 'Scourge', 162, 0.18, 6.21, '#6DB691'], ['O Souzaa', 'Chronomancer', 1364, 0.37, 20.73, '#A750A7'], ['Xhopzz', 'Specter', 3190, 1.3, 20.36, '#E1A7A7'], ['Bayushii', 'Firebrand', 0, 0.24, 17.06, '#6DB6DA'], ['Mini Nenho', 'Scourge', 1465, 0.48, 19.51, '#6DB691'], ['P O L A R T', 'Chronomancer', 819, 0.26, 19.21, '#A750A7'], ['Supp A', 'Druid', 1647, 1.36, 15.03, '#7BD350'], ['Z A L K', 'Dragonhunter', 0, 0.08, 6.95, '#50A7D3'], ['Bath Kol Guardian', 'Firebrand', 0, 0.08, 16.86, '#6DB6DA'], ['Boombmarley', 'Druid', 836, 0.95, 12.8, '#7BD350'], ['O Cara Do Mal', 'Scourge', 0, 0.45, 12.64, '#6DB691'], ['Prez Ashton', 'Dragonhunter', 99, 0.15, 5.25, '#50A7D3'], ['Sayuri Mashiro', 'Firebrand', 0, 0.86, 17.33, '#6DB6DA'], ['Henrique Volkihar', 'Scourge', 1561, 0.55, 17.07, '#6DB691'], ['Mini Poplar', 'Druid', 1529, 1.36, 11.01, '#7BD350'], ['Nôè', 'Holosmith', 0, 0.05, 2.47, '#B6916D'], ['Prióri', 'Firebrand', 0, 0.56, 19.77, '#6DB6DA'], ['Undying Millian', 'Chronomancer', 0, 0.16, 32.91, '#A750A7'], ['Coxinha Astral', 'Dragonhunter', 0, 0.08, 7.65, '#50A7D3'], ['Dare Devilz', 'Firebrand', 0, 0.06, 27.81, '#6DB6DA'], ['Nennius Furry Guard', 'Firebrand', 0, 0.88, 19.3, '#6DB6DA'], ['Páraldá', 'Druid', 1702, 1.46, 23.53, '#7BD350'], ['Sharp Ravenna', 'Catalyst', 0, 0.01, 4.92, '#F49F9C'], ['Tiodosuco', 'Druid', 0, 0.9, 12.98, '#7BD350']",
+  "max": "34.37",
+  "min": "2.4699999999999998",
+  "tags": "202506252106",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202506252106-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506252106-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

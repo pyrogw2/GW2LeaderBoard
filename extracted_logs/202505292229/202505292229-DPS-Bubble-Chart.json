@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Candy Glazed', 'Weaver', 1344, 14.98, 37.0, '#F18783'], ['Modus R', 'Druid', 13, 15.01, 49.0, '#7BD350'], ['Prióri', 'Firebrand', 212, 33.79, 18.0, '#6DB6DA'], ['Smiles Phantom', 'Chronomancer', 21, 20.94, 35.0, '#A750A7'], ['Councillor Stash', 'Catalyst', 573, 17.39, 44.0, '#F49F9C'], ['Lellinya', 'Firebrand', 667, 22.37, 19.0, '#6DB6DA'], ['Neural Necro', 'Scourge', 376, 25.08, 23.0, '#6DB691'], ['Paralda', 'Dragonhunter', 123, 19.65, 37.0, '#50A7D3'], ['Peewee Stability', 'Firebrand', 451, 20.77, 26.0, '#6DB6DA'], ['Pewwwwwwwwwwwwwwwww', 'Chronomancer', 57, 19.16, 35.0, '#A750A7'], ['Primgar', 'Firebrand', 282, 24.43, 41.0, '#6DB6DA'], ['Time Turned Fragile', 'Chronomancer', 53, 19.0, 50.0, '#A750A7'], ['Varda Grenths Hand', 'Reaper', 586, 20.1, 45.0, '#50A77B'], ['Aki Yuya', 'Catalyst', 299, 21.22, 37.0, '#F49F9C'], ['Chrisy Bearbow', 'Druid', 12, 19.4, 49.0, '#7BD350'], ['Elite Dobby', 'Druid', 21, 19.35, 41.0, '#7BD350'], ['Johnny Da Reaper', 'Reaper', 650, 31.09, 35.0, '#50A77B'], ['Mellis N', 'Scourge', 355, 23.84, 22.0, '#6DB691'], ['Supp A', 'Druid', 7, 8.98, 58.0, '#7BD350'], ['Havada Kedavra', 'Scourge', 431, 23.89, 32.0, '#6DB691'], ['Interpretor R', 'Untamed', 768, 20.66, 48.0, '#A7E18A'], ['Lightbeam Jack', 'Holosmith', 736, 22.18, 52.0, '#B6916D'], ['Leblanc Veil', 'Chronomancer', 35, 19.73, 50.0, '#A750A7'], ['Guars Conhuevo', 'Druid', 18, 29.85, 36.0, '#7BD350'], ['Luck N', 'Scourge', 629, 18.5, 22.0, '#6DB691'], ['Boombmarley', 'Druid', 5, 13.69, 55.0, '#7BD350'], ['Tytluf Fierceclaw', 'Firebrand', 300, 25.4, 39.0, '#6DB6DA'], ['Brokmirror', 'Chronomancer', 30, 21.59, 49.0, '#A750A7'], ['Escäñör', 'Spellbreaker', 60, 19.22, 37.0, '#FFB66D'], ['Bounciness', 'Vindicator', 830, 20.81, 52.0, '#E1A593'], ['Pie Ele', 'Catalyst', 608, 14.56, 60.0, '#F49F9C'], ['Kïm Sïeghart', 'Catalyst', 589, 16.63, 48.0, '#F49F9C'], ['Jenasty', 'Chronomancer', 20, 26.3, 58.0, '#A750A7'], ['Kawaii Chill', 'Chronomancer', 10, 8.42, 75.0, '#A750A7'], ['Lady Stéfany', 'Catalyst', 515, 21.37, 44.0, '#F49F9C'], ['Mirielnetta', 'Catalyst', 610, 18.67, 44.0, '#F49F9C'], ['Radburne', 'Firebrand', 72, 15.24, 39.0, '#6DB6DA'], ['Too Huge', 'Willbender', 595, 12.8, 51.0, '#8AC4E1'], ['Pie Ele', 'Tempest', 85, 26.1, 32.0, '#EE6F6A']",
+  "max": "75.0",
+  "min": "18.0",
+  "tags": "202505292229",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202505292229-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202505292229-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}
