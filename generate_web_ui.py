@@ -65,119 +65,53 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
 
 
 def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int, date_filter: str):
-    """Get leaderboard data filtered by date - recalculates ratings on filtered data."""
-    from glicko_rating_system import parse_date_filter
-    import statistics
+    """Get leaderboard data filtered by date - uses same method as CLI."""
+    from glicko_rating_system import calculate_date_filtered_ratings
     
-    cutoff_date = parse_date_filter(date_filter)
-    if not cutoff_date:
-        return get_glicko_leaderboard_data(db_path, metric_category, limit, None)
+    # Use the same method as the CLI for date filtering
+    working_db_path = calculate_date_filtered_ratings(db_path, date_filter)
     
-    conn = sqlite3.connect(db_path)
+    # Now get the results from the filtered database
+    conn = sqlite3.connect(working_db_path)
     cursor = conn.cursor()
     
     if metric_category and metric_category != "Overall":
-        # Get filtered performance data for specific metric
-        metric_map = {
-            'DPS': 'target_dps',
-            'Healing': 'healing_per_sec', 
-            'Barrier': 'barrier_per_sec',
-            'Cleanses': 'condition_cleanses_per_sec',
-            'Strips': 'boon_strips_per_sec',
-            'Stability': 'stability_gen_per_sec',
-            'Resistance': 'resistance_gen_per_sec',
-            'Might': 'might_gen_per_sec',
-            'Downs': 'down_contribution_per_sec'
-        }
-        
-        if metric_category in metric_map:
-            metric_col = metric_map[metric_category]
-            
-            # Get all sessions for ranking calculation
-            cursor.execute(f'''
-                SELECT timestamp, account_name, profession, {metric_col}
-                FROM player_performances 
-                WHERE parsed_date >= ? AND {metric_col} > 0
-                ORDER BY timestamp
-            ''', (cutoff_date.isoformat(),))
-            
-            session_data = cursor.fetchall()
-            
-            # Group by timestamp (session) and calculate ranks
-            sessions = {}
-            for timestamp, account, profession, stat_value in session_data:
-                if timestamp not in sessions:
-                    sessions[timestamp] = []
-                sessions[timestamp].append((account, profession, stat_value))
-            
-            # Calculate ranks for each player across all sessions
-            player_ranks = {}
-            for timestamp, session_players in sessions.items():
-                if len(session_players) < 2:
-                    continue
-                    
-                # Sort by stat value (descending for better rank)
-                session_players.sort(key=lambda x: x[2], reverse=True)
-                total_players = len(session_players)
-                
-                for rank, (account, profession, stat_value) in enumerate(session_players, 1):
-                    key = f"{account}_{profession}"
-                    if key not in player_ranks:
-                        player_ranks[key] = []
-                    
-                    rank_percent = (rank / total_players) * 100
-                    player_ranks[key].append({
-                        'rank_percent': rank_percent,
-                        'stat_value': stat_value
-                    })
-            
-            # Calculate final results
-            formatted_results = []
-            for key, ranks in player_ranks.items():
-                account, profession = key.split('_', 1)
-                games = len(ranks)
-                
-                if games >= 2:
-                    avg_rank_percent = statistics.mean([r['rank_percent'] for r in ranks])
-                    avg_stat = statistics.mean([r['stat_value'] for r in ranks])
-                    
-                    # Simple rating calculation based on average rank
-                    rating = 1500 + (50 - avg_rank_percent) * 10  # Better rank = higher rating
-                    composite = rating + (50 - avg_rank_percent) * 5  # Bonus for good rank
-                    
-                    formatted_results.append((account, profession, composite, rating, games, avg_rank_percent, avg_stat))
-            
-            # Sort by composite score
-            formatted_results.sort(key=lambda x: x[2], reverse=True)
-            return formatted_results[:limit]
-        else:
-            return []
-    else:
-        # Overall leaderboard - simplified approach
+        # Specific metric category
         cursor.execute('''
-            SELECT account_name, profession,
-                   COUNT(*) as games,
-                   AVG((target_dps/100 + healing_per_sec + barrier_per_sec + condition_cleanses_per_sec + 
-                        boon_strips_per_sec + stability_gen_per_sec + resistance_gen_per_sec + might_gen_per_sec/10) / 8.0) as avg_overall
-            FROM player_performances 
-            WHERE parsed_date >= ?
-            GROUP BY account_name, profession
-            HAVING games >= 2
-            ORDER BY avg_overall DESC
+            SELECT account_name, profession, composite_score, rating, games_played, 
+                   average_rank, average_stat_value
+            FROM glicko_ratings 
+            WHERE metric_category = ?
+            ORDER BY composite_score DESC
             LIMIT ?
-        ''', (cutoff_date.isoformat(), limit))
-        
-        results = cursor.fetchall()
-        conn.close()
-        
-        formatted_results = []
-        for i, (account, profession, games, avg_overall) in enumerate(results):
-            # Normalize rating to reasonable range
-            rating = 1400 + (avg_overall * 5)  # Scale down significantly
-            rank_percent = ((i + 1) / len(results)) * 100  # Calculate actual rank percent
-            formatted_results.append((account, profession, rating, rating, games, rank_percent, avg_overall))
-        
-        return formatted_results
+        ''', (metric_category, limit))
+    else:
+        # Overall leaderboard
+        cursor.execute('''
+            SELECT account_name, profession, 
+                   AVG(composite_score) as avg_composite,
+                   AVG(rating) as avg_rating,
+                   SUM(games_played) as total_games,
+                   AVG(average_rank) as avg_rank,
+                   AVG(average_stat_value) as avg_stat
+            FROM glicko_ratings
+            GROUP BY account_name, profession
+            ORDER BY avg_composite DESC
+            LIMIT ?
+        ''', (limit,))
+    
+    results = cursor.fetchall()
+    conn.close()
+    
+    # Clean up temporary database if created
+    if working_db_path != db_path:
+        import os
+        try:
+            os.remove(working_db_path)
+        except OSError:
+            pass
+    
+    return results
 
 
 def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
@@ -363,29 +297,56 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                 <h2>About the Rating System</h2>
                 <div class="about-content">
                     <h3>🎯 Methodology</h3>
-                    <p>This leaderboard uses a <strong>Glicko rating system</strong> combined with session-based z-score evaluation to rank World vs World performance.</p>
+                    <p>This leaderboard uses a <strong>Glicko-2 rating system</strong> combined with session-based z-score evaluation to rank World vs World performance. Each player's skill is evaluated relative to their peers in the same combat sessions, ensuring fair comparisons across different battle contexts.</p>
                     
                     <h3>📊 How It Works</h3>
                     <ul>
-                        <li><strong>Session-Based Evaluation:</strong> Each combat session is analyzed independently</li>
-                        <li><strong>Z-Score Calculation:</strong> Player performance is compared to others in the same session</li>
-                        <li><strong>Glicko Rating:</strong> Dynamic rating system that accounts for uncertainty and volatility</li>
-                        <li><strong>Composite Scoring:</strong> Combines Glicko rating with average rank performance</li>
+                        <li><strong>Session-Based Evaluation:</strong> Each combat session is analyzed independently to calculate player rankings within that specific battle</li>
+                        <li><strong>Z-Score Calculation:</strong> Player performance is normalized using z-scores: <code>(player_value - session_mean) / session_std</code></li>
+                        <li><strong>Glicko-2 Rating:</strong> Dynamic rating system starting at 1500 that increases/decreases based on performance outcomes converted from z-scores</li>
+                        <li><strong>Rating Deviation (RD):</strong> Measures uncertainty in a player's rating (starts at 350, decreases with more games)</li>
+                        <li><strong>Composite Scoring:</strong> Combines multiple factors to create the final ranking score</li>
+                    </ul>
+                    
+                    <h3>🧮 Composite Score Formula</h3>
+                    <p>The final ranking uses a sophisticated formula that balances skill and consistency:</p>
+                    <ul>
+                        <li><strong>Base Formula:</strong> <code>50% Glicko Rating + 50% (Glicko + Rank Bonus)</code></li>
+                        <li><strong>Rank Bonus:</strong> Performance modifier based on average rank percentile:
+                            <ul>
+                                <li>Excellent (0-15%): +150 to +250 points</li>
+                                <li>Good (15-35%): +50 to +150 points</li>
+                                <li>Average (35-65%): 0 to +50 points</li>
+                                <li>Below Average (65-85%): 0 to -50 points</li>
+                                <li>Poor (85-100%): -100 to -250 points</li>
+                            </ul>
+                        </li>
+                        <li><strong>Participation Multiplier:</strong> <code>1.0 + max(0, (350 - RD) / 350 * 0.10)</code>
+                            <br>Rewards consistent participation with up to 10% bonus for experienced players (low RD)</li>
                     </ul>
                     
                     <h3>🏅 Leaderboard Types</h3>
                     <ul>
-                        <li><strong>Overall:</strong> Combined ranking across all metrics</li>
-                        <li><strong>Individual Metrics:</strong> Specialized rankings for DPS, healing, support, etc.</li>
-                        <li><strong>Profession-Specific:</strong> Role-based rankings with weighted metrics</li>
+                        <li><strong>Individual Metrics:</strong> Rankings for specific performance areas (DPS, Healing, Barrier, Cleanses, Strips, Stability, Resistance, Might, Down Contribution)</li>
+                        <li><strong>Profession-Specific:</strong> Role-based rankings using weighted combinations of relevant metrics for each profession</li>
+                        <li><strong>Time Filters:</strong> All-time, 30-day, 90-day, and 180-day rankings to show recent vs historical performance</li>
                     </ul>
                     
-                    <h3>📈 Key Metrics</h3>
+                    <h3>📈 Key Metrics Explained</h3>
                     <ul>
-                        <li><strong>Composite Score:</strong> Final ranking score combining multiple factors</li>
-                        <li><strong>Glicko Rating:</strong> Base skill rating (higher = better)</li>
-                        <li><strong>Avg Rank%:</strong> Average percentile rank in sessions (lower = better)</li>
-                        <li><strong>Games:</strong> Number of combat sessions analyzed</li>
+                        <li><strong>Composite Score:</strong> Final ranking score (higher = better) combining Glicko rating, rank performance, and participation bonus</li>
+                        <li><strong>Glicko Rating:</strong> Base skill rating around 1500 ± 500 (higher = more skilled)</li>
+                        <li><strong>Games:</strong> Number of combat sessions analyzed (more games = lower uncertainty)</li>
+                        <li><strong>Avg Rank%:</strong> Average percentile rank in sessions (lower = consistently better performance)</li>
+                        <li><strong>Avg Stat:</strong> Average raw statistical value for the specific metric being ranked</li>
+                    </ul>
+                    
+                    <h3>⚖️ Fairness Features</h3>
+                    <ul>
+                        <li><strong>Context-Aware:</strong> Performance evaluated relative to session participants, not absolute values</li>
+                        <li><strong>Battle-Type Neutral:</strong> Works equally well for GvG fights, zerg battles, and keep sieges</li>
+                        <li><strong>Consistency Rewarded:</strong> Participation multiplier encourages regular play while maintaining skill-based rankings</li>
+                        <li><strong>Uncertainty Handling:</strong> Rating Deviation ensures new/infrequent players don't dominate experienced players</li>
                     </ul>
                 </div>
             </div>
