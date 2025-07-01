@@ -77,72 +77,121 @@ def fetch_available_logs(base_url: str) -> List[Dict]:
     print(f"🌐 Fetching log list from {base_url}...")
     
     try:
-        # Try common patterns for log listing
-        possible_endpoints = [
-            "",  # Root page
-            "/logs/",
-            "/index.html",
-            "/logs.json",  # If they have a JSON API
-        ]
+        response = requests.get(base_url, timeout=30)
+        response.raise_for_status()
+        content = response.text
         
-        available_logs = []
-        
-        for endpoint in possible_endpoints:
-            url = urljoin(base_url.rstrip('/') + '/', endpoint.lstrip('/'))
-            try:
-                response = requests.get(url, timeout=30)
-                if response.status_code == 200:
-                    content = response.text
-                    
-                    # Look for downloadable log files
-                    # Pattern for TiddlyWiki log files or zip archives
-                    patterns = [
-                        r'href=["\']([^"\']*(\d{12})[^"\']*\.(?:html|zip|tw))["\']',  # Timestamped files
-                        r'href=["\']([^"\']*log[^"\']*\.(?:html|zip|tw))["\']',       # Files with "log" in name
-                        r'href=["\']([^"\']*(?:2025|2024)\d{8}[^"\']*)["\']',        # Files with date patterns
-                    ]
-                    
-                    for pattern in patterns:
-                        matches = re.finditer(pattern, content, re.IGNORECASE)
-                        for match in matches:
-                            file_url = match.group(1)
-                            
-                            # Extract timestamp if possible
-                            timestamp_match = re.search(r'(\d{12})', file_url)
-                            if timestamp_match:
-                                timestamp = timestamp_match.group(1)
-                                
-                                # Make URL absolute
-                                if not file_url.startswith('http'):
-                                    file_url = urljoin(url, file_url)
-                                
-                                log_info = {
-                                    'timestamp': timestamp,
-                                    'url': file_url,
-                                    'filename': os.path.basename(urlparse(file_url).path),
-                                    'source_page': url
-                                }
-                                
-                                # Avoid duplicates
-                                if not any(log['timestamp'] == timestamp for log in available_logs):
-                                    available_logs.append(log_info)
-                
-                if available_logs:
-                    break  # Found logs, no need to try other endpoints
-                    
-            except requests.RequestException as e:
-                print(f"⚠️  Failed to fetch {url}: {e}")
-                continue
-        
-        # Sort by timestamp (newest first)
-        available_logs.sort(key=lambda x: x['timestamp'], reverse=True)
-        
-        print(f"📋 Found {len(available_logs)} available logs")
-        return available_logs
-        
+        # Check if this is a TiddlyWiki site
+        if 'tiddlywiki' in content.lower() or 'tiddler' in content.lower():
+            return fetch_logs_from_tiddlywiki(base_url, content)
+        else:
+            return fetch_logs_from_static_site(base_url, content)
+            
     except Exception as e:
         print(f"❌ Error fetching logs: {e}")
         return []
+
+
+def fetch_logs_from_tiddlywiki(base_url: str, content: str) -> List[Dict]:
+    """Extract log information from TiddlyWiki site."""
+    print("📜 Detected TiddlyWiki site, extracting tiddler information...")
+    
+    available_logs = []
+    
+    # Look for tiddler data with timestamps
+    # TiddlyWiki stores data in JSON format within the HTML
+    patterns = [
+        # Look for timestamp patterns in tiddler titles or content
+        r'"title":"([^"]*(\d{12})[^"]*)"',
+        r'"(\d{12})"[^}]*"title"',
+        # Look for tiddlers that might contain log data
+        r'"title":"([^"]*(?:log|summary|session)[^"]*(\d{8,12})[^"]*)"'
+    ]
+    
+    for pattern in patterns:
+        matches = re.finditer(pattern, content, re.IGNORECASE)
+        for match in matches:
+            if len(match.groups()) >= 2:
+                title = match.group(1)
+                timestamp_text = match.group(2)
+            else:
+                title = match.group(1)
+                # Extract timestamp from title
+                timestamp_match = re.search(r'(\d{12})', title)
+                if not timestamp_match:
+                    continue
+                timestamp_text = timestamp_match.group(1)
+            
+            # Validate timestamp format (YYYYMMDDHHMM)
+            if len(timestamp_text) == 12 and timestamp_text.isdigit():
+                # For TiddlyWiki, we'll need to construct export URLs
+                # This assumes the site supports exporting individual tiddlers
+                export_url = f"{base_url}#{title}"
+                
+                log_info = {
+                    'timestamp': timestamp_text,
+                    'url': export_url,
+                    'filename': f"{timestamp_text}_tiddler.json",
+                    'source_page': base_url,
+                    'tiddler_title': title,
+                    'is_tiddlywiki': True
+                }
+                
+                # Avoid duplicates
+                if not any(log['timestamp'] == timestamp_text for log in available_logs):
+                    available_logs.append(log_info)
+    
+    # Sort by timestamp (newest first)
+    available_logs.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    print(f"📋 Found {len(available_logs)} log tiddlers in TiddlyWiki")
+    return available_logs
+
+
+def fetch_logs_from_static_site(base_url: str, content: str) -> List[Dict]:
+    """Extract log information from static site."""
+    print("🗂️  Scanning static site for log files...")
+    
+    available_logs = []
+    
+    # Look for downloadable log files
+    patterns = [
+        r'href=["\']([^"\']*(\d{12})[^"\']*\.(?:html|zip|tw|json))["\']',  # Timestamped files
+        r'href=["\']([^"\']*log[^"\']*\.(?:html|zip|tw|json))["\']',       # Files with "log" in name
+        r'href=["\']([^"\']*(?:2025|2024)\d{8}[^"\']*)["\']',            # Files with date patterns
+    ]
+    
+    for pattern in patterns:
+        matches = re.finditer(pattern, content, re.IGNORECASE)
+        for match in matches:
+            file_url = match.group(1)
+            
+            # Extract timestamp if possible
+            timestamp_match = re.search(r'(\d{12})', file_url)
+            if timestamp_match:
+                timestamp = timestamp_match.group(1)
+                
+                # Make URL absolute
+                if not file_url.startswith('http'):
+                    file_url = urljoin(base_url, file_url)
+                
+                log_info = {
+                    'timestamp': timestamp,
+                    'url': file_url,
+                    'filename': os.path.basename(urlparse(file_url).path),
+                    'source_page': base_url,
+                    'is_tiddlywiki': False
+                }
+                
+                # Avoid duplicates
+                if not any(log['timestamp'] == timestamp for log in available_logs):
+                    available_logs.append(log_info)
+    
+    # Sort by timestamp (newest first)
+    available_logs.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    print(f"📋 Found {len(available_logs)} available logs")
+    return available_logs
 
 
 def download_and_extract_log(log_info: Dict, extracted_logs_dir: str) -> bool:
@@ -151,15 +200,20 @@ def download_and_extract_log(log_info: Dict, extracted_logs_dir: str) -> bool:
     url = log_info['url']
     filename = log_info['filename']
     
-    print(f"📥 Downloading {filename}...")
+    print(f"📥 Processing {filename}...")
     
     try:
-        response = requests.get(url, timeout=60, stream=True)
-        response.raise_for_status()
-        
         # Create extraction directory
         extract_dir = Path(extracted_logs_dir) / timestamp
         extract_dir.mkdir(parents=True, exist_ok=True)
+        
+        if log_info.get('is_tiddlywiki', False):
+            # This is a TiddlyWiki tiddler - need special handling
+            return extract_tiddlywiki_tiddler(log_info, str(extract_dir))
+        
+        # Regular file download
+        response = requests.get(url, timeout=60, stream=True)
+        response.raise_for_status()
         
         # Download to temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=Path(filename).suffix) as tmp_file:
@@ -216,8 +270,138 @@ def download_and_extract_log(log_info: Dict, extracted_logs_dir: str) -> bool:
             os.unlink(tmp_file_path)
             
     except Exception as e:
-        print(f"❌ Failed to download/extract {filename}: {e}")
+        print(f"❌ Failed to process {filename}: {e}")
         return False
+
+
+def extract_tiddlywiki_tiddler(log_info: Dict, extract_dir: str) -> bool:
+    """Extract data from a specific TiddlyWiki tiddler."""
+    print(f"📜 Extracting TiddlyWiki tiddler: {log_info.get('tiddler_title', 'Unknown')}")
+    
+    try:
+        # For TiddlyWiki sites, we need to fetch the whole site and extract the specific tiddler
+        base_url = log_info['source_page']
+        response = requests.get(base_url, timeout=60)
+        response.raise_for_status()
+        
+        content = response.text
+        tiddler_title = log_info.get('tiddler_title', '')
+        
+        # Look for the specific tiddler in the TiddlyWiki content
+        # TiddlyWiki stores tiddlers as JSON objects
+        tiddler_pattern = rf'"title":"{re.escape(tiddler_title)}"[^{{}}]*"text":"([^"]*)"'
+        
+        match = re.search(tiddler_pattern, content)
+        if match:
+            tiddler_text = match.group(1)
+            
+            # Decode JSON escapes
+            tiddler_text = tiddler_text.replace('\\"', '"').replace('\\n', '\n').replace('\\t', '\t')
+            
+            # If the tiddler text is JSON, save it
+            try:
+                tiddler_data = json.loads(tiddler_text)
+                
+                # Save as JSON file
+                output_file = Path(extract_dir) / f"{log_info['timestamp']}-tiddler.json"
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    json.dump(tiddler_data, f, indent=2)
+                
+                print(f"✅ Extracted tiddler data to {output_file}")
+                return True
+                
+            except json.JSONDecodeError:
+                # Maybe it's not JSON, try to extract JSON from the text
+                return extract_json_from_text(tiddler_text, extract_dir, log_info['timestamp'])
+        
+        # Fallback: look for any tiddlers with the timestamp
+        return extract_json_from_tiddlywiki_by_timestamp(content, extract_dir, log_info['timestamp'])
+        
+    except Exception as e:
+        print(f"❌ Failed to extract TiddlyWiki tiddler: {e}")
+        return False
+
+
+def extract_json_from_text(text: str, extract_dir: str, timestamp: str) -> bool:
+    """Extract JSON data from text content."""
+    json_objects = []
+    
+    # Look for JSON-like structures
+    brace_count = 0
+    start_pos = None
+    
+    for i, char in enumerate(text):
+        if char == '{':
+            if brace_count == 0:
+                start_pos = i
+            brace_count += 1
+        elif char == '}':
+            brace_count -= 1
+            if brace_count == 0 and start_pos is not None:
+                json_text = text[start_pos:i+1]
+                try:
+                    json_obj = json.loads(json_text)
+                    json_objects.append(json_obj)
+                except json.JSONDecodeError:
+                    pass
+                start_pos = None
+    
+    if json_objects:
+        for i, obj in enumerate(json_objects):
+            output_file = Path(extract_dir) / f"{timestamp}-extracted-{i}.json"
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(obj, f, indent=2)
+        
+        print(f"✅ Extracted {len(json_objects)} JSON objects")
+        return True
+    
+    return False
+
+
+def extract_json_from_tiddlywiki_by_timestamp(content: str, extract_dir: str, timestamp: str) -> bool:
+    """Extract JSON data from TiddlyWiki by looking for timestamp-related tiddlers."""
+    print(f"🔍 Searching for tiddlers with timestamp {timestamp}...")
+    
+    # Look for any tiddlers that might contain the log data
+    patterns = [
+        rf'"title":"[^"]*{timestamp}[^"]*"[^{{}}]*"text":"([^"]*)"',
+        rf'"title":"[^"]*{timestamp[:8]}[^"]*"[^{{}}]*"text":"([^"]*)"',  # Date only
+    ]
+    
+    extracted_count = 0
+    
+    for pattern in patterns:
+        matches = re.finditer(pattern, content)
+        for match in matches:
+            try:
+                tiddler_text = match.group(1)
+                # Decode JSON escapes
+                tiddler_text = tiddler_text.replace('\\"', '"').replace('\\n', '\n').replace('\\t', '\t')
+                
+                # Try to parse as JSON
+                try:
+                    tiddler_data = json.loads(tiddler_text)
+                    
+                    output_file = Path(extract_dir) / f"{timestamp}-tiddler-{extracted_count}.json"
+                    with open(output_file, 'w', encoding='utf-8') as f:
+                        json.dump(tiddler_data, f, indent=2)
+                    
+                    extracted_count += 1
+                    
+                except json.JSONDecodeError:
+                    # Try to extract JSON from within the text
+                    if extract_json_from_text(tiddler_text, extract_dir, f"{timestamp}-{extracted_count}"):
+                        extracted_count += 1
+                        
+            except Exception:
+                continue
+    
+    if extracted_count > 0:
+        print(f"✅ Extracted {extracted_count} tiddlers")
+        return True
+    
+    print("❌ No tiddler data found")
+    return False
 
 
 def extract_json_from_tiddlywiki(tw_path: str, output_dir: str):
