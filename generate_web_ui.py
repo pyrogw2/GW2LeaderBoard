@@ -681,7 +681,7 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
 
         print(f"[{worker_id}] Processing profession leaderboards in parallel...")
         # Process key professions (can be configured based on performance needs)
-        professions_to_process = ["Firebrand", "Chronomancer", "Scourge"]  # Most common WvW professions
+        professions_to_process = ["Firebrand", "Chronomancer", "Scourge", "Druid", "Condi Firebrand", "Support Spb"]  # Most common WvW professions
         
         # Process professions in parallel within each filter
         with ThreadPoolExecutor(max_workers=min(len(professions_to_process), 3)) as prof_executor:
@@ -1468,8 +1468,8 @@ function loadOverallLeaderboard() {{
         {{ key: 'average_rank_percent', label: 'Avg Rank%', type: 'percent' }}
     ];
     
-    // Add guild member column if guild filtering is enabled
-    if (leaderboardData.guild_enabled) {{
+    // Add guild member column if guild filtering is enabled and we're showing all players
+    if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
         columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
@@ -1505,8 +1505,8 @@ function loadIndividualMetric(metric) {{
         {{ key: 'average_stat_value', label: `Avg ${{metric}}`, type: 'stat' }}
     ];
     
-    // Add guild member column if guild filtering is enabled
-    if (leaderboardData.guild_enabled) {{
+    // Add guild member column if guild filtering is enabled and we're showing all players
+    if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
         columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
@@ -1552,8 +1552,8 @@ function loadProfessionLeaderboard(profession) {{
         {{ key: 'key_stats', label: 'Key Stats', type: 'stats' }}
     ];
     
-    // Add guild member column if guild filtering is enabled
-    if (leaderboardData.guild_enabled) {{
+    // Add guild member column if guild filtering is enabled and we're showing all players
+    if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
         columns.splice(2, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
@@ -1586,8 +1586,8 @@ function loadHighScores(metric) {{
         {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
     ];
     
-    // Add guild member column if guild filtering is enabled
-    if (leaderboardData.guild_enabled) {{
+    // Add guild member column if guild filtering is enabled and we're showing all players
+    if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
         columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
