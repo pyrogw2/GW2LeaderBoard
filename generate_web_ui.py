@@ -323,6 +323,68 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     return results
 
 
+def get_new_high_scores_data(db_path: str, limit: int = 100):
+    """Get high scores data from the new high_scores table."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Check if guild_members table exists for guild membership info
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = cursor.fetchone() is not None
+    
+    high_scores_data = {}
+    
+    # Target metrics to extract
+    target_metrics = {
+        'highest_outgoing_skill_damage': 'Highest Outgoing Skill Damage',
+        'highest_incoming_skill_damage': 'Highest Incoming Skill Damage',
+        'highest_single_fight_dps': 'Highest Single Fight DPS'
+    }
+    
+    for metric_key, metric_name in target_metrics.items():
+        if guild_table_exists:
+            # Query with guild membership info
+            cursor.execute('''
+                SELECT hs.player_account, hs.player_name, hs.profession, hs.skill_name, 
+                       hs.score_value, hs.timestamp, hs.fight_number,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM high_scores hs
+                LEFT JOIN guild_members gm ON hs.player_account = gm.account_name
+                WHERE hs.metric_type = ?
+                ORDER BY hs.score_value DESC
+                LIMIT ?
+            ''', (metric_key, limit))
+        else:
+            # Query without guild membership info
+            cursor.execute('''
+                SELECT player_account, player_name, profession, skill_name, 
+                       score_value, timestamp, fight_number, 0 as is_guild_member
+                FROM high_scores
+                WHERE metric_type = ?
+                ORDER BY score_value DESC
+                LIMIT ?
+            ''', (metric_key, limit))
+        
+        results = cursor.fetchall()
+        high_scores_data[metric_name] = [
+            {
+                "rank": i + 1,
+                "account_name": account,
+                "player_name": player_name,
+                "profession": profession,
+                "skill_name": skill_name,
+                "score_value": score_value,
+                "timestamp": timestamp,
+                "fight_number": fight_number,
+                "is_guild_member": bool(is_guild_member)
+            }
+            for i, (account, player_name, profession, skill_name, score_value, timestamp, fight_number, is_guild_member) in enumerate(results)
+        ]
+    
+    conn.close()
+    return high_scores_data
+
+
 def get_high_scores_data(db_path: str, limit: int = 100):
     """Get top burst damage records for High Scores section (non-Glicko based)."""
     conn = sqlite3.connect(db_path)
@@ -725,6 +787,11 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
             for i, (account, profession, burst_damage, timestamp, is_guild_member) in enumerate(high_scores_results)
         ]
         
+        # Get new high scores data (skill damage and single fight DPS)
+        new_high_scores_results = get_new_high_scores_data(db_path, limit=100)
+        for metric_name, metric_data in new_high_scores_results.items():
+            filter_data["high_scores"][metric_name] = metric_data
+        
         print(f"[{worker_id}] Worker completed successfully")
         return filter_data
     
@@ -806,10 +873,13 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
             <!-- High Scores -->
             <div id="high-scores" class="tab-content">
                 <h2>High Scores</h2>
-                <p class="description">Top single-instance burst damage records (non-Glicko based).</p>
+                <p class="description">Top performance records across different categories (non-Glicko based).</p>
                 
                 <div class="metric-selector">
                     <button class="metric-button active" data-metric="Highest 1 Sec Burst">Highest 1 Sec Burst</button>
+                    <button class="metric-button" data-metric="Highest Outgoing Skill Damage">Highest Outgoing Skill Damage</button>
+                    <button class="metric-button" data-metric="Highest Incoming Skill Damage">Highest Incoming Skill Damage</button>
+                    <button class="metric-button" data-metric="Highest Single Fight DPS">Highest Single Fight DPS</button>
                 </div>
                 
                 <div id="high-scores-leaderboard" class="leaderboard-container"></div>
@@ -1345,10 +1415,17 @@ function setupEventListeners() {{
         }});
     }});
     
-    // Metric selection
-    document.querySelectorAll('.metric-button').forEach(button => {{
+    // Metric selection - handle individual metrics and high scores separately
+    document.querySelectorAll('#individual .metric-button').forEach(button => {{
         button.addEventListener('click', function() {{
             selectMetric(this.dataset.metric);
+        }});
+    }});
+    
+    // High score selection
+    document.querySelectorAll('#high-scores .metric-button').forEach(button => {{
+        button.addEventListener('click', function() {{
+            selectHighScore(this.dataset.metric);
         }});
     }});
     
@@ -1415,6 +1492,16 @@ function selectMetric(metric) {{
     if (currentTab === 'individual') {{
         loadIndividualMetric(metric);
     }} else if (currentTab === 'high-scores') {{
+        loadHighScores(metric);
+    }}
+}}
+
+function selectHighScore(metric) {{
+    currentHighScore = metric;
+    // For high scores tab, update the metric buttons in the high scores section
+    if (currentTab === 'high-scores') {{
+        document.querySelectorAll('#high-scores .metric-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`#high-scores [data-metric="${{metric}}"]`).classList.add('active');
         loadHighScores(metric);
     }}
 }}
@@ -1578,13 +1665,44 @@ function loadHighScores(metric) {{
         rank: index + 1
     }}));
     
-    const columns = [
-        {{ key: 'rank', label: 'Rank', type: 'rank' }},
-        {{ key: 'account_name', label: 'Account', type: 'account' }},
-        {{ key: 'profession', label: 'Profession', type: 'profession' }},
-        {{ key: 'burst_damage', label: 'Burst Damage', type: 'number' }},
-        {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
-    ];
+    // Define columns based on metric type
+    let columns;
+    if (metric === 'Highest 1 Sec Burst') {{
+        columns = [
+            {{ key: 'rank', label: 'Rank', type: 'rank' }},
+            {{ key: 'account_name', label: 'Account', type: 'account' }},
+            {{ key: 'profession', label: 'Profession', type: 'profession' }},
+            {{ key: 'burst_damage', label: 'Burst Damage', type: 'number' }},
+            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+        ];
+    }} else if (metric === 'Highest Outgoing Skill Damage' || metric === 'Highest Incoming Skill Damage') {{
+        columns = [
+            {{ key: 'rank', label: 'Rank', type: 'rank' }},
+            {{ key: 'player_name', label: 'Player', type: 'account' }},
+            {{ key: 'profession', label: 'Profession', type: 'profession' }},
+            {{ key: 'skill_name', label: 'Skill', type: 'stats' }},
+            {{ key: 'score_value', label: 'Damage', type: 'number' }},
+            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+        ];
+    }} else if (metric === 'Highest Single Fight DPS') {{
+        columns = [
+            {{ key: 'rank', label: 'Rank', type: 'rank' }},
+            {{ key: 'player_name', label: 'Player', type: 'account' }},
+            {{ key: 'profession', label: 'Profession', type: 'profession' }},
+            {{ key: 'score_value', label: 'DPS', type: 'number' }},
+            {{ key: 'fight_number', label: 'Fight', type: 'stats' }},
+            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+        ];
+    }} else {{
+        // Default columns for any other metrics
+        columns = [
+            {{ key: 'rank', label: 'Rank', type: 'rank' }},
+            {{ key: 'account_name', label: 'Account', type: 'account' }},
+            {{ key: 'profession', label: 'Profession', type: 'profession' }},
+            {{ key: 'score_value', label: 'Score', type: 'number' }},
+            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+        ];
+    }}
     
     // Add guild member column if guild filtering is enabled and we're showing all players
     if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{

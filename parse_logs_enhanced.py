@@ -12,6 +12,7 @@ from dataclasses import dataclass, asdict
 from typing import List, Dict, Optional
 import argparse
 from datetime import datetime, date
+from high_scores_parser import HighScoresParser
 
 
 @dataclass
@@ -705,8 +706,61 @@ def create_database(db_path: str):
         )
     ''')
     
+    # Create high scores table
+    cursor.execute('DROP TABLE IF EXISTS high_scores')
+    cursor.execute('''
+        CREATE TABLE high_scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            parsed_date TEXT,
+            player_account TEXT NOT NULL,
+            player_name TEXT NOT NULL,
+            profession TEXT NOT NULL,
+            fight_number INTEGER NOT NULL,
+            metric_type TEXT NOT NULL,
+            skill_name TEXT,
+            skill_icon_url TEXT,
+            score_value REAL NOT NULL
+        )
+    ''')
+    
+    # Create indexes for efficient querying
+    cursor.execute('CREATE INDEX idx_high_scores_metric ON high_scores(metric_type)')
+    cursor.execute('CREATE INDEX idx_high_scores_date ON high_scores(parsed_date)')
+    cursor.execute('CREATE INDEX idx_high_scores_player ON high_scores(player_account)')
+    cursor.execute('CREATE INDEX idx_high_scores_score ON high_scores(metric_type, score_value DESC)')
+    
     conn.commit()
     conn.close()
+
+
+def store_high_scores(high_scores: List, db_path: str):
+    """Store high scores data in the database."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    for entry in high_scores:
+        cursor.execute('''
+            INSERT OR REPLACE INTO high_scores (
+                timestamp, parsed_date, player_account, player_name, profession,
+                fight_number, metric_type, skill_name, skill_icon_url, score_value
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            entry.timestamp,
+            str(entry.timestamp[:8]),  # Convert YYYYMMDDHHMM to YYYYMMDD
+            entry.player_account,
+            entry.player_name,
+            entry.profession,
+            entry.fight_number,
+            entry.metric_type,
+            entry.skill_name,
+            entry.skill_icon_url,
+            entry.score_value
+        ))
+    
+    conn.commit()
+    conn.close()
+    print(f"Stored {len(high_scores)} high score entries")
 
 
 def store_performances(performances: List[PlayerPerformance], db_path: str):
@@ -757,17 +811,35 @@ def main():
     
     # Process each log directory
     all_performances = []
+    all_high_scores = []
+    
+    # Initialize high scores parser
+    high_scores_parser = HighScoresParser()
+    
     for log_dir in sorted(logs_path.iterdir()):
         if log_dir.is_dir() and re.match(r'\d{12}', log_dir.name):
             print(f"Processing {log_dir.name}...")
             performances = parse_log_directory(log_dir)
             all_performances.extend(performances)
             print(f"  Found {len(performances)} player performances")
+            
+            # Process high scores for this log directory
+            high_scores_file = log_dir / f"{log_dir.name}-High-Scores.json"
+            if high_scores_file.exists():
+                high_scores = high_scores_parser.parse_high_scores_file(high_scores_file)
+                all_high_scores.extend(high_scores)
+                print(f"  Found {len(high_scores)} high score entries")
+            else:
+                print(f"  No High-Scores.json found")
     
     # Store in database
     if all_performances:
         store_performances(all_performances, args.database)
         print(f"Stored {len(all_performances)} comprehensive performances in database")
+    
+    if all_high_scores:
+        store_high_scores(all_high_scores, args.database)
+        print(f"Stored {len(all_high_scores)} high score entries in database")
         
         # Show summary
         conn = sqlite3.connect(args.database)
@@ -783,10 +855,21 @@ def main():
         metrics = ['target_dps', 'healing_per_sec', 'barrier_per_sec', 'condition_cleanses_per_sec', 
                   'boon_strips_per_sec', 'stability_gen_per_sec', 'resistance_gen_per_sec', 'might_gen_per_sec']
         
+        # Get high scores summary
+        cursor.execute('SELECT COUNT(*) FROM high_scores')
+        result = cursor.fetchone()
+        total_high_scores = result[0] if result else 0
+        
+        cursor.execute('SELECT COUNT(DISTINCT metric_type) FROM high_scores')
+        result = cursor.fetchone()
+        unique_metrics = result[0] if result else 0
+        
         print(f"\nSummary:")
         print(f"  Unique players: {unique_players}")
         print(f"  Gaming sessions: {unique_sessions}")
         print(f"  Metrics tracked: {len(metrics)}")
+        print(f"  High score entries: {total_high_scores}")
+        print(f"  High score metric types: {unique_metrics}")
         
         print(f"\nTop performers by metric:")
         for metric in metrics:
