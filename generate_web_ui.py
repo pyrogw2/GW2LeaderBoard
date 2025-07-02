@@ -840,9 +840,16 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
 <body>
     <div class="container">
         <header>
-            <h1>🏆 GW2 WvW Leaderboards</h1>
-            <p class="subtitle">Glicko-based rating system for World vs World performance</p>
-            <p class="last-updated">Last updated: <span id="lastUpdated"></span></p>
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>🏆 GW2 WvW Leaderboards</h1>
+                    <p class="subtitle">Glicko-based rating system for World vs World performance</p>
+                    <p class="last-updated">Last updated: <span id="lastUpdated"></span></p>
+                </div>
+                <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+                    <span class="toggle-icon">🌙</span>
+                </button>
+            </div>
         </header>
 
         <nav class="nav-tabs">
@@ -935,24 +942,6 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                         <li><strong>Z-Score Calculation:</strong> Player performance is normalized using z-scores: <code>(player_value - session_mean) / session_std</code></li>
                         <li><strong>Glicko-2 Rating:</strong> Dynamic rating system starting at 1500 that increases/decreases based on performance outcomes converted from z-scores</li>
                         <li><strong>Rating Deviation (RD):</strong> Measures uncertainty in a player's rating (starts at 350, decreases with more games)</li>
-                        <li><strong>Composite Scoring:</strong> Combines multiple factors to create the final ranking score</li>
-                    </ul>
-                    
-                    <h3>🧮 Composite Score Formula</h3>
-                    <p>The final ranking uses a sophisticated formula that balances skill and consistency:</p>
-                    <ul>
-                        <li><strong>Base Formula:</strong> <code>50% Glicko Rating + 50% (Glicko + Rank Bonus)</code></li>
-                        <li><strong>Rank Bonus:</strong> Performance modifier based on average rank percentile:
-                            <ul>
-                                <li>Excellent (0-15%): +150 to +250 points</li>
-                                <li>Good (15-35%): +50 to +150 points</li>
-                                <li>Average (35-65%): 0 to +50 points</li>
-                                <li>Below Average (65-85%): 0 to -50 points</li>
-                                <li>Poor (85-100%): -100 to -250 points</li>
-                            </ul>
-                        </li>
-                        <li><strong>Participation Multiplier:</strong> <code>1.0 + max(0, (350 - RD) / 350 * 0.10)</code>
-                            <br>Rewards consistent participation with up to 10% bonus for experienced players (low RD)</li>
                     </ul>
                     
                     <h3>🏅 Leaderboard Types</h3>
@@ -988,7 +977,39 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
 </html>"""
 
     # Generate CSS file
-    css_content = """* {
+    css_content = """:root {
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --main-bg: #ffffff;
+    --text-color: #333333;
+    --text-color-secondary: #666666;
+    --text-color-light: #ffffff;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+    --hover-bg: #f8f9fa;
+    --button-bg: rgba(255,255,255,0.2);
+    --button-border: rgba(255,255,255,0.3);
+    --button-hover: rgba(255,255,255,0.3);
+    --button-active: rgba(255,255,255,0.4);
+    --shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    --main-bg: #2c3e50;
+    --text-color: #ecf0f1;
+    --text-color-secondary: #bdc3c7;
+    --text-color-light: #ffffff;
+    --card-bg: #34495e;
+    --border-color: #4a6741;
+    --hover-bg: #3c5a99;
+    --button-bg: rgba(255,255,255,0.1);
+    --button-border: rgba(255,255,255,0.2);
+    --button-hover: rgba(255,255,255,0.2);
+    --button-active: rgba(255,255,255,0.3);
+    --shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -997,9 +1018,10 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    color: #333;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--text-color);
+    background: var(--bg-gradient);
     min-height: 100vh;
+    transition: all 0.3s ease;
 }
 
 .container {
@@ -1009,9 +1031,21 @@ body {
 }
 
 header {
-    text-align: center;
     margin-bottom: 30px;
-    color: white;
+    color: var(--text-color-light);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header-text {
+    text-align: center;
+    flex: 1;
 }
 
 header h1 {
@@ -1031,11 +1065,38 @@ header h1 {
     opacity: 0.8;
 }
 
+.dark-mode-toggle {
+    background: var(--button-bg);
+    border: 2px solid var(--button-border);
+    border-radius: 50px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-color-light);
+    font-size: 1.2rem;
+    min-width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark-mode-toggle:hover {
+    background: var(--button-hover);
+    border-color: rgba(255,255,255,0.5);
+    transform: scale(1.05);
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+    font-size: 1.2rem;
+}
+
 .nav-tabs {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
-    background: rgba(255,255,255,0.1);
+    background: var(--button-bg);
     border-radius: 10px;
     padding: 10px;
     backdrop-filter: blur(10px);
@@ -1046,7 +1107,7 @@ header h1 {
     justify-content: center;
     align-items: center;
     margin-bottom: 20px;
-    background: rgba(255,255,255,0.1);
+    background: var(--button-bg);
     border-radius: 10px;
     padding: 15px;
     backdrop-filter: blur(10px);
@@ -1059,30 +1120,30 @@ header h1 {
 }
 
 .filter-label {
-    color: white;
+    color: var(--text-color-light);
     font-weight: bold;
     margin-right: 15px;
     font-size: 1rem;
 }
 
 .date-filter-button, .guild-filter-button {
-    background: rgba(255,255,255,0.2);
-    border: 2px solid rgba(255,255,255,0.3);
+    background: var(--button-bg);
+    border: 2px solid var(--button-border);
     padding: 8px 16px;
     border-radius: 6px;
-    color: white;
+    color: var(--text-color-light);
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .date-filter-button:hover, .guild-filter-button:hover {
-    background: rgba(255,255,255,0.3);
+    background: var(--button-hover);
     border-color: rgba(255,255,255,0.5);
 }
 
 .date-filter-button.active, .guild-filter-button.active {
-    background: rgba(255,255,255,0.4);
+    background: var(--button-active);
     border-color: rgba(255,255,255,0.6);
     font-weight: bold;
 }
@@ -1093,27 +1154,28 @@ header h1 {
     padding: 12px 24px;
     margin: 0 5px;
     border-radius: 8px;
-    color: white;
+    color: var(--text-color-light);
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .tab-button:hover {
-    background: rgba(255,255,255,0.2);
+    background: var(--button-hover);
 }
 
 .tab-button.active {
-    background: rgba(255,255,255,0.3);
+    background: var(--button-active);
     font-weight: bold;
 }
 
 main {
-    background: white;
+    background: var(--main-bg);
     border-radius: 15px;
     padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow);
     min-height: 600px;
+    transition: all 0.3s ease;
 }
 
 .tab-content {
@@ -1125,13 +1187,13 @@ main {
 }
 
 h2 {
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 10px;
     font-size: 1.8rem;
 }
 
 .description {
-    color: #666;
+    color: var(--text-color-secondary);
     margin-bottom: 25px;
     font-size: 1.1rem;
 }
@@ -1145,18 +1207,19 @@ h2 {
 }
 
 .metric-button, .profession-button {
-    background: #f8f9fa;
-    border: 2px solid #dee2e6;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
     padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+    color: var(--text-color);
 }
 
 .metric-button:hover, .profession-button:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background: var(--hover-bg);
+    border-color: var(--text-color-secondary);
 }
 
 .metric-button.active, .profession-button.active {
@@ -1166,20 +1229,21 @@ h2 {
 }
 
 .profession-info {
-    background: #f8f9fa;
+    background: var(--card-bg);
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
     border-left: 4px solid #667eea;
+    border: 1px solid var(--border-color);
 }
 
 .profession-info h3 {
     margin-bottom: 10px;
-    color: #333;
+    color: var(--text-color);
 }
 
 .profession-info p {
-    color: #666;
+    color: var(--text-color-secondary);
     margin-bottom: 5px;
 }
 
@@ -1197,19 +1261,21 @@ h2 {
 .leaderboard-table td {
     padding: 12px;
     text-align: left;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
 .leaderboard-table th {
-    background: #f8f9fa;
+    background: var(--card-bg);
     font-weight: bold;
-    color: #495057;
+    color: var(--text-color);
     position: sticky;
     top: 0;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .leaderboard-table tr:hover {
-    background: #f8f9fa;
+    background: var(--hover-bg);
 }
 
 .rank-cell {
@@ -1302,6 +1368,16 @@ h2 {
 @media (max-width: 768px) {
     .container {
         padding: 10px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .dark-mode-toggle {
+        align-self: center;
+        margin-top: 10px;
     }
     
     header h1 {
@@ -1409,6 +1485,9 @@ function initializePage() {{
     const lastUpdated = new Date(leaderboardData.generated_at);
     document.getElementById('lastUpdated').textContent = lastUpdated.toLocaleString();
     
+    // Initialize dark mode from localStorage
+    initializeDarkMode();
+    
     // Initialize guild filtering if enabled
     if (leaderboardData.guild_enabled) {{
         const guildFilters = document.getElementById('guild-filters');
@@ -1420,7 +1499,38 @@ function initializePage() {{
     }}
 }}
 
+function initializeDarkMode() {{
+    // Check for saved theme preference or default to light mode
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateToggleIcon(savedTheme);
+}}
+
+function toggleDarkMode() {{
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateToggleIcon(newTheme);
+    
+    // Reapply raids gradient with new theme colors
+    setTimeout(() => applyRaidsGradient(), 50);
+}}
+
+function updateToggleIcon(theme) {{
+    const toggleIcon = document.querySelector('.toggle-icon');
+    if (theme === 'dark') {{
+        toggleIcon.textContent = '☀️';
+    }} else {{
+        toggleIcon.textContent = '🌙';
+    }}
+}}
+
 function setupEventListeners() {{
+    // Dark mode toggle
+    document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+    
     // Tab navigation
     document.querySelectorAll('.tab-button').forEach(button => {{
         button.addEventListener('click', function() {{
@@ -1569,10 +1679,9 @@ function loadOverallLeaderboard() {{
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
-        {{ key: 'composite_score', label: 'Composite', type: 'number' }},
         {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
-        {{ key: 'average_rank_percent', label: 'Avg Rank%', type: 'percent' }}
+        {{ key: 'average_rank_percent', label: 'Avg Rank Per Raid', type: 'avg_rank' }}
     ];
     
     // Add guild member column if guild filtering is enabled and we're showing all players
@@ -1605,11 +1714,10 @@ function loadIndividualMetric(metric) {{
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
-        {{ key: 'composite_score', label: 'Composite', type: 'number' }},
         {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
-        {{ key: 'average_rank_percent', label: 'Avg Rank%', type: 'percent' }},
-        {{ key: 'average_stat_value', label: `Avg ${{metric}}`, type: 'stat' }}
+        {{ key: 'average_rank_percent', label: 'Avg Rank Per Raid', type: 'avg_rank' }},
+        {{ key: 'average_stat_value', label: `Avg ${{metric === 'Downs' ? 'DownCont' : metric}}`, type: 'stat' }}
     ];
     
     // Add guild member column if guild filtering is enabled and we're showing all players
@@ -1653,7 +1761,6 @@ function loadProfessionLeaderboard(profession) {{
     const columns = [
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
-        {{ key: 'composite_score', label: 'Composite', type: 'number' }},
         {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
         {{ key: 'key_stats', label: 'Key Stats', type: 'stats' }}
@@ -1783,6 +1890,11 @@ function formatCellValue(value, type) {{
         case 'percent':
             const percentClass = value < 25 ? 'rank-percent' : value > 75 ? 'rank-percent poor' : 'rank-percent average';
             return `<span class="${{percentClass}}">${{value.toFixed(1)}}%</span>`;
+        case 'avg_rank':
+            // Display actual average rank with 1 decimal place
+            // Good ranks are low numbers (1-5), poor ranks are high numbers (10+)
+            const rankClass = value <= 5 ? 'rank-percent' : value >= 10 ? 'rank-percent poor' : 'rank-percent average';
+            return `<span class="${{rankClass}}">${{value.toFixed(1)}}</span>`;
         case 'stat':
             return `<span class="stat-value">${{value.toFixed(1)}}</span>`;
         case 'stats':
@@ -1825,18 +1937,31 @@ function applyRaidsGradient() {{
     const minRaids = Math.min(...raidsValues);
     const maxRaids = Math.max(...raidsValues);
     
+    // Check if we're in dark mode
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    
     // Apply gradient coloring
     raidsElements.forEach(element => {{
         const raids = parseInt(element.dataset.raids);
         const ratio = maxRaids === minRaids ? 0.5 : (raids - minRaids) / (maxRaids - minRaids);
         
-        // Interpolate between red (0) and green (255)
-        const red = Math.round(255 * (1 - ratio));
-        const green = Math.round(255 * ratio);
-        const blue = 0;
-        
-        element.style.backgroundColor = `rgba(${{red}}, ${{green}}, ${{blue}}, 0.3)`;
-        element.style.color = ratio > 0.5 ? '#2d5a2d' : '#5a2d2d';
+        if (isDarkMode) {{
+            // Dark mode: use brighter, more visible colors
+            const red = Math.round(255 * (1 - ratio));
+            const green = Math.round(255 * ratio);
+            const blue = 50; // Add slight blue tint for better visibility
+            
+            element.style.backgroundColor = `rgba(${{red}}, ${{green}}, ${{blue}}, 0.4)`;
+            element.style.color = ratio > 0.5 ? '#90ee90' : '#ffb3b3'; // Light green/red text
+        }} else {{
+            // Light mode: original colors
+            const red = Math.round(255 * (1 - ratio));
+            const green = Math.round(255 * ratio);
+            const blue = 0;
+            
+            element.style.backgroundColor = `rgba(${{red}}, ${{green}}, ${{blue}}, 0.3)`;
+            element.style.color = ratio > 0.5 ? '#2d5a2d' : '#5a2d2d'; // Dark green/red text
+        }}
     }});
 }}"""
 

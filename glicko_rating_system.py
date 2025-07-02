@@ -60,18 +60,17 @@ class GlickoSystem:
     def z_score_to_outcome(self, z_score: float) -> float:
         """
         Convert z-score to outcome value for Glicko.
-        z > 1.0: Excellent performance (outcome = 1.0)
-        z = 0.0: Average performance (outcome = 0.5) 
-        z < -1.0: Poor performance (outcome = 0.0)
-        Linear interpolation between these points.
+        Uses sigmoid curve to better distinguish performance levels:
+        z > 2.0: Outstanding performance (~0.95)
+        z = 1.0: Good performance (~0.75)
+        z = 0.0: Average performance (0.5) 
+        z = -1.0: Poor performance (~0.25)
+        z < -2.0: Very poor performance (~0.05)
         """
-        if z_score >= 1.0:
-            return 1.0
-        elif z_score <= -1.0:
-            return 0.0
-        else:
-            # Linear interpolation: z_score of 0 = outcome 0.5
-            return 0.5 + (z_score * 0.5)
+        # Use sigmoid function for more granular distinction
+        # Sigmoid: 1 / (1 + exp(-x))
+        # Scale and shift: we want z=0 to give 0.5
+        return 1.0 / (1.0 + math.exp(-z_score * 1.5))
     
     def update_rating(self, rating: float, rd: float, volatility: float, 
                      z_scores: List[float]) -> Tuple[float, float, float]:
@@ -467,7 +466,7 @@ def recalculate_profession_ratings(db_path: str, profession: str, date_filter: s
             # Update rating
             new_rating, new_rd, new_volatility = glicko.update_rating(rating, rd, volatility, [z_score])
             new_games = games + 1
-            new_total_rank_sum = total_rank_sum + normalized_rank
+            new_total_rank_sum = total_rank_sum + rank
             new_average_rank = new_total_rank_sum / new_games
             
             # Calculate composite score with participation bonus
@@ -556,8 +555,8 @@ def calculate_composite_score(glicko_rating: float, average_rank_percentile: flo
     # Calculate participation confidence multiplier based on Rating Deviation
     # Lower RD (more games) = higher confidence = rating boost
     # RD starts at 350 (new player), decreases with more games
-    # Formula gives 0-10% bonus for experienced players
-    confidence_multiplier = 1.0 + max(0, (350 - rd) / 350 * 0.10)
+    # Formula gives 0-2% bonus for experienced players
+    confidence_multiplier = 1.0 + max(0, (350 - rd) / 350 * 0.02)
     
     # Combine: 50% Glicko + 50% rank performance (much higher rank impact)
     base_composite = (glicko_rating * 0.5) + ((glicko_rating + rank_bonus) * 0.5)
@@ -635,6 +634,7 @@ def _process_metric_for_session(db_path: str, timestamp: str, metric_category: s
         profession = player['profession']
         z_score = player['z_score']
         normalized_rank = player['normalized_rank']
+        rank = player['rank']
         metric_value = player['metric_value']
         
         # Get current rating and stat tracking
@@ -646,7 +646,7 @@ def _process_metric_for_session(db_path: str, timestamp: str, metric_category: s
             rating, rd, volatility, [z_score])
         
         # Update rank tracking
-        new_total_rank_sum = total_rank_sum + normalized_rank
+        new_total_rank_sum = total_rank_sum + rank
         new_games = games + 1
         new_average_rank = new_total_rank_sum / new_games
         
@@ -680,6 +680,7 @@ def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_fil
             profession = player['profession']
             z_score = player['z_score']
             normalized_rank = player['normalized_rank']
+            rank = player['rank']
             metric_value = player['metric_value']
             
             # Get current rating and stat tracking
@@ -691,7 +692,7 @@ def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_fil
                 rating, rd, volatility, [z_score])
             
             # Update rank tracking
-            new_total_rank_sum = total_rank_sum + normalized_rank
+            new_total_rank_sum = total_rank_sum + rank
             new_games = games + 1
             new_average_rank = new_total_rank_sum / new_games
             
