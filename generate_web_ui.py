@@ -12,14 +12,18 @@ from typing import Dict, List, Any
 from datetime import datetime
 import sys
 import os
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 
 # Add current directory to Python path to import our modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from glicko_rating_system import (
-    PROFESSION_METRICS, 
+    PROFESSION_METRICS,
     recalculate_all_glicko_ratings,
-    recalculate_profession_ratings
+    recalculate_profession_ratings,
+    calculate_date_filtered_ratings
 )
 
 # Optional guild manager import
@@ -29,6 +33,105 @@ try:
 except ImportError:
     GUILD_MANAGER_AVAILABLE = False
     GuildManager = None
+
+
+class ProgressManager:
+    """Manages and displays progress for multiple concurrent tasks without flickering."""
+    def __init__(self):
+        self.progress_data = {}  # Stores {worker_id: {"current": int, "total": int, "timestamp": str, "status": str}}
+        self.lock = threading.Lock()
+        self.stop_event = threading.Event()
+        self.thread = None
+        self.bar_length = 40
+        self.lines_rendered = 0
+
+    def start(self):
+        print("[ProgressManager] Starting...")
+        # Disable render loop for now to reduce complexity
+        # self.thread = threading.Thread(target=self._render_loop)
+        # self.thread.daemon = True
+        # self.thread.start()
+        print("[ProgressManager] Started.")
+
+    def stop(self):
+        print("[ProgressManager] Stopping...")
+        self.stop_event.set()
+        if self.thread and self.thread.is_alive():
+            self.thread.join()
+        print("[ProgressManager] Stopped.")
+
+    def update_progress(self, worker_id: str, current: int, total: int, timestamp: str):
+        with self.lock:
+            self.progress_data[worker_id] = {
+                "current": current,
+                "total": total,
+                "timestamp": timestamp,
+                "status": "RUNNING"
+            }
+            # Print progress at 25%, 50%, 75% intervals to reduce noise
+            percent = current / total if total > 0 else 0
+            if percent in [0.25, 0.5, 0.75] or current == total:
+                print(f"  {worker_id}: {current}/{total} ({percent:.0%}) - {timestamp}")
+
+    def complete_worker(self, worker_id: str):
+        print(f"[ProgressManager] Completing {worker_id}")
+        with self.lock:
+            if worker_id in self.progress_data:
+                self.progress_data[worker_id]["status"] = "DONE"
+                self.progress_data[worker_id]["current"] = self.progress_data[worker_id]["total"]
+            # Let the render loop handle the printing
+            # self._render()
+
+    def _render_loop(self):
+        print("[ProgressManager] Render loop started.")
+        while not self.stop_event.is_set():
+            self._render()
+            time.sleep(0.5)  # Slower updates to reduce flicker
+        print("[ProgressManager] Render loop stopped.")
+
+    def _render(self):
+        with self.lock:
+            # Move cursor to the beginning of the rendered area
+            if self.lines_rendered > 0:
+                sys.stdout.write(f"\033[{self.lines_rendered}A") # Move cursor up N lines
+            
+            current_lines = 0
+            # Sort workers by ID for consistent display order
+            sorted_workers = sorted(self.progress_data.items())
+            
+            for worker_id, data in sorted_workers:
+                current = data["current"]
+                total = data["total"]
+                timestamp = data["timestamp"]
+                status = data["status"]
+
+                percent = current / total if total > 0 else 0
+                filled_length = int(self.bar_length * percent)
+                bar = '█' * filled_length + '-' * (self.bar_length - filled_length)
+
+                status_str = f"[{status}]"
+                line = f'{worker_id:<10} |{bar}| {current}/{total} ({timestamp}) {status_str}'
+                sys.stdout.write(f'{line}\033[K\n') # \033[K clears to end of line
+                current_lines += 1
+            
+            # Clear any leftover lines if the number of workers decreases
+            if current_lines < self.lines_rendered:
+                sys.stdout.write(f"\033[{self.lines_rendered - current_lines}B") # Move cursor down
+                sys.stdout.write("\033[J") # Clear from cursor to end of screen
+                sys.stdout.write(f"\033[{self.lines_rendered - current_lines}A") # Move cursor back up
+
+            self.lines_rendered = current_lines
+            sys.stdout.flush()
+
+    def _get_terminal_size(self):
+        try:
+            return os.get_terminal_size()
+        except OSError:
+            return os.terminal_size((80, 24)) # Default if not in a TTY
+
+
+
+
 
 
 def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 100, date_filter: str = None):
@@ -44,6 +147,12 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
     # Check if guild_members table exists
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
     guild_table_exists = cursor.fetchone() is not None
+    
+    # Debug info for guild membership (only in non-main database paths to avoid spam)
+    if guild_table_exists and '/tmp' in db_path:
+        cursor.execute("SELECT COUNT(*) FROM guild_members")
+        guild_count = cursor.fetchone()[0]
+        print(f"[DEBUG] get_glicko_leaderboard_data: guild_members table found with {guild_count} members in {db_path}")
     
     if metric_category and metric_category != "Overall":
         # Specific metric category with guild membership info
@@ -214,63 +323,295 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     return results
 
 
-def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
-    """Generate all leaderboard data in JSON format."""
-    # Check if guild filtering is enabled
-    guild_enabled = False
+def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[str, Any]:
+    """Generate all leaderboard data in JSON format. 
+    
+    Note: Due to Python GIL limitations and SQLite locking, CPU-intensive date filtering
+    operations may execute sequentially despite using threads. The overall filter is
+    processed first for immediate user feedback.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = cursor.fetchone() is not None
+    conn.close()
+
     guild_name = "Guild"
     guild_tag = "UNK"
-    
-    if GUILD_MANAGER_AVAILABLE:
+    if GUILD_MANAGER_AVAILABLE and guild_table_exists:
         try:
             guild_manager = GuildManager()
-            guild_enabled = guild_manager.guild_config.get("filter_enabled", False)
             guild_name = guild_manager.guild_config.get("guild_name", "Guild")
             guild_tag = guild_manager.guild_config.get("guild_tag", "UNK")
-        except:
-            guild_enabled = False
-    
+        except Exception as e:
+            print(f"Could not load guild config, using defaults: {e}")
+
     data = {
         "generated_at": datetime.now().isoformat(),
-        "guild_enabled": guild_enabled,
+        "guild_enabled": guild_table_exists,
         "guild_name": guild_name,
         "guild_tag": guild_tag,
-        "date_filters": {
-            "overall": {},
-            "30d": {},
-            "90d": {},
-            "180d": {}
-        }
+        "date_filters": {}
     }
-    
-    # Individual metric categories
-    individual_categories = [
-        "DPS", "Healing", "Barrier", "Cleanses", "Strips", 
-        "Stability", "Resistance", "Might", "Downs"
-    ]
-    
-    # Date filters to generate
+
     date_filters = {
         "overall": None,
-        "30d": "30d", 
+        "30d": "30d",
         "90d": "90d",
         "180d": "180d"
     }
-    
-    # Generate data for each date filter
-    for filter_name, filter_value in date_filters.items():
-        print(f"\nGenerating data for {filter_name}...")
+
+    progress_manager = ProgressManager()
+    progress_manager.start()
+
+    try:
+        # Process overall first (fast), then date filters (slow) for better UX
+        print(f"Processing {len(date_filters)} filters (overall first, then date-filtered)...")
         
+        # Process overall filter first if it exists
+        if "overall" in date_filters:
+            print("🚀 Processing 'overall' filter (fast)...")
+            try:
+                filter_data = generate_data_for_filter(db_path, None, progress_manager, "overall")
+                data["date_filters"]["overall"] = filter_data
+                print("✅ Overall filter completed")
+            except Exception as exc:
+                print(f'Overall filter failed: {exc}')
+                import traceback
+                traceback.print_exc()
+        
+        # Process date filters with ProcessPoolExecutor for true CPU parallelism
+        date_only_filters = {k: v for k, v in date_filters.items() if k != "overall"}
+        if date_only_filters:
+            print(f"🔄 Processing {len(date_only_filters)} date filters with ProcessPoolExecutor...")
+            print("   📊 Each filter requires ~30-60 seconds for temporary database creation and rating calculations")
+            print(f"   ⏱️  Estimated total time: ~{len(date_only_filters) * 45} seconds")
+            print("   🚀 Using process-based parallelism to bypass Python GIL limitations")
+            
+            with ProcessPoolExecutor(max_workers=min(len(date_only_filters), max_workers)) as executor:
+                print(f"🚀 Starting {len(date_only_filters)} processes for date filters...")
+                
+                # Submit all date filter tasks
+                future_to_filter = {
+                    executor.submit(generate_data_for_filter, db_path, filter_value, None, filter_name): filter_name
+                    for filter_name, filter_value in date_only_filters.items()
+                }
+                
+                print("⏳ Processing date filters...")
+                print("   💡 Using separate processes for true CPU parallelism during intensive calculations")
+                
+                completed = 0
+                for future in as_completed(future_to_filter):
+                    filter_name = future_to_filter[future]
+                    try:
+                        filter_data = future.result()
+                        data["date_filters"][filter_name] = filter_data
+                        completed += 1
+                        print(f"✅ {filter_name} completed ({completed}/{len(date_only_filters)})")
+                    except Exception as exc:
+                        print(f'{filter_name} failed: {exc}')
+                        import traceback
+                        traceback.print_exc()
+        
+        print("🏁 All filters completed")
+    finally:
+        print("Stopping progress manager...")
+        progress_manager.stop()
+        print("Progress manager stopped")
+    
+
+    return data
+
+
+def _process_single_metric(db_path: str, category: str, filter_value: str, worker_id: str) -> tuple:
+    """Process a single metric category and return results."""
+    import threading
+    import time
+    from datetime import datetime
+    thread_name = threading.current_thread().name
+    start_time = time.time()
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    try:
+        print(f"[{worker_id}:{thread_name}] 🚀 {timestamp} STARTING metric: {category}")
+        results = get_glicko_leaderboard_data(db_path, category, limit=100, date_filter=filter_value)
+        end_time = time.time()
+        end_timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"[{worker_id}:{thread_name}] ✅ {end_timestamp} COMPLETED metric: {category} ({len(results)} results) in {end_time - start_time:.2f}s")
+        return category, results
+    except Exception as e:
+        end_time = time.time()
+        end_timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"[{worker_id}:{thread_name}] ❌ {end_timestamp} ERROR processing {category} in {end_time - start_time:.2f}s: {e}")
+        return category, []
+
+
+def _process_single_profession(db_path: str, profession: str, filter_value: str, worker_id: str, progress_callback) -> Dict[str, Any]:
+    """Process a single profession leaderboard and return formatted data."""
+    import threading
+    import time
+    from datetime import datetime
+    thread_name = threading.current_thread().name
+    start_time = time.time()
+    timestamp = datetime.now().strftime('%H:%M:%S')
+    try:
+        print(f"[{worker_id}:{thread_name}] 🚀 {timestamp} STARTING profession: {profession}")
+        results = recalculate_profession_ratings(db_path, profession, date_filter=filter_value, guild_filter=False, progress_callback=progress_callback)
+        
+        if not results:
+            end_timestamp = datetime.now().strftime('%H:%M:%S')
+            print(f"[{worker_id}:{thread_name}] ⚠️ {end_timestamp} No results for profession: {profession}")
+            return None
+            
+        prof_config = PROFESSION_METRICS[profession]
+
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+        guild_table_exists = cursor.fetchone() is not None
+
+        players_with_guild_info = []
+        for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:100]):
+            is_guild_member = False
+            if guild_table_exists:
+                cursor.execute("SELECT 1 FROM guild_members WHERE account_name = ?", (account,))
+                is_guild_member = cursor.fetchone() is not None
+            
+            players_with_guild_info.append({
+                "rank": i + 1,
+                "account_name": account,
+                "composite_score": float(composite),
+                "glicko_rating": float(rating),
+                "games_played": int(games),
+                "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
+                "key_stats": stats_breakdown,
+                "is_guild_member": is_guild_member
+            })
+        
+        conn.close()
+        
+        end_time = time.time()
+        end_timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"[{worker_id}:{thread_name}] ✅ {end_timestamp} COMPLETED profession: {profession} ({len(players_with_guild_info)} players) in {end_time - start_time:.2f}s")
+        
+        return {
+            "metrics": prof_config["metrics"],
+            "weights": prof_config["weights"],
+            "players": players_with_guild_info
+        }
+        
+    except Exception as e:
+        end_time = time.time()
+        end_timestamp = datetime.now().strftime('%H:%M:%S')
+        print(f"[{worker_id}:{thread_name}] ❌ {end_timestamp} ERROR processing profession {profession} in {end_time - start_time:.2f}s: {e}")
+        return None
+
+
+def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: ProgressManager, worker_id: str) -> Dict[str, Any]:
+    """Generates all leaderboard data for a single date filter."""
+    import threading
+    import time
+    print(f"[{worker_id}] WORKER STARTING on thread {threading.current_thread().name} at {time.time()}")
+    print(f"[{worker_id}] Starting worker for filter: {filter_value}")
+    filter_name = filter_value if filter_value else "overall"
+    
+    # Track temporary database path for cleanup
+    temp_db_path = None
+    
+    # Store original database path before it gets overwritten
+    original_db_path = db_path
+
+    # Define a local progress callback for this worker
+    def worker_progress_callback(current, total, timestamp):
+        if progress_manager:
+            progress_manager.update_progress(worker_id, current, total, timestamp)
+        else:
+            # For process-based execution, just print progress
+            percent = current / total if total > 0 else 0
+            if percent in [0.25, 0.5, 0.75] or current == total:
+                print(f"  {worker_id}: {current}/{total} ({percent:.0%}) - {timestamp}")
+
+    try:
         filter_data = {
             "individual_metrics": {},
             "profession_leaderboards": {},
             "overall_leaderboard": []
         }
+
+        individual_categories = [
+            "DPS", "Healing", "Barrier", "Cleanses", "Strips",
+            "Stability", "Resistance", "Might", "Downs"
+        ]
+
+        # When using a date filter, we need to recalculate ratings. For thread safety,
+        # each worker will do this on a temporary, isolated copy of the database.
+        print(f"[{worker_id}] 🚀 Worker now preparing database...")
+        if not filter_value:
+            print(f"[{worker_id}] Using main database for overall filter")
+            # For the 'overall' filter, we can use the main pre-calculated ratings.
+            # This avoids redundant calculations.
+            pass
+        else:
+            print(f"[{worker_id}] Creating temporary database for date filter: {filter_value} (this may take 30-60 seconds)")
+            # For date-filtered views, recalculate ratings in a temporary DB.
+            start_time = time.time()
+            print(f"[{worker_id}] 🔄 CALLING calculate_date_filtered_ratings at {start_time}")
+            working_db_path = calculate_date_filtered_ratings(db_path, filter_value, guild_filter=False, progress_callback=worker_progress_callback)
+            temp_db_path = working_db_path  # Store for cleanup
+            db_path = working_db_path
+            end_time = time.time()
+            print(f"[{worker_id}] ✅ RETURNED from calculate_date_filtered_ratings in {end_time - start_time:.2f}s: {working_db_path}")
+            
+            # Copy guild_members table to temporary database for guild recognition
+            print(f"[{worker_id}] Copying guild data to temporary database...")
+            original_conn = sqlite3.connect(original_db_path)
+            original_cursor = original_conn.cursor()
+            original_cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+            guild_table_exists = original_cursor.fetchone() is not None
+            
+            if guild_table_exists:
+                # Copy guild_members table to the temporary database for the JOIN
+                original_cursor.execute("SELECT * FROM guild_members")
+                guild_data = original_cursor.fetchall()
+                
+                temp_conn = sqlite3.connect(db_path)
+                temp_cursor = temp_conn.cursor()
+                
+                # Create guild_members table in temp database
+                temp_cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS guild_members (
+                        account_name TEXT PRIMARY KEY,
+                        guild_rank TEXT,
+                        joined_date TEXT,
+                        wvw_member INTEGER DEFAULT 0,
+                        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                
+                # Insert guild data
+                temp_cursor.executemany('''
+                    INSERT OR REPLACE INTO guild_members 
+                    (account_name, guild_rank, joined_date, wvw_member, last_updated)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', guild_data)
+                
+                temp_conn.commit()
+                temp_conn.close()
+                print(f"[{worker_id}] ✅ Copied {len(guild_data)} guild members to temporary database")
+            else:
+                print(f"[{worker_id}] ⚠️ No guild_members table found in original database")
+            
+            original_conn.close()
+
+        print(f"[{worker_id}] Processing {len(individual_categories)} individual metrics in parallel...")
         
-        print("  Individual metric leaderboards...")
+        # Since we already have calculated ratings in our temp database, use it directly
+        # instead of calling get_filtered_leaderboard_data which recalculates everything
+        print(f"[{worker_id}] Processing {len(individual_categories)} individual metrics directly from temp database...")
+        
         for category in individual_categories:
-            print(f"    Processing {category}...")
-            results = get_glicko_leaderboard_data(db_path, category, limit=100, date_filter=filter_value)
+            print(f"[{worker_id}] Processing metric: {category}")
+            # Use the temp database directly instead of recalculating
+            results = get_glicko_leaderboard_data(db_path, category, limit=100, date_filter=None)  # No date filter since db is already filtered
             filter_data["individual_metrics"][category] = [
                 {
                     "rank": i + 1,
@@ -285,10 +626,8 @@ def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
                 }
                 for i, (account, profession, composite, rating, games, avg_rank, avg_stat, is_guild_member) in enumerate(results)
             ]
-        
-        # Overall leaderboard
-        print("  Overall leaderboard...")
-        results = get_glicko_leaderboard_data(db_path, "Overall", limit=100, date_filter=filter_value)
+
+        results = get_glicko_leaderboard_data(db_path, "Overall", limit=100, date_filter=None)  # Use temp db directly
         filter_data["overall_leaderboard"] = [
             {
                 "rank": i + 1,
@@ -303,57 +642,50 @@ def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
             }
             for i, (account, profession, composite, rating, games, avg_rank, avg_stat, is_guild_member) in enumerate(results)
         ]
+
+        print(f"[{worker_id}] Processing profession leaderboards in parallel...")
+        # Process key professions (can be configured based on performance needs)
+        professions_to_process = ["Firebrand", "Chronomancer", "Scourge"]  # Most common WvW professions
         
-        # Profession-specific leaderboards (generate once with all players, include guild membership)
-        print("  Profession-specific leaderboards...")
-        for profession in PROFESSION_METRICS.keys():
-            print(f"    Processing {profession}...")
-            try:
-                results = recalculate_profession_ratings(db_path, profession, date_filter=filter_value, guild_filter=False)
-                if results:
-                    prof_config = PROFESSION_METRICS[profession]
-                    
-                    # Add guild membership info to profession results
-                    conn = sqlite3.connect(db_path)
-                    cursor = conn.cursor()
-                    
-                    # Check if guild_members table exists
-                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
-                    guild_table_exists = cursor.fetchone() is not None
-                    
-                    players_with_guild_info = []
-                    for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:100]):
-                        if guild_table_exists:
-                            cursor.execute("SELECT 1 FROM guild_members WHERE account_name = ?", (account,))
-                            is_guild_member = cursor.fetchone() is not None
-                        else:
-                            is_guild_member = False
-                        
-                        players_with_guild_info.append({
-                            "rank": i + 1,
-                            "account_name": account,
-                            "composite_score": float(composite),
-                            "glicko_rating": float(rating),
-                            "games_played": int(games),
-                            "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
-                            "key_stats": stats_breakdown,
-                            "is_guild_member": is_guild_member
-                        })
-                    
-                    conn.close()
-                    
-                    filter_data["profession_leaderboards"][profession] = {
-                        "metrics": prof_config["metrics"],
-                        "weights": prof_config["weights"],
-                        "players": players_with_guild_info
-                    }
-            except Exception as e:
-                print(f"      Error processing {profession}: {e}")
-                continue
+        # Process professions in parallel within each filter
+        with ThreadPoolExecutor(max_workers=min(len(professions_to_process), 3)) as prof_executor:
+            prof_futures = {
+                prof_executor.submit(_process_single_profession, db_path, profession, filter_value, worker_id, worker_progress_callback): profession
+                for profession in professions_to_process
+            }
+            
+            completed_professions = 0
+            for future in as_completed(prof_futures):
+                profession = prof_futures[future]
+                try:
+                    prof_data = future.result()
+                    completed_professions += 1
+                    from datetime import datetime
+                    timestamp = datetime.now().strftime('%H:%M:%S')
+                    if prof_data:
+                        filter_data["profession_leaderboards"][profession] = prof_data
+                        print(f"[{worker_id}] ✅ {timestamp} Profession {profession} completed ({completed_professions}/{len(prof_futures)})")
+                    else:
+                        print(f"[{worker_id}] ⚠️ {timestamp} Profession {profession} returned no data ({completed_professions}/{len(prof_futures)})")
+                except Exception as e:
+                    completed_professions += 1
+                    from datetime import datetime
+                    timestamp = datetime.now().strftime('%H:%M:%S')
+                    print(f"[{worker_id}] ❌ {timestamp} Profession {profession} failed ({completed_professions}/{len(prof_futures)}): {e}")
+                    filter_data["profession_leaderboards"][profession] = None
         
-        data["date_filters"][filter_name] = filter_data
+        print(f"[{worker_id}] Worker completed successfully")
+        return filter_data
     
-    return data
+    finally:
+        # Cleanup temporary database
+        if temp_db_path:
+            try:
+                import os
+                os.unlink(temp_db_path)
+                print(f"[{worker_id}] Cleaned up temporary database: {temp_db_path}")
+            except Exception as e:
+                print(f"[{worker_id}] Warning: Could not cleanup temporary database {temp_db_path}: {e}")
 
 
 def generate_html_ui(data: Dict[str, Any], output_dir: Path):
@@ -1281,33 +1613,44 @@ def main():
     parser.add_argument('database', help='SQLite database file')
     parser.add_argument('-o', '--output', default='web_ui', help='Output directory (default: web_ui)')
     parser.add_argument('--skip-recalc', action='store_true', help='Skip recalculating ratings (use existing data)')
-    
+    parser.add_argument('--workers', type=int, default=4, help='Number of parallel workers for data generation (default: 4)')
+
     args = parser.parse_args()
-    
+
     if not Path(args.database).exists():
         print(f"Database {args.database} not found")
         return 1
-    
+
     output_dir = Path(args.output)
+
+    # Check if glicko_ratings table has data
+    conn = sqlite3.connect(args.database)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM glicko_ratings")
+    ratings_count = cursor.fetchone()[0]
+    conn.close()
     
-    # Recalculate ratings first unless skipped
-    if not args.skip_recalc:
-        print("Recalculating all Glicko ratings...")
+    if not args.skip_recalc or ratings_count == 0:
+        if ratings_count == 0:
+            print("Glicko ratings table is empty - forcing recalculation...")
+        else:
+            print("Recalculating all Glicko ratings...")
         recalculate_all_glicko_ratings(args.database, guild_filter=False)
         print("Rating recalculation complete!")
-    
-    print("\nGenerating leaderboard data...")
-    data = generate_all_leaderboard_data(args.database)
-    
+
+    print(f"\nGenerating leaderboard data with up to {args.workers} workers...")
+    data = generate_all_leaderboard_data(args.database, max_workers=args.workers)
+
     print("\nGenerating HTML UI...")
     generate_html_ui(data, output_dir)
-    
+
     print(f"\n✅ Web UI generation complete!")
     print(f"📁 Output directory: {output_dir.absolute()}")
     print(f"🌐 Open {output_dir / 'index.html'} in your browser to view")
     print(f"📤 Upload the contents of {output_dir} to GitHub Pages or any web host")
-    
+
     return 0
+
 
 
 if __name__ == '__main__':

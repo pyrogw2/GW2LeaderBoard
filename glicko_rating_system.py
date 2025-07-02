@@ -169,7 +169,7 @@ PROFESSION_METRICS = {
 }
 
 
-def parse_date_filter(date_filter: str) -> Optional[date]:
+def parse_date_filter(date_filter: str, verbose: bool = True) -> Optional[date]:
     """
     Parse date filter strings like '90d', '6m', '1w', etc.
     Returns the cutoff date (sessions on or after this date will be included).
@@ -198,8 +198,9 @@ def parse_date_filter(date_filter: str) -> Optional[date]:
         try:
             return datetime.strptime(date_filter, '%Y-%m-%d').date()
         except ValueError:
-            print(f"Invalid date filter format: {date_filter}")
-            print("Use formats like: 90d (90 days), 6m (6 months), 1w (1 week), 1y (1 year), or YYYY-MM-DD")
+            if verbose:
+                print(f"Invalid date filter format: {date_filter}")
+                print("Use formats like: 90d (90 days), 6m (6 months), 1w (1 week), 1y (1 year), or YYYY-MM-DD")
             return None
 
 
@@ -374,7 +375,7 @@ def calculate_profession_session_performance(db_path: str, timestamp: str, profe
     return player_performances
 
 
-def recalculate_profession_ratings(db_path: str, profession: str, date_filter: str = None, guild_filter: bool = False):
+def recalculate_profession_ratings(db_path: str, profession: str, date_filter: str = None, guild_filter: bool = False, progress_callback=None):
     """
     Calculate profession-specific Glicko ratings using session-based weighted z-scores.
     """
@@ -425,8 +426,11 @@ def recalculate_profession_ratings(db_path: str, profession: str, date_filter: s
     
     glicko = GlickoSystem()
     
+    total_sessions = len(timestamps)
     # Process each session chronologically
-    for timestamp in timestamps:
+    for i, timestamp in enumerate(timestamps):
+        if progress_callback:
+            progress_callback(i + 1, total_sessions, timestamp)
         session_performances = calculate_profession_session_performance(db_path, timestamp, profession, guild_filter)
         
         if len(session_performances) < 2:
@@ -603,20 +607,62 @@ def create_glicko_database(db_path: str):
     conn.close()
 
 
+def _process_metric_for_session(db_path: str, timestamp: str, metric_category: str, guild_filter: bool = False):
+    """Process a single metric category for a session."""
+    import threading
+    glicko = GlickoSystem()
+    thread_name = threading.current_thread().name
+    
+    # Get session statistics and z-scores
+    mean_val, std_val, players = calculate_session_stats(db_path, timestamp, metric_category, guild_filter)
+    
+    if len(players) < 2:
+        return f"[{thread_name}] {metric_category}: skipped (insufficient players)"
+    
+    # Update each player's rating
+    for player in players:
+        account_name = player['account_name']
+        profession = player['profession']
+        z_score = player['z_score']
+        normalized_rank = player['normalized_rank']
+        metric_value = player['metric_value']
+        
+        # Get current rating and stat tracking
+        rating, rd, volatility, games, total_rank_sum, total_stat_value = get_current_glicko_rating(
+            db_path, account_name, profession, metric_category)
+        
+        # Update rating based on this z-score
+        new_rating, new_rd, new_volatility = glicko.update_rating(
+            rating, rd, volatility, [z_score])
+        
+        # Update rank tracking
+        new_total_rank_sum = total_rank_sum + normalized_rank
+        new_games = games + 1
+        new_average_rank = new_total_rank_sum / new_games
+        
+        # Update stat tracking
+        new_total_stat_value = total_stat_value + metric_value
+        new_average_stat_value = new_total_stat_value / new_games
+        
+        # Store updated rating, rank, and stat data
+        update_glicko_rating(db_path, account_name, profession, metric_category,
+                           new_rating, new_rd, new_volatility, new_games, 
+                           new_total_rank_sum, new_average_rank, new_total_stat_value, new_average_stat_value)
+    
+    return f"[{thread_name}] {metric_category}: processed {len(players)} players"
+
+
 def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_filter: bool = False):
     """Calculate Glicko rating changes for all players in a session."""
+    # Due to SQLite write locking, process metrics sequentially but optimize individual operations
     glicko = GlickoSystem()
     
     for metric_category in METRIC_CATEGORIES.keys():
-        print(f"  Processing {metric_category} Glicko ratings...")
-        
         # Get session statistics and z-scores
         mean_val, std_val, players = calculate_session_stats(db_path, timestamp, metric_category, guild_filter)
         
         if len(players) < 2:
             continue
-        
-        print(f"    Session stats: mean={mean_val:.1f}, std={std_val:.1f}, players={len(players)}")
         
         # Update each player's rating
         for player in players:
@@ -649,7 +695,7 @@ def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_fil
                                new_total_rank_sum, new_average_rank, new_total_stat_value, new_average_stat_value)
 
 
-def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False):
+def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False, progress_callback=None):
     """Recalculate all Glicko ratings chronologically."""
     # Create Glicko table
     create_glicko_database(db_path)
@@ -673,15 +719,14 @@ def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False):
     
     conn.close()
     
-    filter_label = " (Guild Members Only)" if guild_filter else ""
-    print(f"Recalculating Glicko ratings{filter_label} for {len(timestamps)} sessions across {len(METRIC_CATEGORIES)} metrics...")
-    
+    total_sessions = len(timestamps)
     for i, timestamp in enumerate(timestamps):
-        print(f"Processing session {i+1}/{len(timestamps)}: {timestamp}")
+        if progress_callback:
+            progress_callback(i + 1, total_sessions, timestamp)
         calculate_glicko_ratings_for_session(db_path, timestamp, guild_filter)
 
 
-def calculate_date_filtered_ratings(db_path: str, date_filter: str, guild_filter: bool = False) -> str:
+def calculate_date_filtered_ratings(db_path: str, date_filter: str, guild_filter: bool = False, progress_callback=None) -> str:
     """
     Calculate Glicko ratings using only sessions within the date filter.
     Returns path to temporary database with filtered ratings.
@@ -706,6 +751,16 @@ def calculate_date_filtered_ratings(db_path: str, date_filter: str, guild_filter
     conn = sqlite3.connect(temp_db_path)
     cursor = conn.cursor()
     
+    # Verify guild_members table was copied correctly (for debugging guild recognition issues)
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = cursor.fetchone() is not None
+    if guild_table_exists:
+        cursor.execute("SELECT COUNT(*) FROM guild_members")
+        guild_member_count = cursor.fetchone()[0]
+        # Only show debug info if there's a progress callback (indicating verbose mode)
+        if progress_callback:
+            print(f"[DEBUG] Temporary database has guild_members table with {guild_member_count} members")
+    
     # Get timestamps within date range
     if guild_filter:
         query = f"SELECT DISTINCT p.timestamp FROM player_performances p INNER JOIN guild_members g ON p.account_name = g.account_name WHERE 1=1 {date_clause} ORDER BY p.timestamp"
@@ -717,18 +772,16 @@ def calculate_date_filtered_ratings(db_path: str, date_filter: str, guild_filter
     conn.close()
     
     if not filtered_timestamps:
-        print(f"No sessions found for date filter: {date_filter}")
         return temp_db_path
     
-    filter_label = " (Guild Members Only)" if guild_filter else ""
-    print(f"Recalculating ratings{filter_label} for {len(filtered_timestamps)} sessions within {date_filter}...")
-    
+    total_sessions = len(filtered_timestamps)
     # Recalculate ratings using only filtered sessions
     create_glicko_database(temp_db_path)
     
     glicko = GlickoSystem()
     for i, timestamp in enumerate(filtered_timestamps):
-        print(f"  Processing session {i+1}/{len(filtered_timestamps)}: {timestamp}")
+        if progress_callback:
+            progress_callback(i + 1, total_sessions, timestamp)
         calculate_glicko_ratings_for_session(temp_db_path, timestamp, guild_filter)
     
     return temp_db_path
