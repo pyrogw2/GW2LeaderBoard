@@ -21,7 +21,14 @@ from glicko_rating_system import (
     recalculate_all_glicko_ratings,
     recalculate_profession_ratings
 )
-from guild_manager import GuildManager
+
+# Optional guild manager import
+try:
+    from guild_manager import GuildManager
+    GUILD_MANAGER_AVAILABLE = True
+except ImportError:
+    GUILD_MANAGER_AVAILABLE = False
+    GuildManager = None
 
 
 def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 100, date_filter: str = None):
@@ -34,34 +41,63 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
+    # Check if guild_members table exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = cursor.fetchone() is not None
+    
     if metric_category and metric_category != "Overall":
         # Specific metric category with guild membership info
-        cursor.execute('''
-            SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
-                   g.average_rank, g.average_stat_value,
-                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
-            FROM glicko_ratings g
-            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
-            WHERE g.metric_category = ?
-            ORDER BY g.composite_score DESC
-            LIMIT ?
-        ''', (metric_category, limit))
+        if guild_table_exists:
+            cursor.execute('''
+                SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                       g.average_rank, g.average_stat_value,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM glicko_ratings g
+                LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+                WHERE g.metric_category = ?
+                ORDER BY g.composite_score DESC
+                LIMIT ?
+            ''', (metric_category, limit))
+        else:
+            cursor.execute('''
+                SELECT account_name, profession, composite_score, rating, games_played, 
+                       average_rank, average_stat_value, 0 as is_guild_member
+                FROM glicko_ratings 
+                WHERE metric_category = ?
+                ORDER BY composite_score DESC
+                LIMIT ?
+            ''', (metric_category, limit))
     else:
         # Overall leaderboard with guild membership info
-        cursor.execute('''
-            SELECT g.account_name, g.profession, 
-                   AVG(g.composite_score) as avg_composite,
-                   AVG(g.rating) as avg_rating,
-                   SUM(g.games_played) as total_games,
-                   AVG(g.average_rank) as avg_rank,
-                   AVG(g.average_stat_value) as avg_stat,
-                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
-            FROM glicko_ratings g
-            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
-            GROUP BY g.account_name, g.profession
-            ORDER BY avg_composite DESC
-            LIMIT ?
-        ''', (limit,))
+        if guild_table_exists:
+            cursor.execute('''
+                SELECT g.account_name, g.profession, 
+                       AVG(g.composite_score) as avg_composite,
+                       AVG(g.rating) as avg_rating,
+                       SUM(g.games_played) as total_games,
+                       AVG(g.average_rank) as avg_rank,
+                       AVG(g.average_stat_value) as avg_stat,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM glicko_ratings g
+                LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+                GROUP BY g.account_name, g.profession
+                ORDER BY avg_composite DESC
+                LIMIT ?
+            ''', (limit,))
+        else:
+            cursor.execute('''
+                SELECT account_name, profession, 
+                       AVG(composite_score) as avg_composite,
+                       AVG(rating) as avg_rating,
+                       SUM(games_played) as total_games,
+                       AVG(average_rank) as avg_rank,
+                       AVG(average_stat_value) as avg_stat,
+                       0 as is_guild_member
+                FROM glicko_ratings
+                GROUP BY account_name, profession
+                ORDER BY avg_composite DESC
+                LIMIT ?
+            ''', (limit,))
     
     results = cursor.fetchall()
     conn.close()
@@ -79,59 +115,90 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     conn = sqlite3.connect(working_db_path)
     cursor = conn.cursor()
     
-    # Copy guild_members table to the temporary database for the JOIN
+    # Check if guild_members table exists in original database
     original_conn = sqlite3.connect(db_path)
     original_cursor = original_conn.cursor()
-    original_cursor.execute("SELECT * FROM guild_members")
-    guild_data = original_cursor.fetchall()
+    original_cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = original_cursor.fetchone() is not None
+    
+    if guild_table_exists:
+        # Copy guild_members table to the temporary database for the JOIN
+        original_cursor.execute("SELECT * FROM guild_members")
+        guild_data = original_cursor.fetchall()
+        
+        # Create guild_members table in temp database
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS guild_members (
+                account_name TEXT PRIMARY KEY,
+                guild_rank TEXT,
+                joined_date TEXT,
+                wvw_member INTEGER DEFAULT 0,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Insert guild data
+        cursor.executemany('''
+            INSERT OR REPLACE INTO guild_members 
+            (account_name, guild_rank, joined_date, wvw_member, last_updated)
+            VALUES (?, ?, ?, ?, ?)
+        ''', guild_data)
+    
     original_conn.close()
-    
-    # Create guild_members table in temp database
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS guild_members (
-            account_name TEXT PRIMARY KEY,
-            guild_rank TEXT,
-            joined_date TEXT,
-            wvw_member INTEGER DEFAULT 0,
-            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Insert guild data
-    cursor.executemany('''
-        INSERT OR REPLACE INTO guild_members 
-        (account_name, guild_rank, joined_date, wvw_member, last_updated)
-        VALUES (?, ?, ?, ?, ?)
-    ''', guild_data)
     
     if metric_category and metric_category != "Overall":
         # Specific metric category with guild membership info
-        cursor.execute('''
-            SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
-                   g.average_rank, g.average_stat_value,
-                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
-            FROM glicko_ratings g
-            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
-            WHERE g.metric_category = ?
-            ORDER BY g.composite_score DESC
-            LIMIT ?
-        ''', (metric_category, limit))
+        if guild_table_exists:
+            cursor.execute('''
+                SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                       g.average_rank, g.average_stat_value,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM glicko_ratings g
+                LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+                WHERE g.metric_category = ?
+                ORDER BY g.composite_score DESC
+                LIMIT ?
+            ''', (metric_category, limit))
+        else:
+            cursor.execute('''
+                SELECT account_name, profession, composite_score, rating, games_played, 
+                       average_rank, average_stat_value, 0 as is_guild_member
+                FROM glicko_ratings 
+                WHERE metric_category = ?
+                ORDER BY composite_score DESC
+                LIMIT ?
+            ''', (metric_category, limit))
     else:
         # Overall leaderboard with guild membership info
-        cursor.execute('''
-            SELECT g.account_name, g.profession, 
-                   AVG(g.composite_score) as avg_composite,
-                   AVG(g.rating) as avg_rating,
-                   SUM(g.games_played) as total_games,
-                   AVG(g.average_rank) as avg_rank,
-                   AVG(g.average_stat_value) as avg_stat,
-                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
-            FROM glicko_ratings g
-            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
-            GROUP BY g.account_name, g.profession
-            ORDER BY avg_composite DESC
-            LIMIT ?
-        ''', (limit,))
+        if guild_table_exists:
+            cursor.execute('''
+                SELECT g.account_name, g.profession, 
+                       AVG(g.composite_score) as avg_composite,
+                       AVG(g.rating) as avg_rating,
+                       SUM(g.games_played) as total_games,
+                       AVG(g.average_rank) as avg_rank,
+                       AVG(g.average_stat_value) as avg_stat,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM glicko_ratings g
+                LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+                GROUP BY g.account_name, g.profession
+                ORDER BY avg_composite DESC
+                LIMIT ?
+            ''', (limit,))
+        else:
+            cursor.execute('''
+                SELECT account_name, profession, 
+                       AVG(composite_score) as avg_composite,
+                       AVG(rating) as avg_rating,
+                       SUM(games_played) as total_games,
+                       AVG(average_rank) as avg_rank,
+                       AVG(average_stat_value) as avg_stat,
+                       0 as is_guild_member
+                FROM glicko_ratings
+                GROUP BY account_name, profession
+                ORDER BY avg_composite DESC
+                LIMIT ?
+            ''', (limit,))
     
     results = cursor.fetchall()
     conn.close()
@@ -150,15 +217,18 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
 def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
     """Generate all leaderboard data in JSON format."""
     # Check if guild filtering is enabled
-    try:
-        guild_manager = GuildManager()
-        guild_enabled = guild_manager.guild_config.get("filter_enabled", False)
-        guild_name = guild_manager.guild_config.get("guild_name", "Guild")
-        guild_tag = guild_manager.guild_config.get("guild_tag", "UNK")
-    except:
-        guild_enabled = False
-        guild_name = "Guild"
-        guild_tag = "UNK"
+    guild_enabled = False
+    guild_name = "Guild"
+    guild_tag = "UNK"
+    
+    if GUILD_MANAGER_AVAILABLE:
+        try:
+            guild_manager = GuildManager()
+            guild_enabled = guild_manager.guild_config.get("filter_enabled", False)
+            guild_name = guild_manager.guild_config.get("guild_name", "Guild")
+            guild_tag = guild_manager.guild_config.get("guild_tag", "UNK")
+        except:
+            guild_enabled = False
     
     data = {
         "generated_at": datetime.now().isoformat(),
@@ -247,10 +317,17 @@ def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
                     conn = sqlite3.connect(db_path)
                     cursor = conn.cursor()
                     
+                    # Check if guild_members table exists
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+                    guild_table_exists = cursor.fetchone() is not None
+                    
                     players_with_guild_info = []
                     for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:100]):
-                        cursor.execute("SELECT 1 FROM guild_members WHERE account_name = ?", (account,))
-                        is_guild_member = cursor.fetchone() is not None
+                        if guild_table_exists:
+                            cursor.execute("SELECT 1 FROM guild_members WHERE account_name = ?", (account,))
+                            is_guild_member = cursor.fetchone() is not None
+                        else:
+                            is_guild_member = False
                         
                         players_with_guild_info.append({
                             "rank": i + 1,
