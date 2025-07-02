@@ -593,6 +593,7 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
     # Calculate session-wide stats for build detection
     all_condition_dps = [p.target_condition_dps for p in performances if p.target_condition_dps > 0]
     all_resistance_gen = [p.resistance_gen_per_sec for p in performances if p.resistance_gen_per_sec > 0]
+    all_stability_gen = [p.stability_gen_per_sec for p in performances if p.stability_gen_per_sec > 0]
     
     import statistics
     
@@ -608,6 +609,12 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
         mean_resistance_gen = statistics.mean(all_resistance_gen)
         support_sb_threshold = max(mean_resistance_gen * 1.2, 0.5)
     
+    # Detect China DH: Dragonhunter with stability generation significantly above average
+    china_dh_threshold = 3.0  # Default minimum threshold (stability/sec)
+    if len(all_stability_gen) >= 2:
+        mean_stability_gen = statistics.mean(all_stability_gen)
+        china_dh_threshold = max(mean_stability_gen * 1.2, 3.0)
+    
     updated_performances = []
     for performance in performances:
         new_profession = performance.profession  # Default to original
@@ -621,6 +628,11 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
         elif (performance.profession == "Spellbreaker" and 
               performance.resistance_gen_per_sec >= support_sb_threshold):
             new_profession = "Support Spb"
+        
+        # Check for China DH
+        elif (performance.profession == "Dragonhunter" and 
+              performance.stability_gen_per_sec >= china_dh_threshold):
+            new_profession = "China DH"
         
         # Create performance object with potentially updated profession
         updated_performance = PlayerPerformance(

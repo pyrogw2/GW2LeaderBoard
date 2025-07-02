@@ -897,6 +897,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="profession-button" data-profession="Druid">Druid</button>
                     <button class="profession-button" data-profession="Condi Firebrand">Condi Firebrand</button>
                     <button class="profession-button" data-profession="Support Spb">Support Spb</button>
+                    <button class="profession-button" data-profession="China DH">China DH</button>
                 </div>
                 
                 <div id="profession-info" class="profession-info"></div>
@@ -1339,6 +1340,7 @@ let currentGuildFilter = 'all_players';
 const professionIcons = {{
     'Guardian': 'https://wiki.guildwars2.com/images/c/c7/Guardian_icon_small.png',
     'Dragonhunter': 'https://wiki.guildwars2.com/images/5/5d/Dragonhunter_icon_small.png',
+    'China DH': 'https://wiki.guildwars2.com/images/5/5d/Dragonhunter_icon_small.png',
     'Firebrand': 'https://wiki.guildwars2.com/images/0/0e/Firebrand_icon_small.png',
     'Willbender': 'https://wiki.guildwars2.com/images/c/c7/Guardian_icon_small.png', // Fallback to Guardian
     'Warrior': 'https://wiki.guildwars2.com/images/4/45/Warrior_icon_small.png',
@@ -1787,6 +1789,7 @@ function getProfessionColor(profession) {{
         'Tempest': '#1abc9c',
         'Holosmith': '#34495e',
         'Dragonhunter': '#f1c40f',
+        'China DH': '#f39c12',
         'Reaper': '#8e44ad',
         'Soulbeast': '#16a085',
         'Untamed': '#c0392b',

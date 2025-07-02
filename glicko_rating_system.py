@@ -159,6 +159,10 @@ PROFESSION_METRICS = {
         'metrics': ['Healing', 'Cleanses'],
         'weights': [0.6, 0.4]  # Healing more important
     },
+    'China DH': {
+        'metrics': ['Stability', 'DPS'],
+        'weights': [0.7, 0.3]  # Stability much more important for China DH
+    },
     'Condi Firebrand': {
         'metrics': ['Stability', 'Cleanses', 'DPS'],
         'weights': [0.5, 0.3, 0.2]  # Stability most important, then cleanses
