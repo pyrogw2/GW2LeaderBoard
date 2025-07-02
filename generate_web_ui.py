@@ -323,14 +323,19 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     return results
 
 
-def get_new_high_scores_data(db_path: str, limit: int = 100):
+def get_new_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None):
     """Get high scores data from the new high_scores table."""
+    from glicko_rating_system import build_date_filter_clause
+    
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Check if guild_members table exists for guild membership info
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
     guild_table_exists = cursor.fetchone() is not None
+    
+    # Build date filter clause
+    date_clause, date_params = build_date_filter_clause(date_filter)
     
     high_scores_data = {}
     
@@ -344,26 +349,30 @@ def get_new_high_scores_data(db_path: str, limit: int = 100):
     for metric_key, metric_name in target_metrics.items():
         if guild_table_exists:
             # Query with guild membership info
-            cursor.execute('''
+            query = f'''
                 SELECT hs.player_account, hs.player_name, hs.profession, hs.skill_name, 
                        hs.score_value, hs.timestamp, hs.fight_number,
                        CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
                 FROM high_scores hs
                 LEFT JOIN guild_members gm ON hs.player_account = gm.account_name
-                WHERE hs.metric_type = ?
+                WHERE hs.metric_type = ? {date_clause}
                 ORDER BY hs.score_value DESC
                 LIMIT ?
-            ''', (metric_key, limit))
+            '''
+            params = [metric_key] + date_params + [limit]
+            cursor.execute(query, params)
         else:
             # Query without guild membership info
-            cursor.execute('''
+            query = f'''
                 SELECT player_account, player_name, profession, skill_name, 
                        score_value, timestamp, fight_number, 0 as is_guild_member
                 FROM high_scores
-                WHERE metric_type = ?
+                WHERE metric_type = ? {date_clause}
                 ORDER BY score_value DESC
                 LIMIT ?
-            ''', (metric_key, limit))
+            '''
+            params = [metric_key] + date_params + [limit]
+            cursor.execute(query, params)
         
         results = cursor.fetchall()
         high_scores_data[metric_name] = [
@@ -385,8 +394,10 @@ def get_new_high_scores_data(db_path: str, limit: int = 100):
     return high_scores_data
 
 
-def get_high_scores_data(db_path: str, limit: int = 100):
+def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None):
     """Get top burst damage records for High Scores section (non-Glicko based)."""
+    from glicko_rating_system import build_date_filter_clause
+    
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -394,26 +405,33 @@ def get_high_scores_data(db_path: str, limit: int = 100):
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
     guild_table_exists = cursor.fetchone() is not None
     
+    # Build date filter clause
+    date_clause, date_params = build_date_filter_clause(date_filter)
+    
     if guild_table_exists:
         # Query with guild membership info
-        cursor.execute('''
+        query = f'''
             SELECT p.account_name, p.profession, p.burst_damage_1s, p.timestamp,
                    CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
             FROM player_performances p
             LEFT JOIN guild_members gm ON p.account_name = gm.account_name
-            WHERE p.burst_damage_1s > 0
+            WHERE p.burst_damage_1s > 0 {date_clause}
             ORDER BY p.burst_damage_1s DESC
             LIMIT ?
-        ''', (limit,))
+        '''
+        params = date_params + [limit]
+        cursor.execute(query, params)
     else:
         # Query without guild membership info
-        cursor.execute('''
+        query = f'''
             SELECT account_name, profession, burst_damage_1s, timestamp, 0 as is_guild_member
             FROM player_performances
-            WHERE burst_damage_1s > 0
+            WHERE burst_damage_1s > 0 {date_clause}
             ORDER BY burst_damage_1s DESC
             LIMIT ?
-        ''', (limit,))
+        '''
+        params = date_params + [limit]
+        cursor.execute(query, params)
     
     results = cursor.fetchall()
     conn.close()
@@ -773,8 +791,8 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                     filter_data["profession_leaderboards"][profession] = None
 
         print(f"[{worker_id}] Processing high scores...")
-        # Get high scores data (top burst damage records)
-        high_scores_results = get_high_scores_data(db_path, limit=100)
+        # Get high scores data (top burst damage records) with date filtering
+        high_scores_results = get_high_scores_data(db_path, limit=100, date_filter=filter_value)
         filter_data["high_scores"]["Highest 1 Sec Burst"] = [
             {
                 "rank": i + 1,
@@ -787,8 +805,8 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
             for i, (account, profession, burst_damage, timestamp, is_guild_member) in enumerate(high_scores_results)
         ]
         
-        # Get new high scores data (skill damage and single fight DPS)
-        new_high_scores_results = get_new_high_scores_data(db_path, limit=100)
+        # Get new high scores data (skill damage and single fight DPS) with date filtering
+        new_high_scores_results = get_new_high_scores_data(db_path, limit=100, date_filter=filter_value)
         for metric_name, metric_data in new_high_scores_results.items():
             filter_data["high_scores"][metric_name] = metric_data
         
