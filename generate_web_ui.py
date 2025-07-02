@@ -655,7 +655,7 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
 
         individual_categories = [
             "DPS", "Healing", "Barrier", "Cleanses", "Strips",
-            "Stability", "Resistance", "Might", "Downs", "Burst Consistency"
+            "Stability", "Resistance", "Might", "Protection", "Downs", "Burst Consistency"
         ]
 
         # When using a date filter, we need to recalculate ratings. For thread safety,
@@ -881,6 +881,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="metric-button" data-metric="Stability">Stability</button>
                     <button class="metric-button" data-metric="Resistance">Resistance</button>
                     <button class="metric-button" data-metric="Might">Might</button>
+                    <button class="metric-button" data-metric="Protection">Protection</button>
                     <button class="metric-button" data-metric="Downs">DownCont</button>
                     <button class="metric-button" data-metric="Burst Consistency">Burst Consistency</button>
                 </div>
@@ -915,7 +916,6 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="profession-button" data-profession="Druid">Druid</button>
                     <button class="profession-button" data-profession="Condi Firebrand">Condi Firebrand</button>
                     <button class="profession-button" data-profession="Support Spb">Support Spb</button>
-                    <button class="profession-button" data-profession="China DH">China DH</button>
                 </div>
                 
                 <div id="profession-info" class="profession-info"></div>
@@ -1378,7 +1378,7 @@ const professionIcons = {{
     'Deadeye': 'https://wiki.guildwars2.com/images/7/70/Deadeye_icon_small.png',
     'Specter': 'https://wiki.guildwars2.com/images/6/61/Specter_icon_small.png',
     'Elementalist': 'https://wiki.guildwars2.com/images/4/4e/Elementalist_icon_small.png',
-    'Tempest': 'https://wiki.guildwars2.com/images/4/4a/Tempest_icon_small.png',
+    'Tempest': 'https://wiki.guildwars2.com/images/5/58/Tempest_icon_small.png',
     'Weaver': 'https://wiki.guildwars2.com/images/c/c3/Weaver_icon_small.png',
     'Catalyst': 'https://wiki.guildwars2.com/images/c/c5/Catalyst_icon_small.png',
     'Mesmer': 'https://wiki.guildwars2.com/images/7/79/Mesmer_icon_small.png',
@@ -1807,7 +1807,6 @@ function getProfessionColor(profession) {{
         'Tempest': '#1abc9c',
         'Holosmith': '#34495e',
         'Dragonhunter': '#f1c40f',
-        'China DH': '#f39c12',
         'Reaper': '#8e44ad',
         'Soulbeast': '#16a085',
         'Untamed': '#c0392b',

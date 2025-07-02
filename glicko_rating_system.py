@@ -137,6 +137,7 @@ METRIC_CATEGORIES = {
     'Stability': 'stability_gen_per_sec',
     'Resistance': 'resistance_gen_per_sec',
     'Might': 'might_gen_per_sec',
+    'Protection': 'protection_gen_per_sec',
     'Downs': 'down_contribution_per_sec',
     'Burst Consistency': 'burst_consistency_1s'
 }
@@ -170,6 +171,10 @@ PROFESSION_METRICS = {
     'Support Spb': {
         'metrics': ['Might', 'Resistance', 'Stability', 'Cleanses'],
         'weights': [0.4, 0.3, 0.2, 0.1]  # Might most important
+    },
+    'Boon Vindi': {
+        'metrics': ['Protection', 'DPS'],
+        'weights': [0.7, 0.3]  # Protection much more important for Boon Vindi
     }
 }
 

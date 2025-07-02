@@ -39,6 +39,7 @@ class PlayerPerformance:
     stability_gen_per_sec: float = 0.0
     resistance_gen_per_sec: float = 0.0
     might_gen_per_sec: float = 0.0
+    protection_gen_per_sec: float = 0.0
     # Downstate Metrics (per second)
     down_contribution_per_sec: float = 0.0
     # Burst Metrics
@@ -361,6 +362,7 @@ def parse_boon_generation_table(boon_text: str) -> Dict[str, Dict]:
             # Find boon columns based on header pattern
             # Standard order: Might, Fury, Quickness, Alacrity, Protection, Regeneration, Vigor, Aegis, Stability, Swiftness, Resistance, Resolution, Superspeed, Stealth
             might_ps = extract_span_value(cells[4]) if len(cells) > 4 else 0.0  # Might column
+            protection_ps = extract_span_value(cells[8]) if len(cells) > 8 else 0.0  # Protection column
             stability_ps = extract_span_value(cells[12]) if len(cells) > 12 else 0.0  # Stability column
             resistance_ps = extract_span_value(cells[14]) if len(cells) > 14 else 0.0  # Resistance column
             
@@ -370,7 +372,8 @@ def parse_boon_generation_table(boon_text: str) -> Dict[str, Dict]:
                 'profession': profession,
                 'stability_gen_per_sec': stability_ps,
                 'resistance_gen_per_sec': resistance_ps,
-                'might_gen_per_sec': might_ps
+                'might_gen_per_sec': might_ps,
+                'protection_gen_per_sec': protection_ps
             }
             
         except (ValueError, IndexError) as e:
@@ -573,6 +576,7 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
             stability_gen_per_sec=boon_data.get('stability_gen_per_sec', 0.0),
             resistance_gen_per_sec=boon_data.get('resistance_gen_per_sec', 0.0),
             might_gen_per_sec=boon_data.get('might_gen_per_sec', 0.0),
+            protection_gen_per_sec=boon_data.get('protection_gen_per_sec', 0.0),
             down_contribution_per_sec=offensive_data.get('down_contribution', 0) / player_data['fight_time'] if player_data['fight_time'] > 0 else 0.0,
             burst_damage_1s=burst_damage_data.get('burst_damage_1s', 0),
             burst_consistency_1s=burst_consistency_data.get('burst_consistency_1s', 0)
@@ -615,6 +619,13 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
         mean_stability_gen = statistics.mean(all_stability_gen)
         china_dh_threshold = max(mean_stability_gen * 1.2, 3.0)
     
+    # Detect Boon Vindi: Vindicator with protection generation significantly above average
+    all_protection_gen = [p.protection_gen_per_sec for p in performances if p.protection_gen_per_sec > 0]
+    boon_vindi_threshold = 1.0  # Default minimum threshold (protection/sec)
+    if len(all_protection_gen) >= 2:
+        mean_protection_gen = statistics.mean(all_protection_gen)
+        boon_vindi_threshold = max(mean_protection_gen * 1.2, 1.0)
+    
     updated_performances = []
     for performance in performances:
         new_profession = performance.profession  # Default to original
@@ -633,6 +644,11 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
         elif (performance.profession == "Dragonhunter" and 
               performance.stability_gen_per_sec >= china_dh_threshold):
             new_profession = "China DH"
+        
+        # Check for Boon Vindi
+        elif (performance.profession == "Vindicator" and 
+              performance.protection_gen_per_sec >= boon_vindi_threshold):
+            new_profession = "Boon Vindi"
         
         # Create performance object with potentially updated profession
         updated_performance = PlayerPerformance(
@@ -655,6 +671,7 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
             stability_gen_per_sec=performance.stability_gen_per_sec,
             resistance_gen_per_sec=performance.resistance_gen_per_sec,
             might_gen_per_sec=performance.might_gen_per_sec,
+            protection_gen_per_sec=performance.protection_gen_per_sec,
             down_contribution_per_sec=performance.down_contribution_per_sec,
             burst_damage_1s=performance.burst_damage_1s,
             burst_consistency_1s=performance.burst_consistency_1s
@@ -694,6 +711,7 @@ def create_database(db_path: str):
             stability_gen_per_sec REAL DEFAULT 0.0,
             resistance_gen_per_sec REAL DEFAULT 0.0,
             might_gen_per_sec REAL DEFAULT 0.0,
+            protection_gen_per_sec REAL DEFAULT 0.0,
             down_contribution_per_sec REAL DEFAULT 0.0,
             burst_damage_1s INTEGER DEFAULT 0,
             burst_consistency_1s INTEGER DEFAULT 0,
@@ -786,9 +804,9 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
             (timestamp, parsed_date, player_name, account_name, profession, party, fight_time,
              target_damage, target_dps, all_damage, target_condition_damage, target_condition_dps,
              healing_per_sec, barrier_per_sec, condition_cleanses_per_sec, boon_strips_per_sec, 
-             stability_gen_per_sec, resistance_gen_per_sec, might_gen_per_sec, down_contribution_per_sec,
+             stability_gen_per_sec, resistance_gen_per_sec, might_gen_per_sec, protection_gen_per_sec, down_contribution_per_sec,
              burst_damage_1s, burst_consistency_1s)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             perf.timestamp, perf.parsed_date.isoformat() if perf.parsed_date else None,
             perf.player_name, perf.account_name, perf.profession,
@@ -796,7 +814,7 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
             perf.all_damage, perf.target_condition_damage, perf.target_condition_dps,
             perf.healing_per_sec, perf.barrier_per_sec, perf.condition_cleanses_per_sec, 
             perf.boon_strips_per_sec, perf.stability_gen_per_sec, perf.resistance_gen_per_sec, 
-            perf.might_gen_per_sec, perf.down_contribution_per_sec,
+            perf.might_gen_per_sec, perf.protection_gen_per_sec, perf.down_contribution_per_sec,
             perf.burst_damage_1s, perf.burst_consistency_1s
         ))
     
