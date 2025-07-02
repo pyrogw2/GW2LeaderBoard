@@ -1069,26 +1069,29 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     
                     <h3>🏅 Leaderboard Types</h3>
                     <ul>
-                        <li><strong>Individual Metrics:</strong> Rankings for specific performance areas (DPS, Healing, Barrier, Cleanses, Strips, Stability, Resistance, Might, Down Contribution)</li>
+                        <li><strong>Individual Metrics:</strong> Rankings for specific performance areas (DPS, Healing, Barrier, Cleanses, Strips, Stability, Resistance, Might, Protection, Down Contribution, Burst Consistency)</li>
+                        <li><strong>High Scores:</strong> Record-breaking single performance instances (highest burst damage, skill damage, single-fight DPS)</li>
                         <li><strong>Profession-Specific:</strong> Role-based rankings using weighted combinations of relevant metrics for each profession</li>
                         <li><strong>Time Filters:</strong> All-time, 30-day, 90-day, and 180-day rankings to show recent vs historical performance</li>
+                        <li><strong>Player Summaries:</strong> Click any player name to view detailed performance breakdowns by profession and metric</li>
                     </ul>
                     
                     <h3>📈 Key Metrics Explained</h3>
                     <ul>
-                        <li><strong>Composite Score:</strong> Final ranking score (higher = better) combining Glicko rating, rank performance, and participation bonus</li>
-                        <li><strong>Glicko Rating:</strong> Base skill rating around 1500 ± 500 (higher = more skilled)</li>
-                        <li><strong>Games:</strong> Number of combat sessions analyzed (more games = lower uncertainty)</li>
-                        <li><strong>Avg Rank%:</strong> Average percentile rank in sessions (lower = consistently better performance)</li>
+                        <li><strong>Glicko Rating:</strong> Base skill rating around 1500 ± 500 (higher = more skilled, used for primary ranking)</li>
+                        <li><strong>Raids:</strong> Number of combat sessions analyzed (more sessions = lower uncertainty in rating)</li>
+                        <li><strong>Avg Rank:</strong> Average percentile rank in sessions (lower percentage = consistently better performance)</li>
                         <li><strong>Avg Stat:</strong> Average raw statistical value for the specific metric being ranked</li>
+                        <li><strong>Rating Deviation:</strong> Uncertainty measure that decreases with more games played</li>
                     </ul>
                     
                     <h3>⚖️ Fairness Features</h3>
                     <ul>
                         <li><strong>Context-Aware:</strong> Performance evaluated relative to session participants, not absolute values</li>
                         <li><strong>Battle-Type Neutral:</strong> Works equally well for GvG fights, zerg battles, and keep sieges</li>
-                        <li><strong>Consistency Rewarded:</strong> Participation multiplier encourages regular play while maintaining skill-based rankings</li>
+                        <li><strong>Skill-Based Rankings:</strong> Pure Glicko-2 ratings without artificial bonuses or penalties</li>
                         <li><strong>Uncertainty Handling:</strong> Rating Deviation ensures new/infrequent players don't dominate experienced players</li>
+                        <li><strong>Profession Recognition:</strong> Automatic detection of build variants (China DH, Boon Vindicator, etc.)</li>
                     </ul>
                 </div>
             </div>
@@ -1531,7 +1534,7 @@ h2 {
 }
 
 .about-content strong {
-    color: #333;
+    color: var(--text-color);
 }
 
 @media (max-width: 768px) {
