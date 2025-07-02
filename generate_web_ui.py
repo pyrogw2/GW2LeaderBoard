@@ -2168,6 +2168,7 @@ function loadIndividualMetric(metric) {{
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
         {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
+        {{ key: 'average_rank_percent', label: 'Avg Rank', type: 'avg_rank' }},
         {{ key: 'average_stat_value', label: `Avg ${{metric === 'Downs' ? 'DownCont' : metric}}`, type: 'stat' }}
     ];
     
