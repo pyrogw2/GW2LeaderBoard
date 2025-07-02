@@ -218,19 +218,28 @@ def build_date_filter_clause(date_filter: str = None) -> Tuple[str, List]:
     return "AND parsed_date >= ?", [cutoff_date.isoformat()]
 
 
-def calculate_session_stats(db_path: str, timestamp: str, metric_category: str) -> Tuple[float, float, List[Dict]]:
+def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, guild_filter: bool = False) -> Tuple[float, float, List[Dict]]:
     """Calculate session mean, std dev, and player data with rankings for a metric."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     metric_column = METRIC_CATEGORIES[metric_category]
     
-    query = f'''
-        SELECT account_name, profession, {metric_column}
-        FROM player_performances 
-        WHERE timestamp = ? AND {metric_column} > 0
-        ORDER BY {metric_column} DESC
-    '''
+    if guild_filter:
+        query = f'''
+            SELECT p.account_name, p.profession, p.{metric_column}
+            FROM player_performances p
+            INNER JOIN guild_members g ON p.account_name = g.account_name
+            WHERE p.timestamp = ? AND p.{metric_column} > 0
+            ORDER BY p.{metric_column} DESC
+        '''
+    else:
+        query = f'''
+            SELECT account_name, profession, {metric_column}
+            FROM player_performances 
+            WHERE timestamp = ? AND {metric_column} > 0
+            ORDER BY {metric_column} DESC
+        '''
     
     cursor.execute(query, (timestamp,))
     results = cursor.fetchall()
@@ -288,7 +297,7 @@ def get_current_glicko_rating(db_path: str, account_name: str, profession: str, 
         return 1500.0, 350.0, 0.06, 0, 0.0, 0.0  # Default Glicko values
 
 
-def calculate_profession_session_performance(db_path: str, timestamp: str, profession: str) -> List[Dict]:
+def calculate_profession_session_performance(db_path: str, timestamp: str, profession: str, guild_filter: bool = False) -> List[Dict]:
     """
     Calculate profession-specific performance for a session using weighted z-scores.
     Returns list of player performance data with profession-specific composite z-scores.
@@ -304,12 +313,21 @@ def calculate_profession_session_performance(db_path: str, timestamp: str, profe
     cursor = conn.cursor()
     
     # Get all players of this profession in this session
-    cursor.execute('''
-        SELECT DISTINCT account_name
-        FROM player_performances 
-        WHERE timestamp = ? AND profession = ?
-    ''', (timestamp, profession))
+    if guild_filter:
+        query = '''
+            SELECT DISTINCT p.account_name
+            FROM player_performances p
+            INNER JOIN guild_members g ON p.account_name = g.account_name
+            WHERE p.timestamp = ? AND p.profession = ?
+        '''
+    else:
+        query = '''
+            SELECT DISTINCT account_name
+            FROM player_performances 
+            WHERE timestamp = ? AND profession = ?
+        '''
     
+    cursor.execute(query, (timestamp, profession))
     players = [row[0] for row in cursor.fetchall()]
     
     if len(players) < 2:  # Need at least 2 players for z-score calculation
@@ -321,7 +339,7 @@ def calculate_profession_session_performance(db_path: str, timestamp: str, profe
     # Calculate session performance for each metric
     metric_session_data = {}
     for metric in metrics:
-        mean_val, std_val, session_players = calculate_session_stats(db_path, timestamp, metric)
+        mean_val, std_val, session_players = calculate_session_stats(db_path, timestamp, metric, guild_filter)
         if session_players:
             # Filter to only players of this profession
             prof_players = [p for p in session_players if p['account_name'] in players]
@@ -356,7 +374,7 @@ def calculate_profession_session_performance(db_path: str, timestamp: str, profe
     return player_performances
 
 
-def recalculate_profession_ratings(db_path: str, profession: str, date_filter: str = None):
+def recalculate_profession_ratings(db_path: str, profession: str, date_filter: str = None, guild_filter: bool = False):
     """
     Calculate profession-specific Glicko ratings using session-based weighted z-scores.
     """
@@ -368,7 +386,10 @@ def recalculate_profession_ratings(db_path: str, profession: str, date_filter: s
     cursor = conn.cursor()
     
     date_clause, date_params = build_date_filter_clause(date_filter)
-    query = f"SELECT DISTINCT timestamp FROM player_performances WHERE profession = ? {date_clause} ORDER BY timestamp"
+    if guild_filter:
+        query = f"SELECT DISTINCT p.timestamp FROM player_performances p INNER JOIN guild_members g ON p.account_name = g.account_name WHERE p.profession = ? {date_clause} ORDER BY p.timestamp"
+    else:
+        query = f"SELECT DISTINCT timestamp FROM player_performances WHERE profession = ? {date_clause} ORDER BY timestamp"
     params = [profession] + date_params
     
     cursor.execute(query, params)
@@ -406,7 +427,7 @@ def recalculate_profession_ratings(db_path: str, profession: str, date_filter: s
     
     # Process each session chronologically
     for timestamp in timestamps:
-        session_performances = calculate_profession_session_performance(db_path, timestamp, profession)
+        session_performances = calculate_profession_session_performance(db_path, timestamp, profession, guild_filter)
         
         if len(session_performances) < 2:
             continue
@@ -582,7 +603,7 @@ def create_glicko_database(db_path: str):
     conn.close()
 
 
-def calculate_glicko_ratings_for_session(db_path: str, timestamp: str):
+def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_filter: bool = False):
     """Calculate Glicko rating changes for all players in a session."""
     glicko = GlickoSystem()
     
@@ -590,7 +611,7 @@ def calculate_glicko_ratings_for_session(db_path: str, timestamp: str):
         print(f"  Processing {metric_category} Glicko ratings...")
         
         # Get session statistics and z-scores
-        mean_val, std_val, players = calculate_session_stats(db_path, timestamp, metric_category)
+        mean_val, std_val, players = calculate_session_stats(db_path, timestamp, metric_category, guild_filter)
         
         if len(players) < 2:
             continue
@@ -628,7 +649,7 @@ def calculate_glicko_ratings_for_session(db_path: str, timestamp: str):
                                new_total_rank_sum, new_average_rank, new_total_stat_value, new_average_stat_value)
 
 
-def recalculate_all_glicko_ratings(db_path: str):
+def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False):
     """Recalculate all Glicko ratings chronologically."""
     # Create Glicko table
     create_glicko_database(db_path)
@@ -636,20 +657,31 @@ def recalculate_all_glicko_ratings(db_path: str):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # Get all timestamps in chronological order
-    cursor.execute('SELECT DISTINCT timestamp FROM player_performances ORDER BY timestamp')
+    # Get all timestamps in chronological order with optional guild filtering
+    if guild_filter:
+        query = '''
+            SELECT DISTINCT p.timestamp 
+            FROM player_performances p
+            INNER JOIN guild_members g ON p.account_name = g.account_name
+            ORDER BY p.timestamp
+        '''
+    else:
+        query = 'SELECT DISTINCT timestamp FROM player_performances ORDER BY timestamp'
+    
+    cursor.execute(query)
     timestamps = [row[0] for row in cursor.fetchall()]
     
     conn.close()
     
-    print(f"Recalculating Glicko ratings for {len(timestamps)} sessions across {len(METRIC_CATEGORIES)} metrics...")
+    filter_label = " (Guild Members Only)" if guild_filter else ""
+    print(f"Recalculating Glicko ratings{filter_label} for {len(timestamps)} sessions across {len(METRIC_CATEGORIES)} metrics...")
     
     for i, timestamp in enumerate(timestamps):
         print(f"Processing session {i+1}/{len(timestamps)}: {timestamp}")
-        calculate_glicko_ratings_for_session(db_path, timestamp)
+        calculate_glicko_ratings_for_session(db_path, timestamp, guild_filter)
 
 
-def calculate_date_filtered_ratings(db_path: str, date_filter: str) -> str:
+def calculate_date_filtered_ratings(db_path: str, date_filter: str, guild_filter: bool = False) -> str:
     """
     Calculate Glicko ratings using only sessions within the date filter.
     Returns path to temporary database with filtered ratings.
@@ -675,7 +707,10 @@ def calculate_date_filtered_ratings(db_path: str, date_filter: str) -> str:
     cursor = conn.cursor()
     
     # Get timestamps within date range
-    query = f"SELECT DISTINCT timestamp FROM player_performances WHERE 1=1 {date_clause} ORDER BY timestamp"
+    if guild_filter:
+        query = f"SELECT DISTINCT p.timestamp FROM player_performances p INNER JOIN guild_members g ON p.account_name = g.account_name WHERE 1=1 {date_clause} ORDER BY p.timestamp"
+    else:
+        query = f"SELECT DISTINCT timestamp FROM player_performances WHERE 1=1 {date_clause} ORDER BY timestamp"
     cursor.execute(query, date_params)
     filtered_timestamps = [row[0] for row in cursor.fetchall()]
     
@@ -685,7 +720,8 @@ def calculate_date_filtered_ratings(db_path: str, date_filter: str) -> str:
         print(f"No sessions found for date filter: {date_filter}")
         return temp_db_path
     
-    print(f"Recalculating ratings for {len(filtered_timestamps)} sessions within {date_filter}...")
+    filter_label = " (Guild Members Only)" if guild_filter else ""
+    print(f"Recalculating ratings{filter_label} for {len(filtered_timestamps)} sessions within {date_filter}...")
     
     # Recalculate ratings using only filtered sessions
     create_glicko_database(temp_db_path)
@@ -693,7 +729,7 @@ def calculate_date_filtered_ratings(db_path: str, date_filter: str) -> str:
     glicko = GlickoSystem()
     for i, timestamp in enumerate(filtered_timestamps):
         print(f"  Processing session {i+1}/{len(filtered_timestamps)}: {timestamp}")
-        calculate_glicko_ratings_for_session(temp_db_path, timestamp)
+        calculate_glicko_ratings_for_session(temp_db_path, timestamp, guild_filter)
     
     return temp_db_path
 

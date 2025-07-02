@@ -21,13 +21,13 @@ from glicko_rating_system import (
     recalculate_all_glicko_ratings,
     recalculate_profession_ratings
 )
+from guild_manager import GuildManager
 
 
 def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 100, date_filter: str = None):
-    """Extract leaderboard data from database."""
+    """Extract leaderboard data from database with guild membership info."""
     if date_filter:
         # For date filtering, we need to recalculate ratings on filtered data
-        # This is more complex but gives accurate results
         return get_filtered_leaderboard_data(db_path, metric_category, limit, date_filter)
     
     # No date filter - use existing glicko_ratings table
@@ -35,26 +35,30 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
     cursor = conn.cursor()
     
     if metric_category and metric_category != "Overall":
-        # Specific metric category
+        # Specific metric category with guild membership info
         cursor.execute('''
-            SELECT account_name, profession, composite_score, rating, games_played, 
-                   average_rank, average_stat_value
-            FROM glicko_ratings 
-            WHERE metric_category = ?
-            ORDER BY composite_score DESC
+            SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                   g.average_rank, g.average_stat_value,
+                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+            FROM glicko_ratings g
+            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+            WHERE g.metric_category = ?
+            ORDER BY g.composite_score DESC
             LIMIT ?
         ''', (metric_category, limit))
     else:
-        # Overall leaderboard
+        # Overall leaderboard with guild membership info
         cursor.execute('''
-            SELECT account_name, profession, 
-                   AVG(composite_score) as avg_composite,
-                   AVG(rating) as avg_rating,
-                   SUM(games_played) as total_games,
-                   AVG(average_rank) as avg_rank,
-                   AVG(average_stat_value) as avg_stat
-            FROM glicko_ratings
-            GROUP BY account_name, profession
+            SELECT g.account_name, g.profession, 
+                   AVG(g.composite_score) as avg_composite,
+                   AVG(g.rating) as avg_rating,
+                   SUM(g.games_played) as total_games,
+                   AVG(g.average_rank) as avg_rank,
+                   AVG(g.average_stat_value) as avg_stat,
+                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+            FROM glicko_ratings g
+            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+            GROUP BY g.account_name, g.profession
             ORDER BY avg_composite DESC
             LIMIT ?
         ''', (limit,))
@@ -68,34 +72,63 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     """Get leaderboard data filtered by date - uses same method as CLI."""
     from glicko_rating_system import calculate_date_filtered_ratings
     
-    # Use the same method as the CLI for date filtering
-    working_db_path = calculate_date_filtered_ratings(db_path, date_filter)
+    # Use the same method as the CLI for date filtering (all players)
+    working_db_path = calculate_date_filtered_ratings(db_path, date_filter, guild_filter=False)
     
-    # Now get the results from the filtered database
+    # Now get the results from the filtered database with guild membership info
     conn = sqlite3.connect(working_db_path)
     cursor = conn.cursor()
     
+    # Copy guild_members table to the temporary database for the JOIN
+    original_conn = sqlite3.connect(db_path)
+    original_cursor = original_conn.cursor()
+    original_cursor.execute("SELECT * FROM guild_members")
+    guild_data = original_cursor.fetchall()
+    original_conn.close()
+    
+    # Create guild_members table in temp database
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS guild_members (
+            account_name TEXT PRIMARY KEY,
+            guild_rank TEXT,
+            joined_date TEXT,
+            wvw_member INTEGER DEFAULT 0,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Insert guild data
+    cursor.executemany('''
+        INSERT OR REPLACE INTO guild_members 
+        (account_name, guild_rank, joined_date, wvw_member, last_updated)
+        VALUES (?, ?, ?, ?, ?)
+    ''', guild_data)
+    
     if metric_category and metric_category != "Overall":
-        # Specific metric category
+        # Specific metric category with guild membership info
         cursor.execute('''
-            SELECT account_name, profession, composite_score, rating, games_played, 
-                   average_rank, average_stat_value
-            FROM glicko_ratings 
-            WHERE metric_category = ?
-            ORDER BY composite_score DESC
+            SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                   g.average_rank, g.average_stat_value,
+                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+            FROM glicko_ratings g
+            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+            WHERE g.metric_category = ?
+            ORDER BY g.composite_score DESC
             LIMIT ?
         ''', (metric_category, limit))
     else:
-        # Overall leaderboard
+        # Overall leaderboard with guild membership info
         cursor.execute('''
-            SELECT account_name, profession, 
-                   AVG(composite_score) as avg_composite,
-                   AVG(rating) as avg_rating,
-                   SUM(games_played) as total_games,
-                   AVG(average_rank) as avg_rank,
-                   AVG(average_stat_value) as avg_stat
-            FROM glicko_ratings
-            GROUP BY account_name, profession
+            SELECT g.account_name, g.profession, 
+                   AVG(g.composite_score) as avg_composite,
+                   AVG(g.rating) as avg_rating,
+                   SUM(g.games_played) as total_games,
+                   AVG(g.average_rank) as avg_rank,
+                   AVG(g.average_stat_value) as avg_stat,
+                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+            FROM glicko_ratings g
+            LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+            GROUP BY g.account_name, g.profession
             ORDER BY avg_composite DESC
             LIMIT ?
         ''', (limit,))
@@ -116,8 +149,22 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
 
 def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
     """Generate all leaderboard data in JSON format."""
+    # Check if guild filtering is enabled
+    try:
+        guild_manager = GuildManager()
+        guild_enabled = guild_manager.guild_config.get("filter_enabled", False)
+        guild_name = guild_manager.guild_config.get("guild_name", "Guild")
+        guild_tag = guild_manager.guild_config.get("guild_tag", "UNK")
+    except:
+        guild_enabled = False
+        guild_name = "Guild"
+        guild_tag = "UNK"
+    
     data = {
         "generated_at": datetime.now().isoformat(),
+        "guild_enabled": guild_enabled,
+        "guild_name": guild_name,
+        "guild_tag": guild_tag,
         "date_filters": {
             "overall": {},
             "30d": {},
@@ -163,9 +210,10 @@ def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
                     "glicko_rating": float(rating),
                     "games_played": int(games),
                     "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
-                    "average_stat_value": float(avg_stat) if avg_stat > 0 else None
+                    "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
+                    "is_guild_member": bool(is_guild_member)
                 }
-                for i, (account, profession, composite, rating, games, avg_rank, avg_stat) in enumerate(results)
+                for i, (account, profession, composite, rating, games, avg_rank, avg_stat, is_guild_member) in enumerate(results)
             ]
         
         # Overall leaderboard
@@ -180,34 +228,47 @@ def generate_all_leaderboard_data(db_path: str) -> Dict[str, Any]:
                 "glicko_rating": float(rating),
                 "games_played": int(games),
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
-                "average_stat_value": float(avg_stat) if avg_stat > 0 else None
+                "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
+                "is_guild_member": bool(is_guild_member)
             }
-            for i, (account, profession, composite, rating, games, avg_rank, avg_stat) in enumerate(results)
+            for i, (account, profession, composite, rating, games, avg_rank, avg_stat, is_guild_member) in enumerate(results)
         ]
         
-        # Profession-specific leaderboards
+        # Profession-specific leaderboards (generate once with all players, include guild membership)
         print("  Profession-specific leaderboards...")
         for profession in PROFESSION_METRICS.keys():
             print(f"    Processing {profession}...")
             try:
-                results = recalculate_profession_ratings(db_path, profession, date_filter=filter_value)
+                results = recalculate_profession_ratings(db_path, profession, date_filter=filter_value, guild_filter=False)
                 if results:
                     prof_config = PROFESSION_METRICS[profession]
+                    
+                    # Add guild membership info to profession results
+                    conn = sqlite3.connect(db_path)
+                    cursor = conn.cursor()
+                    
+                    players_with_guild_info = []
+                    for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:100]):
+                        cursor.execute("SELECT 1 FROM guild_members WHERE account_name = ?", (account,))
+                        is_guild_member = cursor.fetchone() is not None
+                        
+                        players_with_guild_info.append({
+                            "rank": i + 1,
+                            "account_name": account,
+                            "composite_score": float(composite),
+                            "glicko_rating": float(rating),
+                            "games_played": int(games),
+                            "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
+                            "key_stats": stats_breakdown,
+                            "is_guild_member": is_guild_member
+                        })
+                    
+                    conn.close()
+                    
                     filter_data["profession_leaderboards"][profession] = {
                         "metrics": prof_config["metrics"],
                         "weights": prof_config["weights"],
-                        "players": [
-                            {
-                                "rank": i + 1,
-                                "account_name": account,
-                                "composite_score": float(composite),
-                                "glicko_rating": float(rating),
-                                "games_played": int(games),
-                                "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
-                                "key_stats": stats_breakdown
-                            }
-                            for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:100])
-                        ]
+                        "players": players_with_guild_info
                     }
             except Exception as e:
                 print(f"      Error processing {profession}: {e}")
@@ -251,6 +312,12 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
             <button class="date-filter-button" data-filter="30d">Last 30 Days</button>
             <button class="date-filter-button" data-filter="90d">Last 90 Days</button>
             <button class="date-filter-button" data-filter="180d">Last 180 Days</button>
+        </div>
+
+        <div class="guild-filters" id="guild-filters" style="display: none;">
+            <span class="filter-label">Players:</span>
+            <button class="guild-filter-button active" data-guild-filter="all_players">All Players</button>
+            <button class="guild-filter-button" data-guild-filter="guild_members" id="guild-members-button">Guild Members Only</button>
         </div>
 
         <main>
@@ -411,17 +478,21 @@ header h1 {
     backdrop-filter: blur(10px);
 }
 
-.date-filters {
+.date-filters, .guild-filters {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     background: rgba(255,255,255,0.1);
     border-radius: 10px;
     padding: 15px;
     backdrop-filter: blur(10px);
     flex-wrap: wrap;
     gap: 10px;
+}
+
+.guild-filters {
+    margin-bottom: 30px;
 }
 
 .filter-label {
@@ -431,7 +502,7 @@ header h1 {
     font-size: 1rem;
 }
 
-.date-filter-button {
+.date-filter-button, .guild-filter-button {
     background: rgba(255,255,255,0.2);
     border: 2px solid rgba(255,255,255,0.3);
     padding: 8px 16px;
@@ -442,12 +513,12 @@ header h1 {
     transition: all 0.3s ease;
 }
 
-.date-filter-button:hover {
+.date-filter-button:hover, .guild-filter-button:hover {
     background: rgba(255,255,255,0.3);
     border-color: rgba(255,255,255,0.5);
 }
 
-.date-filter-button.active {
+.date-filter-button.active, .guild-filter-button.active {
     background: rgba(255,255,255,0.4);
     border-color: rgba(255,255,255,0.6);
     font-weight: bold;
@@ -632,6 +703,16 @@ h2 {
     border-radius: 3px;
 }
 
+.guild-yes {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.guild-no {
+    color: #6c757d;
+    font-weight: normal;
+}
+
 .about-content {
     line-height: 1.8;
 }
@@ -707,6 +788,7 @@ let currentDateFilter = 'overall';
 let currentTab = 'individual';
 let currentMetric = 'DPS';
 let currentProfession = 'Firebrand';
+let currentGuildFilter = 'all_players';
 
 // GW2 Wiki profession icons
 const professionIcons = {{
@@ -761,6 +843,16 @@ function initializePage() {{
     // Set last updated time
     const lastUpdated = new Date(leaderboardData.generated_at);
     document.getElementById('lastUpdated').textContent = lastUpdated.toLocaleString();
+    
+    // Initialize guild filtering if enabled
+    if (leaderboardData.guild_enabled) {{
+        const guildFilters = document.getElementById('guild-filters');
+        guildFilters.style.display = 'flex';
+        
+        // Update guild member button text
+        const guildButton = document.getElementById('guild-members-button');
+        guildButton.textContent = `${{leaderboardData.guild_tag}} Members Only`;
+    }}
 }}
 
 function setupEventListeners() {{
@@ -791,6 +883,13 @@ function setupEventListeners() {{
             selectProfession(this.dataset.profession);
         }});
     }});
+    
+    // Guild filter selection
+    document.querySelectorAll('.guild-filter-button').forEach(button => {{
+        button.addEventListener('click', function() {{
+            selectGuildFilter(this.dataset.guildFilter);
+        }});
+    }});
 }}
 
 function selectDateFilter(filter) {{
@@ -800,8 +899,24 @@ function selectDateFilter(filter) {{
     loadCurrentData();
 }}
 
+function selectGuildFilter(guildFilter) {{
+    currentGuildFilter = guildFilter;
+    document.querySelectorAll('.guild-filter-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-guild-filter="${{guildFilter}}"]`).classList.add('active');
+    loadCurrentData();
+}}
+
 function getCurrentData() {{
     return leaderboardData.date_filters[currentDateFilter];
+}}
+
+function filterDataByGuildMembership(data) {{
+    if (!leaderboardData.guild_enabled || currentGuildFilter === 'all_players') {{
+        return data;
+    }}
+    
+    // Filter to guild members only
+    return data.filter(player => player.is_guild_member === true);
 }}
 
 function switchTab(tabName) {{
@@ -851,9 +966,18 @@ function loadCurrentData() {{
 
 function loadOverallLeaderboard() {{
     const container = document.getElementById('overall-leaderboard');
-    const data = getCurrentData().overall_leaderboard;
+    const rawData = getCurrentData().overall_leaderboard;
     
-    container.innerHTML = createLeaderboardTable(data, [
+    // Filter data based on guild membership
+    const filteredData = filterDataByGuildMembership(rawData);
+    
+    // Reassign ranks after filtering
+    const dataWithNewRanks = filteredData.map((player, index) => ({{
+        ...player,
+        rank: index + 1
+    }}));
+    
+    const columns = [
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
@@ -861,19 +985,35 @@ function loadOverallLeaderboard() {{
         {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
         {{ key: 'average_rank_percent', label: 'Avg Rank%', type: 'percent' }}
-    ]);
+    ];
+    
+    // Add guild member column if guild filtering is enabled
+    if (leaderboardData.guild_enabled) {{
+        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+    }}
+    
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
 }}
 
 function loadIndividualMetric(metric) {{
     const container = document.getElementById('individual-leaderboard');
-    const data = getCurrentData().individual_metrics[metric];
+    const rawData = getCurrentData().individual_metrics[metric];
     
-    if (!data) {{
+    if (!rawData) {{
         container.innerHTML = '<p>No data available for this metric.</p>';
         return;
     }}
     
-    container.innerHTML = createLeaderboardTable(data, [
+    // Filter data based on guild membership
+    const filteredData = filterDataByGuildMembership(rawData);
+    
+    // Reassign ranks after filtering
+    const dataWithNewRanks = filteredData.map((player, index) => ({{
+        ...player,
+        rank: index + 1
+    }}));
+    
+    const columns = [
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
@@ -882,7 +1022,14 @@ function loadIndividualMetric(metric) {{
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
         {{ key: 'average_rank_percent', label: 'Avg Rank%', type: 'percent' }},
         {{ key: 'average_stat_value', label: `Avg ${{metric}}`, type: 'stat' }}
-    ]);
+    ];
+    
+    // Add guild member column if guild filtering is enabled
+    if (leaderboardData.guild_enabled) {{
+        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+    }}
+    
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
 }}
 
 function loadProfessionLeaderboard(profession) {{
@@ -906,15 +1053,30 @@ function loadProfessionLeaderboard(profession) {{
         <p><strong>Weights:</strong> ${{weightsText}}</p>
     `;
     
-    // Show leaderboard
-    container.innerHTML = createLeaderboardTable(data.players, [
+    // Filter data based on guild membership
+    const filteredData = filterDataByGuildMembership(data.players);
+    
+    // Reassign ranks after filtering
+    const dataWithNewRanks = filteredData.map((player, index) => ({{
+        ...player,
+        rank: index + 1
+    }}));
+    
+    const columns = [
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
         {{ key: 'composite_score', label: 'Composite', type: 'number' }},
         {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
         {{ key: 'key_stats', label: 'Key Stats', type: 'stats' }}
-    ]);
+    ];
+    
+    // Add guild member column if guild filtering is enabled
+    if (leaderboardData.guild_enabled) {{
+        columns.splice(2, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+    }}
+    
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
 }}
 
 function createLeaderboardTable(data, columns) {{
@@ -972,6 +1134,8 @@ function formatCellValue(value, type) {{
             return `<span class="stat-value">${{value.toFixed(1)}}</span>`;
         case 'stats':
             return `<span class="stat-value">${{value}}</span>`;
+        case 'guild_member':
+            return value ? '<span class="guild-yes">✓ Yes</span>' : '<span class="guild-no">✗ No</span>';
         default:
             return value;
     }}
@@ -1052,7 +1216,7 @@ def main():
     # Recalculate ratings first unless skipped
     if not args.skip_recalc:
         print("Recalculating all Glicko ratings...")
-        recalculate_all_glicko_ratings(args.database)
+        recalculate_all_glicko_ratings(args.database, guild_filter=False)
         print("Rating recalculation complete!")
     
     print("\nGenerating leaderboard data...")
