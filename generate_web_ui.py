@@ -34,6 +34,14 @@ except ImportError:
     GUILD_MANAGER_AVAILABLE = False
     GuildManager = None
 
+# Optional player summary import
+try:
+    from player_summary import PlayerSummaryGenerator
+    PLAYER_SUMMARY_AVAILABLE = True
+except ImportError:
+    PLAYER_SUMMARY_AVAILABLE = False
+    PlayerSummaryGenerator = None
+
 
 class ProgressManager:
     """Manages and displays progress for multiple concurrent tasks without flickering."""
@@ -436,6 +444,121 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
     results = cursor.fetchall()
     conn.close()
     return results
+
+
+def generate_player_summaries_for_filter(db_path: str, output_dir: Path, date_filter: str, active_players: List[tuple]) -> List[str]:
+    """Generate player summaries for a specific date filter."""
+    filter_suffix = f"_{date_filter}" if date_filter != "overall" else ""
+    filter_dir = output_dir / "players" / date_filter if date_filter != "overall" else output_dir / "players"
+    filter_dir.mkdir(parents=True, exist_ok=True)
+    
+    generated_files = []
+    generator = PlayerSummaryGenerator(db_path, date_filter if date_filter != "overall" else None)
+    
+    try:
+        for account_name, session_count in active_players:
+            try:
+                # Generate summary
+                summary = generator.generate_summary(account_name)
+                if summary:
+                    # Convert to dict for JSON serialization
+                    def to_dict(obj):
+                        if hasattr(obj, '__dict__'):
+                            return {k: to_dict(v) for k, v in obj.__dict__.items()}
+                        elif isinstance(obj, list):
+                            return [to_dict(item) for item in obj]
+                        elif isinstance(obj, dict):
+                            return {k: to_dict(v) for k, v in obj.items()}
+                        else:
+                            return obj
+                    
+                    summary_dict = to_dict(summary)
+                    
+                    # Create safe filename
+                    safe_name = account_name.replace('.', '_').replace(' ', '_')
+                    filename = f"{safe_name}{filter_suffix}.json"
+                    filepath = filter_dir / filename
+                    
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        json.dump(summary_dict, f, indent=2)
+                    
+                    generated_files.append(account_name)
+                
+            except Exception as e:
+                print(f"  Warning: Failed to generate {date_filter} summary for {account_name}: {e}")
+                continue
+    
+    finally:
+        generator.close()
+    
+    return generated_files
+
+
+def generate_player_summaries(db_path: str, output_dir: Path) -> List[str]:
+    """Generate player summary JSON files for all active players with date filtering."""
+    if not PLAYER_SUMMARY_AVAILABLE:
+        print("Player summary generation not available (missing player_summary.py)")
+        return []
+    
+    print("Generating player summaries...")
+    
+    # Get top 150 active players by session count (minimum 3 sessions)
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT account_name, COUNT(DISTINCT timestamp) as sessions
+        FROM player_performances 
+        GROUP BY account_name
+        HAVING sessions >= 3
+        ORDER BY sessions DESC
+        LIMIT 150
+    """)
+    
+    active_players = cursor.fetchall()
+    conn.close()
+    
+    print(f"Found {len(active_players)} top active players (3+ sessions, limited to 150)")
+    
+    # Create players directory
+    players_dir = output_dir / "players"
+    players_dir.mkdir(exist_ok=True)
+    
+    # Date filters to generate
+    date_filters = ['overall', '30d', '90d', '180d']
+    
+    # Generate summaries for each date filter using multithreading
+    all_generated_files = {}
+    
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        # Submit tasks for each date filter
+        future_to_filter = {
+            executor.submit(generate_player_summaries_for_filter, db_path, output_dir, date_filter, active_players): date_filter
+            for date_filter in date_filters
+        }
+        
+        # Process results as they complete
+        for future in as_completed(future_to_filter):
+            date_filter = future_to_filter[future]
+            try:
+                generated_files = future.result()
+                all_generated_files[date_filter] = generated_files
+                print(f"✅ Generated {len(generated_files)} {date_filter} player summaries")
+            except Exception as e:
+                print(f"❌ Failed to generate {date_filter} summaries: {e}")
+                all_generated_files[date_filter] = []
+    
+    # Generate player index for all filters
+    player_index = {
+        "generated_at": datetime.now().isoformat(),
+        "date_filters": all_generated_files,
+        "total_players": len(all_generated_files.get('overall', []))
+    }
+    
+    with open(players_dir / "index.json", 'w', encoding='utf-8') as f:
+        json.dump(player_index, f, indent=2)
+    
+    print(f"✅ Generated player summaries for {len(date_filters)} date filters")
+    return all_generated_files.get('overall', [])
 
 
 def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[str, Any]:
@@ -970,6 +1093,38 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                 </div>
             </div>
         </main>
+
+        <!-- Player Detail Modal -->
+        <div id="player-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="player-modal-title">Player Details</h2>
+                    <button class="modal-close" aria-label="Close modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="player-summary-content">
+                        <div class="player-overview">
+                            <div class="player-info-card">
+                                <h3>Overview</h3>
+                                <div id="player-overview-content"></div>
+                            </div>
+                            <div class="player-activity-card">
+                                <h3>Activity</h3>
+                                <div id="player-activity-content"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="player-metrics">
+                            <h3>Performance Metrics</h3>
+                            <div class="profession-filter" id="profession-filter" style="margin-bottom: 15px;">
+                            </div>
+                            <div id="player-metrics-content"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
@@ -1289,6 +1444,20 @@ h2 {
     min-width: 200px;
 }
 
+.account-link {
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.account-link:hover {
+    color: #667eea;
+    background: var(--hover-bg);
+    text-decoration: none;
+}
+
 .profession-badge {
     display: inline-flex;
     align-items: center;
@@ -1415,6 +1584,282 @@ h2 {
     
     .account-cell {
         min-width: 150px;
+    }
+}
+
+/* Player Detail Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: var(--main-bg);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    max-width: 95vw;
+    max-height: 90vh;
+    width: 1200px;
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--hover-bg);
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.modal-close:hover {
+    background: var(--hover-bg);
+}
+
+.modal-body {
+    padding: 30px;
+    overflow-y: auto;
+    max-height: calc(90vh - 100px);
+}
+
+.player-summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.player-overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.player-info-card, .player-activity-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.player-info-card h3, .player-activity-card h3, 
+.player-metrics h3, .player-professions h3, .player-sessions h3 {
+    margin: 0 0 15px 0;
+    color: #667eea;
+    font-size: 1.2rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 5px;
+}
+
+.player-metrics, .player-professions, .player-sessions {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.metric-item {
+    background: var(--hover-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.metric-name {
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 5px;
+}
+
+.metric-value {
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+}
+
+.profession-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.profession-tab {
+    background: var(--button-bg);
+    border: 1px solid var(--button-border);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-color);
+}
+
+.profession-tab:hover {
+    background: var(--button-hover);
+}
+
+.profession-tab.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.sessions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.sessions-table th,
+.sessions-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sessions-table th {
+    background: var(--hover-bg);
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.clickable-name {
+    color: #667eea;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.clickable-name:hover {
+    color: #5a67d8;
+    text-decoration: underline;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-50px) scale(0.95);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Mobile responsive for modal */
+@media (max-width: 768px) {
+    .modal-content {
+        max-width: 95vw;
+        max-height: 95vh;
+        margin: 10px;
+    }
+    
+    .modal-header {
+        padding: 15px 20px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+        max-height: calc(95vh - 80px);
+    }
+    
+    .player-overview {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .metric-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profession-tabs {
+        gap: 5px;
+    }
+    
+    .profession-tab {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Profession Filter Buttons */
+.profession-filter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.profession-filter-btn {
+    background: var(--button-bg);
+    border: 1px solid var(--button-border);
+    padding: 6px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-color);
+    font-size: 0.85rem;
+}
+
+.profession-filter-btn:hover {
+    background: var(--button-hover);
+}
+
+.profession-filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+@media (max-width: 768px) {
+    .profession-filter {
+        gap: 4px;
+    }
+    
+    .profession-filter-btn {
+        padding: 4px 8px;
+        font-size: 0.8rem;
     }
 }"""
 
@@ -1592,6 +2037,10 @@ function getCurrentData() {{
     return leaderboardData.date_filters[currentDateFilter];
 }}
 
+function getCurrentDateFilter() {{
+    return currentDateFilter;
+}}
+
 function filterDataByGuildMembership(data) {{
     if (!leaderboardData.guild_enabled || currentGuildFilter === 'all_players') {{
         return data;
@@ -1690,6 +2139,9 @@ function loadOverallLeaderboard() {{
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+    
+    // Make player names clickable after updating the table
+    setTimeout(() => makePlayerNamesClickable(), 10);
 }}
 
 function loadIndividualMetric(metric) {{
@@ -1716,7 +2168,6 @@ function loadIndividualMetric(metric) {{
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
         {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
-        {{ key: 'average_rank_percent', label: 'Avg Rank Per Raid', type: 'avg_rank' }},
         {{ key: 'average_stat_value', label: `Avg ${{metric === 'Downs' ? 'DownCont' : metric}}`, type: 'stat' }}
     ];
     
@@ -1726,6 +2177,9 @@ function loadIndividualMetric(metric) {{
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+    
+    // Make player names clickable after updating the table
+    setTimeout(() => makePlayerNamesClickable(), 10);
 }}
 
 function loadProfessionLeaderboard(profession) {{
@@ -1772,6 +2226,9 @@ function loadProfessionLeaderboard(profession) {{
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+    
+    // Make player names clickable after updating the table
+    setTimeout(() => makePlayerNamesClickable(), 10);
 }}
 
 function loadHighScores(metric) {{
@@ -1837,6 +2294,9 @@ function loadHighScores(metric) {{
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+    
+    // Make player names clickable after updating the table
+    setTimeout(() => makePlayerNamesClickable(), 10);
 }}
 
 function createLeaderboardTable(data, columns) {{
@@ -1963,7 +2423,195 @@ function applyRaidsGradient() {{
             element.style.color = ratio > 0.5 ? '#2d5a2d' : '#5a2d2d'; // Dark green/red text
         }}
     }});
-}}"""
+}}
+
+// Player Modal Functions
+function showPlayerModal(accountName) {{
+    const modal = document.getElementById('player-modal');
+    const title = document.getElementById('player-modal-title');
+    
+    // Set player name in title
+    title.textContent = accountName + ' - Player Details';
+    
+    // Load player data from existing leaderboard data
+    loadPlayerData(accountName);
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}}
+
+function hidePlayerModal() {{
+    const modal = document.getElementById('player-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scrolling
+}}
+
+function loadPlayerData(accountName) {{
+    const overviewContent = document.getElementById('player-overview-content');
+    const activityContent = document.getElementById('player-activity-content');
+    const metricsContent = document.getElementById('player-metrics-content');
+    const professionFilter = document.getElementById('profession-filter');
+    
+    // Get current date filter
+    const currentFilter = getCurrentDateFilter();
+    const currentData = leaderboardData.date_filters[currentFilter];
+    
+    // Find player across ALL metrics and professions more thoroughly
+    const allPlayerData = [];
+    const playerProfessions = new Set();
+    
+    // Search individual metrics - collect ALL instances of this player
+    Object.entries(currentData.individual_metrics).forEach(([metric, players]) => {{
+        players.forEach(playerData => {{
+            if (playerData.account_name === accountName) {{
+                allPlayerData.push({{
+                    ...playerData,
+                    metric: metric,
+                    source: 'individual'
+                }});
+                playerProfessions.add(playerData.profession);
+            }}
+        }});
+    }});
+    
+    // Search profession leaderboards for additional profession coverage
+    Object.entries(currentData.profession_leaderboards).forEach(([profession, data]) => {{
+        const playerData = data.players.find(p => p.account_name === accountName);
+        if (playerData) {{
+            playerProfessions.add(profession);
+        }}
+    }});
+    
+    // Store all player data globally for filtering
+    window.currentPlayerData = allPlayerData;
+    window.currentPlayerProfessions = Array.from(playerProfessions);
+    
+    // Populate Overview
+    const guildStatus = allPlayerData[0]?.is_guild_member ? 
+        `<span style="color: #667eea;">✓ Guild Member</span>` : 
+        `<span style="color: #999;">Non-Guild Member</span>`;
+    
+    overviewContent.innerHTML = `
+        <div style="display: grid; gap: 10px;">
+            <div><strong>Account:</strong> ${{accountName}}</div>
+            <div><strong>Guild Status:</strong> ${{guildStatus}}</div>
+            <div><strong>Professions Played:</strong> ${{Array.from(playerProfessions).join(', ')}}</div>
+        </div>
+    `;
+    
+    // Populate Activity
+    const totalGames = allPlayerData.reduce((sum, data) => sum + (data.games_played || 0), 0);
+    
+    activityContent.innerHTML = `
+        <div style="display: grid; gap: 10px;">
+            <div><strong>Total Sessions:</strong> ${{totalGames}}</div>
+            <div><strong>Metrics Found:</strong> ${{allPlayerData.length}}</div>
+            <div><strong>Professions:</strong> ${{playerProfessions.size}}</div>
+        </div>
+    `;
+    
+    // Setup profession filter buttons
+    professionFilter.innerHTML = '';
+    
+    const professionsArray = Array.from(playerProfessions);
+    professionsArray.forEach((profession, index) => {{
+        const count = allPlayerData.filter(d => d.profession === profession).length;
+        const btn = document.createElement('button');
+        btn.className = `profession-filter-btn ${{index === 0 ? 'active' : ''}}`;
+        btn.setAttribute('data-profession', profession);
+        btn.textContent = `${{profession}} (${{count}})`;
+        btn.onclick = () => filterMetricsByProfession(profession);
+        professionFilter.appendChild(btn);
+    }});
+    
+    // Show first profession by default
+    if (professionsArray.length > 0) {{
+        filterMetricsByProfession(professionsArray[0]);
+    }}
+}}
+
+function filterMetricsByProfession(profession) {{
+    // Update active button
+    document.querySelectorAll('.profession-filter-btn').forEach(btn => {{
+        btn.classList.remove('active');
+    }});
+    document.querySelector(`[data-profession="${{profession}}"]`).classList.add('active');
+    
+    // Filter and display metrics
+    const metricsContent = document.getElementById('player-metrics-content');
+    const filteredData = window.currentPlayerData.filter(d => d.profession === profession);
+    
+    if (filteredData.length === 0) {{
+        metricsContent.innerHTML = '<p style="color: var(--text-color-secondary); font-style: italic;">No metrics found for this profession.</p>';
+        return;
+    }}
+    
+    // Group by metric for cleaner display
+    const metricGroups = {{}};
+    filteredData.forEach(data => {{
+        if (!metricGroups[data.metric]) {{
+            metricGroups[data.metric] = [];
+        }}
+        metricGroups[data.metric].push(data);
+    }});
+    
+    let metricsHtml = '<div class="metric-grid">';
+    Object.entries(metricGroups).forEach(([metric, instances]) => {{
+        // If multiple instances of same metric (different professions), show the best one
+        const bestInstance = instances.reduce((best, current) => 
+            current.rank < best.rank ? current : best
+        );
+        
+        metricsHtml += `
+            <div class="metric-item" data-profession="${{bestInstance.profession}}">
+                <div class="metric-name">${{metric === 'Downs' ? 'DownCont' : metric}}</div>
+                <div class="metric-value">
+                    <div>Rank: #${{bestInstance.rank}}</div>
+                    <div>Rating: ${{bestInstance.glicko_rating?.toFixed(0) || 'N/A'}}</div>
+                    <div>Games: ${{bestInstance.games_played}}</div>
+                    <div>Profession: ${{bestInstance.profession}}</div>
+                    <div>Avg Value: ${{bestInstance.average_stat_value?.toFixed(1) || 'N/A'}}</div>
+                </div>
+            </div>
+        `;
+    }});
+    metricsHtml += '</div>';
+    metricsContent.innerHTML = metricsHtml;
+}}
+
+function makePlayerNamesClickable() {{
+    // Make account names clickable in all leaderboard tables
+    document.querySelectorAll('.account-cell').forEach(cell => {{
+        if (cell.textContent && cell.textContent.trim() && !cell.querySelector('.clickable-name')) {{
+            const accountName = cell.textContent.trim();
+            cell.innerHTML = `<span class="clickable-name" onclick="showPlayerModal('${{accountName}}')">${{accountName}}</span>`;
+        }}
+    }});
+}}
+
+// Modal event listeners
+document.addEventListener('DOMContentLoaded', function() {{
+    // Close modal when clicking X
+    document.querySelector('.modal-close').addEventListener('click', hidePlayerModal);
+    
+    // Close modal when clicking outside
+    document.getElementById('player-modal').addEventListener('click', function(e) {{
+        if (e.target === this) {{
+            hidePlayerModal();
+        }}
+    }});
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {{
+        if (e.key === 'Escape' && document.getElementById('player-modal').style.display === 'flex') {{
+            hidePlayerModal();
+        }}
+    }});
+    
+    // Make initial player names clickable
+    setTimeout(makePlayerNamesClickable, 100);
+}});"""
 
     # Write all files
     (output_dir / "index.html").write_text(html_content)
@@ -1975,6 +2623,687 @@ function applyRaidsGradient() {{
     print("  - index.html")
     print("  - styles.css") 
     print("  - script.js")
+
+
+def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
+    """Generate individual HTML pages for each player with embedded date filter data."""
+    players_dir = output_dir / "players"
+    
+    if not players_dir.exists():
+        print("No player summaries found, skipping player detail pages")
+        return
+    
+    print(f"Generating player detail pages for {len(player_summaries)} players with embedded date filter data...")
+    
+    # Player detail page template
+    player_template = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{PLAYER_NAME}} - GW2 WvW Leaderboards</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        /* Additional CSS custom properties for player pages */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --main-bg: #ffffff;
+            --text-color: #333333;
+            --text-color-secondary: #666666;
+            --text-color-light: #ffffff;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --hover-bg: #f8f9fa;
+            --button-bg: rgba(255,255,255,0.2);
+            --button-border: rgba(255,255,255,0.3);
+            --button-hover: rgba(255,255,255,0.3);
+            --button-active: rgba(255,255,255,0.4);
+            --shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --main-bg: #2c3e50;
+            --text-color: #ecf0f1;
+            --text-color-secondary: #bdc3c7;
+            --text-color-light: #ffffff;
+            --card-bg: #34495e;
+            --border-color: #4a6741;
+            --hover-bg: #3c5a99;
+            --button-bg: rgba(255,255,255,0.1);
+            --button-border: rgba(255,255,255,0.2);
+            --button-hover: rgba(255,255,255,0.2);
+            --button-active: rgba(255,255,255,0.3);
+            --shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .player-header {
+            background: var(--bg-gradient);
+            color: var(--text-color-light);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        
+        .player-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .player-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .player-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stats-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+        
+        .stats-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .stat-label {
+            color: var(--text-color-secondary);
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+        
+        .metric-performance {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .metric-table th,
+        .metric-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .metric-table th {
+            background: var(--hover-bg);
+            font-weight: bold;
+        }
+        
+        .rank-good {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .rank-average {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .rank-poor {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .profession-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .profession-tag {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .profession-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        .profession-tab-button {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        
+        .profession-tab-button:hover {
+            background: var(--hover-bg);
+            border-color: var(--text-color-secondary);
+        }
+        
+        .profession-tab-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .profession-metric-table {
+            display: none;
+            margin-bottom: 20px;
+        }
+        
+        .profession-metric-table.active {
+            display: block;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-button {
+            background: var(--button-bg);
+            border: 2px solid var(--button-border);
+            color: var(--text-color-light);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-button:hover {
+            background: var(--button-hover);
+            border-color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            color: var(--text-color-light);
+        }
+        
+        .dark-mode-toggle {
+            background: var(--button-bg);
+            border: 2px solid var(--button-border);
+            border-radius: 50px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-color-light);
+            font-size: 1.2rem;
+            min-width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dark-mode-toggle:hover {
+            background: var(--button-hover);
+            border-color: rgba(255,255,255,0.5);
+            transform: scale(1.05);
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+        
+        .date-filter-button:hover {
+            background: var(--button-hover);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .date-filter-button.active {
+            background: var(--button-active);
+            border-color: rgba(255,255,255,0.6);
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .player-stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+            }
+            
+            .player-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-buttons">
+            <a href="../index.html" class="nav-button">← Back to Leaderboards</a>
+            <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+                <span class="toggle-icon">🌙</span>
+            </button>
+        </div>
+        
+        <div class="date-filters" style="background: var(--button-bg); border-radius: 10px; padding: 15px; margin-bottom: 20px; backdrop-filter: blur(10px); display: flex; justify-content: center; flex-wrap: wrap; gap: 10px;">
+            <span class="filter-label" style="color: var(--text-color-light); font-weight: bold; margin-right: 15px; font-size: 1rem;">Time Period:</span>
+            <button class="date-filter-button active" data-filter="overall" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">All Time</button>
+            <button class="date-filter-button" data-filter="30d" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">Last 30 Days</button>
+            <button class="date-filter-button" data-filter="90d" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">Last 90 Days</button>
+            <button class="date-filter-button" data-filter="180d" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">Last 180 Days</button>
+        </div>
+        
+        <div class="player-header">
+            <h1>{{PLAYER_NAME}}</h1>
+            <p class="player-subtitle">Player Performance Summary</p>
+            <div id="playerGuildInfo"></div>
+        </div>
+        
+        <div class="player-stats-grid">
+            <div class="stats-card">
+                <h3>📊 Overview</h3>
+                <div id="overviewStats"></div>
+            </div>
+            
+            <div class="stats-card">
+                <h3>🏆 Performance</h3>
+                <div id="performanceStats"></div>
+            </div>
+            
+            <div class="stats-card">
+                <h3>📈 Activity</h3>
+                <div id="activityStats"></div>
+            </div>
+        </div>
+        
+        <div class="metric-performance">
+            <h3>🎯 Profession Performance</h3>
+            <div class="profession-tabs" id="professionTabs"></div>
+            <div id="professionMetricTables"></div>
+        </div>
+        
+        <div class="stats-card">
+            <h3>⚔️ Professions</h3>
+            <div id="professionStats"></div>
+        </div>
+    </div>
+    
+    <script>
+        const playerName = '{{PLAYER_NAME}}';
+        const allPlayerData = {{ALL_PLAYER_DATA}};
+        let currentDateFilter = 'overall';
+        let playerData = allPlayerData.overall;
+        
+        // Initialize dark mode from localStorage - use same storage as main site
+        function initializeDarkMode() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateToggleIcon(savedTheme);
+        }
+        
+        function toggleDarkMode() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateToggleIcon(newTheme);
+        }
+        
+        function updateToggleIcon(theme) {
+            const toggleIcon = document.querySelector('.toggle-icon');
+            if (theme === 'dark') {
+                toggleIcon.textContent = '☀️';
+            } else {
+                toggleIcon.textContent = '🌙';
+            }
+        }
+        
+        function formatNumber(value) {
+            if (value >= 1000) {
+                return (value / 1000).toFixed(1) + 'k';
+            }
+            return value.toFixed(1);
+        }
+        
+        function getRankClass(percentile) {
+            if (percentile >= 75) return 'rank-good';
+            if (percentile >= 25) return 'rank-average';
+            return 'rank-poor';
+        }
+        
+        function loadProfessionMetrics() {
+            const professionTabs = document.getElementById('professionTabs');
+            const professionMetricTables = document.getElementById('professionMetricTables');
+            
+            // Clear existing content
+            professionTabs.innerHTML = '';
+            professionMetricTables.innerHTML = '';
+            
+            // Create tabs and tables for each profession
+            playerData.profession_summaries.forEach((profSummary, index) => {
+                // Create tab button
+                const tabButton = document.createElement('button');
+                tabButton.className = `profession-tab-button ${index === 0 ? 'active' : ''}`;
+                tabButton.textContent = `${profSummary.profession} (${profSummary.sessions_played} sessions)`;
+                tabButton.onclick = () => switchProfessionTab(profSummary.profession);
+                professionTabs.appendChild(tabButton);
+                
+                // Create table container
+                const tableContainer = document.createElement('div');
+                tableContainer.className = `profession-metric-table ${index === 0 ? 'active' : ''}`;
+                tableContainer.id = `table-${profSummary.profession.replace(/\\s+/g, '-')}`;
+                
+                tableContainer.innerHTML = `
+                    <h4>📊 ${profSummary.profession} Performance</h4>
+                    <div class="leaderboard-container">
+                        <table class="metric-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Glicko Rating</th>
+                                    <th>Games</th>
+                                    <th>Average</th>
+                                    <th>Best</th>
+                                    <th>Rank</th>
+                                    <th>Percentile</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${profSummary.metric_summaries.map(metric => {
+                                    const rankClass = getRankClass(metric.percentile_rank);
+                                    const sampleSizeWarning = metric.total_players <= 5 ? ' ⚠️' : '';
+                                    const rankDisplay = metric.total_players <= 5 ? `#${metric.overall_rank}/${metric.total_players}` : `#${metric.overall_rank}`;
+                                    const percentileDisplay = metric.total_players <= 5 ? `${metric.percentile_rank.toFixed(1)}% (${metric.total_players} players)` : `${metric.percentile_rank.toFixed(1)}%`;
+                                    return `
+                                        <tr>
+                                            <td><strong>${metric.metric_name}${sampleSizeWarning}</strong></td>
+                                            <td>${metric.glicko_rating.toFixed(0)}</td>
+                                            <td>${metric.games_played}</td>
+                                            <td>${formatNumber(metric.average_value)}</td>
+                                            <td>${formatNumber(metric.best_value)}</td>
+                                            <td class="${rankClass}">${rankDisplay}</td>
+                                            <td class="${rankClass}">${percentileDisplay}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                professionMetricTables.appendChild(tableContainer);
+            });
+        }
+        
+        function switchProfessionTab(profession) {
+            // Update tab buttons
+            document.querySelectorAll('.profession-tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update table visibility
+            document.querySelectorAll('.profession-metric-table').forEach(table => {
+                table.classList.remove('active');
+            });
+            document.getElementById(`table-${profession.replace(/\\s+/g, '-')}`).classList.add('active');
+        }
+        
+        function loadPlayerData() {
+            // Guild info
+            const guildInfo = document.getElementById('playerGuildInfo');
+            if (playerData.profile.is_guild_member) {
+                guildInfo.innerHTML = `<span style="color: #28a745; font-weight: bold;">Guild Member</span>`;
+                if (playerData.profile.guild_rank) {
+                    guildInfo.innerHTML += ` (${playerData.profile.guild_rank})`;
+                }
+            } else {
+                guildInfo.innerHTML = `<span style="color: #6c757d;">Non-Guild Member</span>`;
+            }
+            
+            // Overview stats
+            const overviewStats = document.getElementById('overviewStats');
+            overviewStats.innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">Total Sessions:</span>
+                    <span class="stat-value">${playerData.profile.total_sessions}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Activity Score:</span>
+                    <span class="stat-value">${playerData.overall_stats.activity_score.toFixed(1)}/100</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Consistency:</span>
+                    <span class="stat-value">${playerData.overall_stats.consistency_score.toFixed(1)}/100</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Activity Period:</span>
+                    <span class="stat-value">${playerData.profile.activity_days} days</span>
+                </div>
+            `;
+            
+            // Performance stats
+            const performanceStats = document.getElementById('performanceStats');
+            
+            // Find best metric by highest percentile
+            let bestMetric = "N/A";
+            let bestPercentile = 0;
+            playerData.metric_summaries.forEach(metric => {
+                if (metric.percentile_rank > bestPercentile) {
+                    bestPercentile = metric.percentile_rank;
+                    bestMetric = metric.metric_name;
+                }
+            });
+            
+            // Find average Glicko rating across all metrics
+            const avgGlicko = playerData.metric_summaries.length > 0 
+                ? playerData.metric_summaries.reduce((sum, m) => sum + m.glicko_rating, 0) / playerData.metric_summaries.length
+                : 1500;
+            
+            performanceStats.innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">Average Glicko:</span>
+                    <span class="stat-value">${avgGlicko.toFixed(0)}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Best Metric:</span>
+                    <span class="stat-value">${bestMetric}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Best Percentile:</span>
+                    <span class="stat-value">${bestPercentile.toFixed(1)}%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Metrics:</span>
+                    <span class="stat-value">${playerData.metric_summaries.length}</span>
+                </div>
+            `;
+            
+            // Activity stats
+            const activityStats = document.getElementById('activityStats');
+            const firstDate = playerData.profile.first_session;
+            const lastDate = playerData.profile.last_session;
+            const formattedFirst = `${firstDate.substr(4,2)}/${firstDate.substr(6,2)}/${firstDate.substr(0,4)}`;
+            const formattedLast = `${lastDate.substr(4,2)}/${lastDate.substr(6,2)}/${lastDate.substr(0,4)}`;
+            
+            activityStats.innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">First Session:</span>
+                    <span class="stat-value">${formattedFirst}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Latest Session:</span>
+                    <span class="stat-value">${formattedLast}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Sessions/Week:</span>
+                    <span class="stat-value">${(playerData.profile.total_sessions / (playerData.profile.activity_days / 7)).toFixed(1)}</span>
+                </div>
+            `;
+            
+            // Profession-specific metric tables
+            loadProfessionMetrics();
+            
+            // Profession stats
+            const professionStats = document.getElementById('professionStats');
+            professionStats.innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">Professions Played:</span>
+                    <span class="stat-value">${playerData.profile.professions_played.length}</span>
+                </div>
+                <div class="profession-list">
+                    ${playerData.profile.professions_played.map(prof => 
+                        `<span class="profession-tag">${prof}</span>`
+                    ).join('')}
+                </div>
+            `;
+        }
+        
+        function switchDateFilter(dateFilter) {
+            // Check if data exists for this filter
+            if (!allPlayerData[dateFilter]) {
+                console.warn(`No data available for ${dateFilter} filter`);
+                return;
+            }
+            
+            // Switch to new data
+            playerData = allPlayerData[dateFilter];
+            currentDateFilter = dateFilter;
+            
+            // Update UI with new data
+            loadPlayerData();
+            
+            // Update active filter button
+            document.querySelectorAll('.date-filter-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === dateFilter) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDarkMode();
+            loadPlayerData();
+            
+            // Dark mode toggle
+            document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+            
+            // Date filter buttons
+            document.querySelectorAll('.date-filter-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const filter = this.dataset.filter;
+                    if (filter !== currentDateFilter) {
+                        switchDateFilter(filter);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>"""
+    
+    # Generate individual player pages
+    for account_name in player_summaries:
+        try:
+            # Load player data for all date filters
+            safe_name = account_name.replace('.', '_').replace(' ', '_')
+            all_player_data = {}
+            
+            # Load data for each date filter
+            date_filters = ['overall', '30d', '90d', '180d']
+            for date_filter in date_filters:
+                try:
+                    if date_filter == 'overall':
+                        json_file = players_dir / f"{safe_name}.json"
+                    else:
+                        json_file = players_dir / date_filter / f"{safe_name}_{date_filter}.json"
+                    
+                    if json_file.exists():
+                        with open(json_file, 'r', encoding='utf-8') as f:
+                            all_player_data[date_filter] = json.load(f)
+                    else:
+                        print(f"  Warning: Missing {date_filter} data for {account_name}")
+                except Exception as e:
+                    print(f"  Warning: Failed to load {date_filter} data for {account_name}: {e}")
+            
+            # Only generate page if we have at least overall data
+            if 'overall' not in all_player_data:
+                print(f"  Warning: No overall data for {account_name}, skipping")
+                continue
+            
+            # Generate HTML
+            html_content = player_template.replace('{{PLAYER_NAME}}', account_name)
+            html_content = html_content.replace('{{ALL_PLAYER_DATA}}', json.dumps(all_player_data))
+            
+            # Write player page
+            html_file = players_dir / f"{safe_name}.html"
+            with open(html_file, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+                
+        except Exception as e:
+            print(f"  Warning: Failed to generate page for {account_name}: {e}")
+            continue
+    
+    print(f"✅ Generated {len(player_summaries)} player detail pages")
 
 
 def main():
@@ -2012,6 +3341,13 @@ def main():
 
     print("\nGenerating HTML UI...")
     generate_html_ui(data, output_dir)
+
+    # Player summaries now handled by modal in main interface
+    # print("\nGenerating player summaries...")
+    # player_summaries = generate_player_summaries(args.database, output_dir)
+    # 
+    # print("\nGenerating player detail pages...")
+    # generate_player_detail_pages(output_dir, player_summaries)
 
     print(f"\n✅ Web UI generation complete!")
     print(f"📁 Output directory: {output_dir.absolute()}")
