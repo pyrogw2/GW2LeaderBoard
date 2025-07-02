@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Chrisy Bear', 'Firebrand', 0, 0.37, 25.12, '#6DB6DA'], ['Degothi Everild', 'Druid', 0, 2.34, 18.68, '#7BD350'], ['Muted Girl', 'Chronomancer', 0, 1.67, 18.45, '#A750A7'], ['Paralda', 'Dragonhunter', 0, 0.13, 7.83, '#50A7D3'], ['Smile Has Minion', 'Scourge', 0, 0.32, 6.47, '#6DB691'], ['Aelius Oathbreaker', 'Berserker', 0, 0.17, 5.72, '#FFA750'], ['Dadonk', 'Scourge', 0, 0.6, 14.98, '#6DB691'], ['King Modus', 'Firebrand', 0, 0.31, 28.66, '#6DB6DA'], ['Nammes', 'Chronomancer', 0, 1.77, 16.79, '#A750A7'], ['Prof Gi', 'Spellbreaker', 0, 0.65, 19.78, '#FFB66D'], ['Biogg', 'Chronomancer', 0, 1.2, 13.69, '#A750A7'], ['Candyland Queen', 'Weaver', 0, 0.23, 2.0, '#F18783'], ['Elgar The Necro', 'Scourge', 0, 0.8, 13.98, '#6DB691'], ['Interpretor', 'Berserker', 0, 0.36, 11.56, '#FFA750'], ['Ookla The Mök', 'Firebrand', 0, 0.33, 25.2, '#6DB6DA'], ['Havocus Rex', 'Berserker', 0, 0.09, 4.31, '#FFA750'], ['Niffuries', 'Firebrand', 0, 0.81, 20.41, '#6DB6DA'], ['Too Huge', 'Dragonhunter', 0, 0.09, 6.49, '#50A7D3'], ['Varda Argel', 'Druid', 0, 1.7, 11.25, '#7BD350'], ['Zeeb Rah', 'Firebrand', 0, 0.19, 21.06, '#6DB6DA'], ['Shady Sandz', 'Scourge', 0, 0.78, 20.04, '#6DB691'], ['Interpretor', 'Spellbreaker', 0, 1.1, 29.53, '#FFB66D'], ['Hammarian', 'Scrapper', 0, 2.13, 17.87, '#A77B50'], ['Aelius Oathbreaker', 'Warrior', 0, 0.11, 0.18, '#FF9933'], ['T A R Ancalimë', 'Dragonhunter', 0, 0.18, 3.52, '#50A7D3']",
+  "max": "29.530000000000005",
+  "min": "0.18",
+  "tags": "202503172325",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202503172325-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202503172325-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Too Huge', 'Dragonhunter', 0, 0.04, 4.45, '#50A7D3'], ['Flawed Jinn', 'Chronomancer', 729, 0.34, 16.54, '#A750A7'], ['Im An Alt', 'Druid', 1024, 0.83, 17.61, '#7BD350'], ['My Boon Remover', 'Scourge', 0, 0.03, 2.32, '#6DB691'], ['Synco E', 'Catalyst', 97, 0.05, 5.12, '#F49F9C'], ['Falyn Angel', 'Reaper', 25, 0.0, 0.0, '#50A77B'], ['Havacado', 'Catalyst', 37, 0.03, 5.38, '#F49F9C'], ['Nammes', 'Chronomancer', 874, 0.43, 19.81, '#A750A7'], ['Smol Lozen', 'Druid', 1440, 0.89, 15.56, '#7BD350'], ['Zeeb Rah', 'Firebrand', 0, 0.31, 16.84, '#6DB6DA'], ['Elena Mazzara', 'Chronomancer', 1219, 0.54, 28.62, '#A750A7'], ['Luck Beastbane', 'Untamed', 13, 0.01, 4.26, '#A7E18A'], ['M E L Li S', 'Firebrand', 26, 0.41, 19.65, '#6DB6DA'], ['Neural Necro', 'Scourge', 0, 0.04, 3.11, '#6DB691'], ['Aki Yuya', 'Catalyst', 0, 0.01, 1.63, '#F49F9C'], ['Bounciness', 'Vindicator', 0, 0.26, 31.09, '#E1A593'], ['Candy Glazed', 'Weaver', 0, 0.01, 1.88, '#F18783'], ['Harg Gardfur', 'Firebrand', 0, 0.26, 29.62, '#6DB6DA'], ['Interpretor R', 'Untamed', 0, 0.01, 1.66, '#A7E18A'], ['Paralda', 'Dragonhunter', 294, 0.04, 14.06, '#50A7D3'], ['Eve Grim', 'Specter', 4133, 0.88, 21.34, '#E1A7A7'], ['Baleyen Arturius', 'Chronomancer', 1314, 1.04, 22.2, '#A750A7'], ['Too Huge', 'Willbender', 0, 0.56, 14.92, '#8AC4E1'], ['Hiraldo Iii', 'Druid', 1012, 0.71, 16.17, '#7BD350'], ['Aki Yuya', 'Weaver', 0, 0.02, 1.45, '#F18783'], ['Hammarian', 'Holosmith', 30, 0.01, 4.19, '#B6916D'], ['Envious Visit', 'Scourge', 222, 0.09, 4.31, '#6DB691'], ['Darkness Devilz', 'Scourge', 0, 0.37, 26.21, '#6DB691'], ['Serial Experimentts', 'Chronomancer', 0, 0.14, 5.58, '#A750A7'], ['Arronn', 'Chronomancer', 0, 0.34, 17.63, '#A750A7'], ['Lastsuper Hulk', 'Berserker', 0, 0.0, 0, '#FFA750'], ['Dare Devilz', 'Firebrand', 0, 0.07, 35.92, '#6DB6DA'], ['Lastsuperman', 'Guardian', 0, 0.04, 5.91, '#3399cc'], ['Interpretor', 'Spellbreaker', 0, 0.06, 8.18, '#FFB66D'], ['Hammarian', 'Scrapper', 2125, 1.19, 17.12, '#A77B50'], ['Lastsuperman', 'Willbender', 0, 0.24, 4.55, '#8AC4E1'], ['Foofoopig', 'Druid', 1879, 1.21, 10.99, '#7BD350'], ['Bäqir', 'Firebrand', 94, 0.05, 13.91, '#6DB6DA'], ['Lastsuperman', 'Dragonhunter', 0, 0.15, 2.94, '#50A7D3']",
+  "max": "35.92",
+  "min": "0.0",
+  "tags": "202506262310",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202506262310-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506262310-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

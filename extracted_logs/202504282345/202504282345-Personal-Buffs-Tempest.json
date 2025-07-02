@@ -1,0 +1,5 @@
+{
+  "caption": "{{Tempest}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Earth Attunement|https://wiki.guildwars2.com/images/a/a8/Earth_Attunement.png]] |! [img width=24 [Air Attunement|https://wiki.guildwars2.com/images/9/91/Air_Attunement.png]] |! [img width=24 [Water Attunement|https://wiki.guildwars2.com/images/3/31/Water_Attunement.png]] |h\n| 5 |<span data-tooltip=\"Zikum.4126\">Zikum</span> | {{Tempest}} | 264.26| <div class=\"xtooltip\"> 40.56% <span class=\"xtooltiptext\">3 state changes</span></div> | <div class=\"xtooltip\"> 42.52% <span class=\"xtooltiptext\">3 state changes</span></div> | <div class=\"xtooltip\"> 16.98% <span class=\"xtooltiptext\">2 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504282345-Personal-Buffs-Tempest"
+}

@@ -1,0 +1,7 @@
+{
+  "caption": "Skill Usage",
+  "creator": "Drevarr@github.com",
+  "tags": "202503232354",
+  "text": "<$macrocall $name=\"tabs\" tabsList=\"[prefix[202503232354-Skill-Usage-]]\" default={{{[prefix[202503232354-Skill-Usage-]first[]]}}} state=\"$:/temp/sel_skillUsage\"/>",
+  "title": "202503232354-Skill-Usage"
+}

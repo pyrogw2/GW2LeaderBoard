@@ -1,0 +1,6 @@
+{
+  "caption": "{{Chronomancer}} - <span data-tooltip='aznsleeper.5896'>Niffarous       </span>",
+  "tags": "202505280122",
+  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Illusionary Inspiration|https://render.guildwars2.com/file/090D289158520416A4402EBE9C92257E1309020D/1012533.png]]-Illusionary Inspiration | 9 | 2,746| 305| 497| 100.00%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Pie Ele | 490 | 0| 0|\n|Chicaina Mallcrawlr | 557 | 0| 0|\n|Fläùdgin | 497 | 0| 0|\n|Luck N | 544 | 0| 0|\n|Mesmer Kamoidra | 497 | 0| 0|\n|Professor Shikamaru | 161 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
+  "title": "202505280122-Healers-Chronomancer-Niffarous-aznsleeper.5896"
+}

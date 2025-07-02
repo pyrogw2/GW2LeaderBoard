@@ -1,0 +1,5 @@
+{
+  "caption": "{{Specter}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Endless Night|https://wiki.guildwars2.com/images/9/9e/Endless_Night.png]] |! [img width=24 [Lead Attacks|https://render.guildwars2.com/file/0E204D3ECBE43544E2366F250C3AEDDFC3A051FA/1012773.png]] |! [img width=24 [Signet of Malice|https://wiki.guildwars2.com/images/a/ae/Signet_of_Malice.png]] |! [img width=24 [Shrouded Ally|https://wiki.guildwars2.com/images/3/3a/Siphon.png]] |h\n| 7 |<span data-tooltip=\"Fungo Maligno.4081\">Fo Faum O Invisivel</span> | {{Specter}} | 3649.46| <div class=\"xtooltip\"> 24.02% <span class=\"xtooltiptext\">346 state changes</span></div> | <div class=\"xtooltip\"> 76.76% <span class=\"xtooltiptext\">580 state changes</span></div> | <div class=\"xtooltip\"> 0.13% <span class=\"xtooltiptext\">1 state changes</span></div> | - |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504102316-Personal-Buffs-Specter"
+}

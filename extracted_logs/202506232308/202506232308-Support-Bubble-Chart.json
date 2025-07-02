@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Havocus Veil', 'Chronomancer', 1351, 0.71, 17.75, '#A750A7'], ['Ill Eat Yer Boons', 'Scourge', 106, 0.05, 3.46, '#6DB691'], ['Kyra Orpheus', 'Reaper', 0, 0.01, 0.0, '#50A77B'], ['Modus R', 'Druid', 2241, 1.03, 18.97, '#7BD350'], ['Paralda', 'Dragonhunter', 311, 0.05, 14.21, '#50A7D3'], ['Allanlightstone', 'Druid', 1392, 0.79, 11.8, '#7BD350'], ['Flawed Jinn', 'Chronomancer', 1175, 0.38, 18.71, '#A750A7'], ['Luck N', 'Scourge', 134, 0.06, 2.63, '#6DB691'], ['Null Maiden', 'Firebrand', 0, 0.2, 15.76, '#6DB6DA'], ['Bounciness', 'Vindicator', 0, 0.02, 2.56, '#E1A593'], ['Folicity Smoke', 'Druid', 730, 0.56, 5.18, '#7BD350'], ['Lozen Guard', 'Firebrand', 332, 0.26, 15.69, '#6DB6DA'], ['Mellis N', 'Scourge', 57, 0.02, 2.56, '#6DB691'], ['Miwwa Miwwa', 'Chronomancer', 0, 0.55, 14.24, '#A750A7'], ['Hephyt Wolf', 'Druid', 2050, 0.89, 17.98, '#7BD350'], ['Hiraldo I', 'Spellbreaker', 8, 0.02, 1.99, '#FFB66D'], ['Persueas', 'Spellbreaker', 48, 0.03, 4.02, '#FFB66D'], ['Robotic Cucumber', 'Scourge', 0, 0.04, 2.75, '#6DB691'], ['Smiles Phantom', 'Chronomancer', 0, 0.42, 15.38, '#A750A7'], ['Candy Glazed', 'Weaver', 0, 0.02, 1.61, '#F18783'], ['Chrisy Bear', 'Firebrand', 120, 0.19, 23.77, '#6DB6DA'], ['Muted Girl', 'Chronomancer', 1322, 0.85, 17.4, '#A750A7'], ['Its Fool On Cool', 'Holosmith', 0, 0.02, 3.15, '#B6916D'], ['My Names R Ok Chill', 'Druid', 2363, 1.25, 12.17, '#7BD350'], ['Baleyen Arturius', 'Chronomancer', 1676, 1.05, 24.11, '#A750A7'], ['Too Huge', 'Dragonhunter', 0, 0.05, 3.71, '#50A7D3'], ['Nysoc', 'Druid', 2356, 0.67, 11.39, '#7BD350'], ['Strawberty', 'Scourge', 0, 0.04, 1.83, '#6DB691'], ['Niffuries', 'Firebrand', 678, 0.37, 16.52, '#6DB6DA'], ['Its Fool On Cool', 'Scrapper', 0, 0.03, 3.0, '#A77B50'], ['Midori Selvari', 'Scourge', 151, 0.12, 3.61, '#6DB691'], ['Pie Ele', 'Catalyst', 0, 0.01, 3.22, '#F49F9C'], ['Persueas', 'Warrior', 109, 0.14, 6.48, '#FF9933'], ['Candy Glazed', 'Catalyst', 0, 0.03, 1.59, '#F49F9C'], ['Stiloris', 'Catalyst', 101, 0.0, 1.23, '#F49F9C'], ['Claudia Moonheart', 'Specter', 0, 0.27, 17.36, '#E1A7A7'], ['Luck Beastbane', 'Untamed', 40, 0.02, 4.18, '#A7E18A'], ['Lady Kätheryn', 'Catalyst', 119, 0.0, 0.45, '#F49F9C']",
+  "max": "24.110000000000003",
+  "min": "0.0",
+  "tags": "202506232308",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202506232308-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506232308-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

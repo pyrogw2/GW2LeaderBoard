@@ -1,0 +1,5 @@
+{
+  "caption": "{{Soulbeast}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Opening Strike|https://render.guildwars2.com/file/A537B362D8AC54BC7907E050B596BA93E4CBE5F2/1012627.png]] |! [img width=24 [Supportive|https://wiki.guildwars2.com/images/3/32/Supportive_%28Archetype%29.png]] |! [img width=24 [Sic 'Em!|https://wiki.guildwars2.com/images/9/9d/%22Sic_%27Em%21%22.png]] |! [img width=24 [Quick Draw|https://wiki.guildwars2.com/images/3/39/Quick_Draw.png]] |h\n| 1 |Rubben Wood | {{Soulbeast}} |Sarhill.2038 | 145.41| <div class=\"xtooltip\"> 3.83% <span class=\"xtooltiptext\">3 state changes</span></div> | <div class=\"xtooltip\"> 10.98% <span class=\"xtooltiptext\">2 state changes</span></div> | <div class=\"xtooltip\"> 3.27% <span class=\"xtooltiptext\">1 state changes</span></div> | <div class=\"xtooltip\"> 2.45% <span class=\"xtooltiptext\">1 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504040129-Personal-Buffs-Soulbeast"
+}

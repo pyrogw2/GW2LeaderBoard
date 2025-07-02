@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Arronn', 'Chronomancer', 0, 0.31, 19.7, '#A750A7'], ['Kyra Orpheus', 'Reaper', 0, 0.02, 0.0, '#50A77B'], ['Mellis N', 'Scourge', 31, 0.01, 1.64, '#6DB691'], ['Modus R', 'Druid', 1381, 0.79, 18.46, '#7BD350'], ['Paralda', 'Dragonhunter', 165, 0.05, 12.77, '#50A7D3'], ['Allanlightstone', 'Druid', 1509, 0.76, 13.26, '#7BD350'], ['Baleyen Arturius', 'Chronomancer', 1538, 1.2, 27.55, '#A750A7'], ['Candygram Cupid', 'Soulbeast', 0, 0.08, 4.12, '#91DA6D'], ['Flawed Jin', 'Firebrand', 54, 0.37, 21.41, '#6DB6DA'], ['Ïnterpretor', 'Scourge', 0, 0.04, 3.64, '#6DB691'], ['Bounciness', 'Vindicator', 0, 0.02, 3.53, '#E1A593'], ['Chrisy Bearbow', 'Druid', 1794, 0.77, 28.51, '#7BD350'], ['Null Maiden', 'Firebrand', 0, 0.27, 15.6, '#6DB6DA'], ['Penumbra Nightfall', 'Scourge', 123, 0.04, 3.61, '#6DB691'], ['Persueas', 'Spellbreaker', 350, 0.2, 12.44, '#FFB66D'], ['Aelius Oathbreaker', 'Warrior', 0, 0.03, 4.56, '#FF9933'], ['Folicity Smoke', 'Druid', 719, 0.58, 8.36, '#7BD350'], ['Havacado', 'Catalyst', 0, 0.02, 4.72, '#F49F9C'], ['Niffuries', 'Firebrand', 70, 0.25, 14.56, '#6DB6DA'], ['Onigitsune', 'Scourge', 105, 0.04, 3.92, '#6DB691'], ['Harg Gardfur', 'Firebrand', 0, 0.35, 30.46, '#6DB6DA'], ['Muted Girl', 'Chronomancer', 1184, 0.96, 19.41, '#A750A7'], ['Too Huge', 'Dragonhunter', 0, 0.06, 5.91, '#50A7D3'], ['Pie Ele', 'Catalyst', 0, 0.09, 12.95, '#F49F9C'], ['Robotic Cucumber', 'Scourge', 0, 0.03, 5.03, '#6DB691'], ['Shot Across The Bow', 'Druid', 2239, 1.14, 15.4, '#7BD350'], ['Mirielnetta', 'Catalyst', 44, 0.02, 8.13, '#F49F9C'], ['Councillor Stash', 'Catalyst', 57, 0.05, 3.31, '#F49F9C'], ['Persueas', 'Warrior', 16, 0.03, 6.86, '#FF9933'], ['Dis Vanish', 'Chronomancer', 1009, 0.58, 14.48, '#A750A7'], ['My Names R Ok Chill', 'Druid', 0, 0.5, 13.81, '#7BD350'], ['Zeeb Rah', 'Firebrand', 0, 0.17, 12.66, '#6DB6DA'], ['Luck N', 'Scourge', 127, 0.04, 2.63, '#6DB691'], ['Synco E', 'Catalyst', 0, 0.0, 2.35, '#F49F9C']",
+  "max": "30.46",
+  "min": "0.0",
+  "tags": "202506162254",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202506162254-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506162254-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

@@ -1,0 +1,5 @@
+{
+  "caption": "{{Holosmith}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|![img width=24 [Light Density Amplifier|https://render.guildwars2.com/file/3994F02CE07262B156C90E9143F2720ADF2DB0FD/1769927.png]]|h\n| 3 |<span data-tooltip=\"Noe.4360\">Nôè</span> | Holosmith | 1824.89| <div class=\"xtooltip\"> 4.87% <span class=\"xtooltiptext\">1000 of 1993 (50.18% hits)<br>Damage Gained: 189,450<br></span></div>| <div class=\"xtooltip\"> -6.23% <span class=\"xtooltiptext\">877 of 1222 (71.77% hits)<br>Damage Gained: -68,560<br></span></div>| <div class=\"xtooltip\"> -3.80% <span class=\"xtooltiptext\">345 of 1272 (27.12% hits)<br>Damage Gained: -44,938<br></span></div>|",
+  "title": "202506192306-Damage-Modifiers-Holosmith"
+}

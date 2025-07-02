@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scrapper}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Object in Motion|https://render.guildwars2.com/file/FA6A0040D703B2FBF19B4592A63F3D7C2555FE02/2175049.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|h\n| 5 |<span data-tooltip=\"Disenable.1640\">Dis Engage</span> | Scrapper | 706.33| <div class=\"xtooltip\"> 7.97% <span class=\"xtooltiptext\">240 of 255 (94.12% hits)<br>Damage Gained: 6,396<br></span></div>| <div class=\"xtooltip\"> -8.85% <span class=\"xtooltiptext\">302 of 337 (89.61% hits)<br>Damage Gained: -24,125<br></span></div>| <div class=\"xtooltip\"> 6.06% <span class=\"xtooltiptext\">127 of 185 (68.65% hits)<br>Damage Gained: 3,922<br></span></div>|",
+  "title": "202505120016-Damage-Modifiers-Scrapper"
+}

@@ -1,0 +1,5 @@
+{
+  "caption": "{{Engineer}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Thermal Vision|https://render.guildwars2.com/file/F806ACB6130CED2DACC9DD804E4303327073385A/1012358.png]]|![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|h\n| 1 |<span data-tooltip=\"NSLeviathan.7938\">Izuna Kuda</span> | Engineer | 1167.74| <div class=\"xtooltip\"> 0.79% <span class=\"xtooltiptext\">268 of 413 (64.89% hits)<br>Damage Gained: 1,904<br></span></div>| <div class=\"xtooltip\"> 1.97% <span class=\"xtooltiptext\">101 of 344 (29.36% hits)<br>Damage Gained: 4,032<br></span></div>| <div class=\"xtooltip\"> -5.61% <span class=\"xtooltiptext\">135 of 253 (53.36% hits)<br>Damage Gained: -20,482<br></span></div>|",
+  "title": "202504130159-Damage-Modifiers-Engineer"
+}

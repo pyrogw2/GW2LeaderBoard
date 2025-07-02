@@ -1,0 +1,5 @@
+{
+  "caption": "{{Mirage}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Mirage Cloak|https://wiki.guildwars2.com/images/a/a5/Mirage_Cloak_%28effect%29.png]] |! [img width=24 [Mirror|https://wiki.guildwars2.com/images/b/b8/Mirror.png]] |! [img width=24 [Distortion|https://wiki.guildwars2.com/images/2/22/Distortion.png]] |h\n| 1 |<span data-tooltip=\"Griffin.8150\">Masky De Googlieyes</span> | {{Mirage}} | 36.88| <div class=\"xtooltip\"> 8.53% <span class=\"xtooltiptext\">4 state changes</span></div> | <div class=\"xtooltip\"> 6.05% <span class=\"xtooltiptext\">2 state changes</span></div> | <div class=\"xtooltip\"> 2.65% <span class=\"xtooltiptext\">1 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202505192236-Personal-Buffs-Mirage"
+}

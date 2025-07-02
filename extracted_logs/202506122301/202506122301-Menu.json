@@ -1,0 +1,13 @@
+{
+  "boon_radio": "Total",
+  "caption": "Menu",
+  "category_heal": "Squad",
+  "category_radio": "Total",
+  "damage_with_buff": "might",
+  "mitigation": "Player",
+  "radio": "Total",
+  "stacking_item": "might",
+  "tags": "202506122301",
+  "text": "<<tabs \"[[202506122301-Overview]] [[202506122301-General-Stats]] [[202506122301-Buffs]] [[202506122301-Damage-Modifiers]] [[202506122301-Mechanics]] [[202506122301-Skill-Usage]] [[202506122301-Minions]] [[202506122301-High-Scores]] [[202506122301-Top-Damage-By-Skill]] [[202506122301-Player-Damage-By-Skill]] [[202506122301-Squad-Composition]] [[202506122301-On-Tag-Review]] [[202506122301-DPS-Stats]] [[202506122301-Defense-Damage-Mitigation]] [[202506122301-Attendance]] [[202506122301-commander-summary-menu]] [[202506122301-Dashboard]]\" \"202506122301-Overview\" \"$:/temp/menutab1\">>",
+  "title": "202506122301-Menu"
+}

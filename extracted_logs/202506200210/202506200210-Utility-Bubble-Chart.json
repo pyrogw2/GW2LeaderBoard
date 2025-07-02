@@ -1,0 +1,13 @@
+{
+  "caption": "Utility Bubble Chart",
+  "data": "['Name', 'Profession', 'Condition Score', 'Strips/Sec', 'Boon Score', 'color'], ['Candy Glazed', 'Weaver', 0.01, 1.16, 1.27, '#F18783'], ['Dis Vanish', 'Chronomancer', 0.0, 1.13, 16.56, '#A750A7'], ['Foofoopig', 'Druid', 0.01, 0.12, 11.37, '#7BD350'], ['Havacado', 'Catalyst', 0.01, 1.67, 3.04, '#F49F9C'], ['Hiraldo Iii', 'Druid', 0.01, 0.31, 10.62, '#7BD350'], ['Ill Illl Il Ill', 'Dragonhunter', 0.0, 3.33, 6.15, '#50A7D3'], ['Mellis N', 'Reaper', 0.77, 3.43, 0, '#50A77B'], ['Onigitsune', 'Reaper', 0.0, 0, 0, '#50A77B'], ['Robotic Cucumber', 'Reaper', 0.84, 3.55, 0.0, '#50A77B'], ['Shea Butter', 'Tempest', 0.01, 1.02, 7.22, '#EE6F6A'], ['Smol Lozen', 'Druid', 0.0, 0, 1.34, '#7BD350'], ['Coileddarknight', 'Berserker', 0.0, 0.68, 2.68, '#FFA750'], ['Harg Gardfur', 'Firebrand', 0.01, 1.44, 24.19, '#6DB6DA'], ['Paralda', 'Dragonhunter', 0.0, 2.97, 4.5, '#50A7D3'], ['Juicy Meat Enjoyer', 'Scourge', 1.37, 7.35, 8.71, '#6DB691'], ['Tiny Baby Bear', 'Berserker', 0.05, 1.29, 5.85, '#FFA750'], ['Tiny Baby Bear', 'Spellbreaker', 0.34, 1.34, 5.64, '#FFB66D'], ['Mirielnetta', 'Catalyst', 0.0, 1.39, 2.92, '#F49F9C'], ['T A R Ancalimë', 'Dragonhunter', 0.01, 2.95, 3.15, '#50A7D3'], ['Sorrow Silver', 'Spellbreaker', 0.48, 0.67, 4.03, '#FFB66D'], ['Bounciness', 'Vindicator', 0.0, 1.93, 0.4, '#E1A593'], ['Robotic Cucumber', 'Scourge', 0.85, 4.76, 3.14, '#6DB691'], ['Shot Across The Bow', 'Untamed', 0.3, 0.84, 5.12, '#A7E18A'], ['Time Turned Fragile', 'Chronomancer', 0.29, 1.69, 13.01, '#A750A7'], ['Ephemeral Summer', 'Chronomancer', 0.0, 0.73, 11.23, '#A750A7']",
+  "max": "24.189999999999998",
+  "min": "0",
+  "tags": "202506200210",
+  "text": "__''Utility Bubble Chart''__\n\n,,Bubble size based on boon score,,\n\n{{202506200210-Utility-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506200210-Utility-Bubble-Chart",
+  "xAxis": "Strips/Sec",
+  "xData": "Strips/Sec",
+  "yAxis": "Condition Score",
+  "yData": "Condition Score"
+}

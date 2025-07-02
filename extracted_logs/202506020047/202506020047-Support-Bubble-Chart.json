@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Arronn', 'Chronomancer', 0, 0.56, 12.76, '#A750A7'], ['Elemucalist', 'Catalyst', 42, 0.0, 3.89, '#F49F9C'], ['Escäñör', 'Spellbreaker', 876, 0.2, 71.99, '#FFB66D'], ['Neurotic Ending', 'Reaper', 42, 0.0, 0.0, '#50A77B'], ['Paraldä', 'Catalyst', 109, 0.0, 7.29, '#F49F9C'], ['Synco E', 'Catalyst', 165, 0.04, 5.96, '#F49F9C'], ['Xhillabella', 'Firebrand', 115, 0.3, 16.7, '#6DB6DA'], ['Candy Glazed', 'Catalyst', 0, 0.0, 5.17, '#F49F9C'], ['Healing Surge', 'Druid', 0, 0.3, 19.6, '#7BD350'], ['Peewee Stability', 'Dragonhunter', 333, 0.12, 7.65, '#50A7D3'], ['Scowel', 'Catalyst', 71, 0.01, 8.72, '#F49F9C'], ['Time Turned Fragile', 'Chronomancer', 1174, 0.27, 29.48, '#A750A7'], ['Stiloris', 'Tempest', 0, 0.0, 10.55, '#EE6F6A'], ['Stiloris', 'Catalyst', 87, 0.0, 5.46, '#F49F9C'], ['Arwen Sieghart', 'Druid', 2663, 0.81, 30.96, '#7BD350'], ['Luck N', 'Scourge', 204, 0.06, 3.02, '#6DB691'], ['Xxkslayer', 'Reaper', 64, 0.0, 0.01, '#50A77B'], ['Dont Trust Bäqir', 'Spellbreaker', 450, 0.15, 22.42, '#FFB66D'], ['Zeeb Rah', 'Firebrand', 0, 0.2, 16.95, '#6DB6DA'], ['Pie Ele', 'Catalyst', 0, 0.01, 6.51, '#F49F9C'], ['Mellís', 'Chronomancer', 1137, 0.06, 17.18, '#A750A7'], ['Null Maiden', 'Firebrand', 0, 0.32, 18.94, '#6DB6DA'], ['Folicity Smoke', 'Druid', 875, 0.35, 19.93, '#7BD350'], ['Pello Vello', 'Catalyst', 141, 0.0, 3.48, '#F49F9C'], ['Pello Vello', 'Tempest', 1709, 1.06, 18.02, '#EE6F6A']",
+  "max": "71.98999999999998",
+  "min": "0.0",
+  "tags": "202506020047",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202506020047-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506020047-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

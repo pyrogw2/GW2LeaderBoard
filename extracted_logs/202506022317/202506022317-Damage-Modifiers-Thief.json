@@ -1,0 +1,5 @@
+{
+  "caption": "{{Thief}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Lead Attacks|https://render.guildwars2.com/file/0E204D3ECBE43544E2366F250C3AEDDFC3A051FA/1012773.png]]|![img width=24 [Ferocious Strikes|https://render.guildwars2.com/file/519532119E92CFFF9375E2E3CFC4326B46659F63/1012737.png]]|![img width=24 [Executioner|https://render.guildwars2.com/file/C44E0FC7EC5B1870214E24AD4144C55E110AD9C2/1012746.png]]|h\n| 1 |<span data-tooltip=\"Daniel.8106\">Eurynia</span> | Thief | 1008.95| <div class=\"xtooltip\"> 6.38% <span class=\"xtooltiptext\">452 of 532 (84.96% hits)<br>Damage Gained: 12,873<br></span></div>| <div class=\"xtooltip\"> 4.96% <span class=\"xtooltiptext\">93 of 170 (54.71% hits)<br>Damage Gained: 10,020<br></span></div>| <div class=\"xtooltip\"> 4.44% <span class=\"xtooltiptext\">38 of 160 (23.75% hits)<br>Damage Gained: 8,392<br></span></div>|",
+  "title": "202506022317-Damage-Modifiers-Thief"
+}

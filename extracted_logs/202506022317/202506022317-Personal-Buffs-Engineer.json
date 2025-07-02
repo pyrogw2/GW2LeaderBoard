@@ -1,0 +1,5 @@
+{
+  "caption": "{{Engineer}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Explosive Entrance|https://render.guildwars2.com/file/61510F0752BC696F210F92CA0E13AD290F13AD33/2261507.png]] |! [img width=24 [Explosive Temper|https://render.guildwars2.com/file/273E26303F072C3EEEF0DA25D5ACC1E59AECACF6/2261504.png]] |! [img width=24 [A.E.D.|https://render.guildwars2.com/file/37E6184468482B012ACE173098B0784456CA31C5/699525.png]] |h\n| 1 |<span data-tooltip=\"deen.1264\">Slayino</span> | {{Engineer}} | 1141.57| <div class=\"xtooltip\"> 22.87% <span class=\"xtooltiptext\">56 state changes</span></div> | <div class=\"xtooltip\"> 55.47% <span class=\"xtooltiptext\">178 state changes</span></div> | <div class=\"xtooltip\"> 7.48% <span class=\"xtooltiptext\">12 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202506022317-Personal-Buffs-Engineer"
+}

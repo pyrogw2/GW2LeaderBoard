@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['O Divino', 'Warrior', 83, 13.38, 0.0, '#FF9933'], ['Frozen Delirious', 'Scourge', 272, 5.84, 10.0, '#6DB691'], ['Paralda', 'Dragonhunter', 493, 5.53, 10.0, '#50A7D3'], ['Peewee Mesmer', 'Chronomancer', 119, 4.31, 13.0, '#A750A7'], ['T A R Ancalimë', 'Dragonhunter', 3696, 10.01, 13.0, '#50A7D3'], ['Varda Argel', 'Druid', 61, 5.87, 7.0, '#7BD350'], ['Flaudgîn', 'Scourge', 305, 3.95, 8.0, '#6DB691'], ['Ïnterpretor', 'Reaper', 3103, 5.5, 10.0, '#50A77B'], ['King Modus', 'Firebrand', 352, 5.62, 9.0, '#6DB6DA'], ['Nammes', 'Chronomancer', 131, 5.09, 13.0, '#A750A7'], ['Shot Across The Bow', 'Druid', 105, 9.88, 11.0, '#7BD350'], ['Biogg', 'Chronomancer', 145, 5.03, 4.0, '#A750A7'], ['Chrisy Bearbow', 'Druid', 65, 5.58, 8.0, '#7BD350'], ['Kyra Orpheus', 'Reaper', 1462, 7.69, 18.0, '#50A77B'], ['Onysc', 'Spellbreaker', 370, 5.4, 11.0, '#FFB66D'], ['Zeeb Rah', 'Firebrand', 236, 4.07, 14.0, '#6DB6DA'], ['Elgar The Necro', 'Scourge', 317, 6.04, 8.0, '#6DB691'], ['Havocus Imperator', 'Dragonhunter', 3058, 7.4, 10.0, '#50A7D3'], ['Holly Penner', 'Spellbreaker', 283, 5.15, 7.0, '#FFB66D'], ['Madam Vox', 'Chronomancer', 103, 4.49, 8.0, '#A750A7'], ['Ookla The Mök', 'Firebrand', 345, 5.13, 17.0, '#6DB6DA'], ['Hammarian', 'Holosmith', 1236, 0.0, 0.0, '#B6916D'], ['S T E P M O M', 'Scourge', 258, 3.85, 13.0, '#6DB691'], ['Prez Ashton', 'Dragonhunter', 2090, 6.55, 9.0, '#50A7D3'], ['Smiles Phantom', 'Chronomancer', 116, 4.87, 7.0, '#A750A7'], ['Niffuries', 'Firebrand', 234, 9.33, 13.0, '#6DB6DA'], ['Phaytall', 'Holosmith', 1327, 3.91, 10.0, '#B6916D'], ['Too Huge', 'Willbender', 0, 0.0, 0.0, '#8AC4E1'], ['Bäqir', 'Firebrand', 0, 0.0, 0.0, '#6DB6DA'], ['Candie Cat', 'Dragonhunter', 1046, 14.94, 16.0, '#50A7D3'], ['Prez Ashton', 'Willbender', 143, 0.0, 0.0, '#8AC4E1'], ['Too Huge', 'Dragonhunter', 2542, 0.05, 6.0, '#50A7D3']",
+  "max": "18.0",
+  "min": "0.0",
+  "tags": "202503312312",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202503312312-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202503312312-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

@@ -1,0 +1,13 @@
+{
+  "caption": "Utility Bubble Chart",
+  "data": "['Name', 'Profession', 'Condition Score', 'Strips/Sec', 'Boon Score', 'color'], ['Flaudgîn', 'Scourge', 0.95, 3.06, 24.99, '#6DB691'], ['The Spirit Eater', 'Vindicator', 0.24, 1.81, 12.59, '#E1A593'], ['Zikum', 'Tempest', 0.0, 0.42, 4.04, '#EE6F6A'], ['Chrisy Bearbow', 'Druid', 0.02, 0.26, 34.78, '#7BD350'], ['Deggu', 'Reaper', 1.16, 4.2, 0.0, '#50A77B'], ['Havocus Rex', 'Berserker', 0.0, 2.4, 8.48, '#FFA750'], ['Muted Girl', 'Chronomancer', 0.02, 1.53, 24.31, '#A750A7'], ['Paralda', 'Dragonhunter', 0.1, 1.39, 15.59, '#50A7D3'], ['Candygram Cupid', 'Soulbeast', 0.04, 1.49, 4.05, '#91DA6D'], ['Interpretor', 'Warrior', 0.01, 1.75, 6.48, '#FF9933'], ['Niffuries', 'Firebrand', 0.02, 0.53, 20.29, '#6DB6DA'], ['Null Maiden', 'Firebrand', 0.02, 2.05, 29.6, '#6DB6DA'], ['Persueas', 'Spellbreaker', 1.28, 0.95, 24.59, '#FFB66D'], ['Folicity Smoke', 'Druid', 0.01, 0.39, 18.61, '#7BD350'], ['Kyra Orpheus', 'Reaper', 1.02, 3.59, 0.01, '#50A77B'], ['Phaytall', 'Holosmith', 0.01, 2.74, 6.48, '#B6916D'], ['Smiles Phantom', 'Chronomancer', 0.01, 0.75, 20.69, '#A750A7'], ['Too Huge', 'Dragonhunter', 0.0, 2.01, 6.36, '#50A7D3'], ['Elgar The Necro', 'Reaper', 0.71, 2.5, 0, '#50A77B'], ['Gril Gamer', 'Catalyst', 0.01, 1.78, 40.82, '#F49F9C'], ['My Names R Ok Chill', 'Untamed', 0.91, 1.48, 5.23, '#A7E18A'], ['Prez Ashton', 'Firebrand', 0.01, 1.2, 28.98, '#6DB6DA'], ['Selvenant', 'Vindicator', 0.01, 2.5, 11.81, '#E1A593'], ['Space Groove Chill', 'Druid', 0.0, 0.26, 14.74, '#7BD350'], ['Vardaaaa', 'Vindicator', 0.01, 1.56, 14.39, '#E1A593'], ['Interpretor', 'Spellbreaker', 0.46, 1.22, 9.41, '#FFB66D']",
+  "max": "40.82000000000001",
+  "min": "0.0",
+  "tags": "202504282345",
+  "text": "__''Utility Bubble Chart''__\n\n,,Bubble size based on boon score,,\n\n{{202504282345-Utility-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202504282345-Utility-Bubble-Chart",
+  "xAxis": "Strips/Sec",
+  "xData": "Strips/Sec",
+  "yAxis": "Condition Score",
+  "yData": "Condition Score"
+}

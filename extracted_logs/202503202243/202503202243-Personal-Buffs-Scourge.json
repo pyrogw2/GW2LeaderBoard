@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scourge}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |! [img width=24 [Soul Barbs|https://render.guildwars2.com/file/59A0DA7819F43F1B5E689B14CE0D0ABCC0EF3173/1012585.png]] |! [img width=24 [Signet of the Locust|https://wiki.guildwars2.com/images/a/a3/Signet_of_the_Locust.png]] |h\n| 4 |Elgar The Necro | {{Scourge}} |Elgar.2091 | 1038.95| <div class=\"xtooltip\"> 7.88% <span class=\"xtooltiptext\">17 state changes</span></div> | - | - |\n| 5 |Möranà | {{Scourge}} |TheseWoodsBreatheEvil.8024 | 462.42| - | <div class=\"xtooltip\"> 20.76% <span class=\"xtooltiptext\">6 state changes</span></div> | <div class=\"xtooltip\"> 6.50% <span class=\"xtooltiptext\">4 state changes</span></div> |\n| 5 |Necro Something | {{Scourge}} |Malek.9417 | 604.86| <div class=\"xtooltip\"> 9.09% <span class=\"xtooltiptext\">11 state changes</span></div> | - | - |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202503202243-Personal-Buffs-Scourge"
+}

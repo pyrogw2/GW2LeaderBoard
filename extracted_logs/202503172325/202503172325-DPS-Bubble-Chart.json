@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Chrisy Bear', 'Firebrand', 1392, 0.0, 1.0, '#6DB6DA'], ['Degothi Everild', 'Druid', 40, 0.0, 2.0, '#7BD350'], ['Muted Girl', 'Chronomancer', 133, 0.0, 3.0, '#A750A7'], ['Paralda', 'Dragonhunter', 2769, 0.0, 1.0, '#50A7D3'], ['Smile Has Minion', 'Scourge', 1376, 0.0, 3.0, '#6DB691'], ['Aelius Oathbreaker', 'Berserker', 3932, 0.0, 1.0, '#FFA750'], ['Dadonk', 'Scourge', 434, 0.0, 2.0, '#6DB691'], ['King Modus', 'Firebrand', 588, 0.0, 1.0, '#6DB6DA'], ['Nammes', 'Chronomancer', 175, 0.0, 1.0, '#A750A7'], ['Prof Gi', 'Spellbreaker', 390, 0.0, 2.0, '#FFB66D'], ['Biogg', 'Chronomancer', 178, 0.0, 3.0, '#A750A7'], ['Candyland Queen', 'Weaver', 4141, 0.0, 0.0, '#F18783'], ['Elgar The Necro', 'Scourge', 388, 0.0, 1.0, '#6DB691'], ['Interpretor', 'Berserker', 3026, 0.0, 4.0, '#FFA750'], ['Ookla The Mök', 'Firebrand', 317, 0.0, 2.0, '#6DB6DA'], ['Havocus Rex', 'Berserker', 3681, 0.0, 2.0, '#FFA750'], ['Niffuries', 'Firebrand', 399, 0.0, 3.0, '#6DB6DA'], ['Too Huge', 'Dragonhunter', 1735, 0.0, 1.0, '#50A7D3'], ['Varda Argel', 'Druid', 44, 0.0, 2.0, '#7BD350'], ['Zeeb Rah', 'Firebrand', 298, 0.0, 2.0, '#6DB6DA'], ['Shady Sandz', 'Scourge', 693, 0.0, 1.0, '#6DB691'], ['Interpretor', 'Spellbreaker', 443, 0.0, 2.0, '#FFB66D'], ['Hammarian', 'Scrapper', 210, 0.0, 2.0, '#A77B50'], ['Aelius Oathbreaker', 'Warrior', 3061, 0.0, 1.0, '#FF9933'], ['T A R Ancalimë', 'Dragonhunter', 4968, 0.0, 2.0, '#50A7D3']",
+  "max": "4.0",
+  "min": "0.0",
+  "tags": "202503172325",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202503172325-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202503172325-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

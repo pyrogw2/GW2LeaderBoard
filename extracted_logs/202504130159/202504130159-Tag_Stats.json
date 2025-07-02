@@ -1,0 +1,5 @@
+{
+  "caption": "Tag Summary",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Summary by Command Tag |c\n| | | | Enemy |<| Squad|<| |h\n|Name | Prof | Fights | {{DownedEnemy}} | {{killed}} | {{DownedAlly}} | {{DeadAlly}} | KDR |h\n|<span data-tooltip=\"CrimeLordXx.3920\">Link Does Damage</span> | {{Spellbreaker}} | 23 | 625 | 365 | 600 | 456 | 0.80|\n|Totals |<| 23 | 625 | 365 | 600 | 456 | 0.80|f\n\n\n</div>",
+  "title": "202504130159-Tag_Stats"
+}

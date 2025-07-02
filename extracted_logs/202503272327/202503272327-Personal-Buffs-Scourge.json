@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scourge}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |! [img width=24 [Grim Specter (Target)|https://wiki.guildwars2.com/images/3/30/Grim_Specter.png]] |h\n| 4 |Lil Piggly | {{Scourge}} |Foodels.7358 | 1991.15| <div class=\"xtooltip\"> 4.76% <span class=\"xtooltiptext\">19 state changes</span></div> | <div class=\"xtooltip\"> 1.21% <span class=\"xtooltiptext\">4 state changes</span></div> |\n| 6 |Refried The Green | {{Scourge}} |Chief.7143 | 2030.76| <div class=\"xtooltip\"> 4.58% <span class=\"xtooltiptext\">20 state changes</span></div> | - |\n| 7 |Arx Goetia | {{Scourge}} |Arx.5831 | 875.25| <div class=\"xtooltip\"> 6.21% <span class=\"xtooltiptext\">11 state changes</span></div> | - |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202503272327-Personal-Buffs-Scourge"
+}

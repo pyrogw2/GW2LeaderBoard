@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scrapper}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|![img width=24 [Object in Motion|https://render.guildwars2.com/file/FA6A0040D703B2FBF19B4592A63F3D7C2555FE02/2175049.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|h\n| 5 |Drop Bandages | Scrapper |Knightmare.6849 | 2704.56| <div class=\"xtooltip\"> 4.33% <span class=\"xtooltiptext\">1013 of 1748 (57.95% hits)<br>Damage Gained: 14,578<br></span></div>| <div class=\"xtooltip\"> 8.66% <span class=\"xtooltiptext\">1713 of 1760 (97.33% hits)<br>Damage Gained: 29,249<br></span></div>| <div class=\"xtooltip\"> -7.19% <span class=\"xtooltiptext\">1581 of 2015 (78.46% hits)<br>Damage Gained: -121,285<br></span></div>|",
+  "title": "202504070027-Damage-Modifiers-Scrapper"
+}

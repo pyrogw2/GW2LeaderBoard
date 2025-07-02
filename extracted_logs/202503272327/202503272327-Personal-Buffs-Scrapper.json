@@ -1,0 +1,5 @@
+{
+  "caption": "{{Scrapper}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Med Kit|https://wiki.guildwars2.com/images/1/14/Med_Kit.png]] |h\n| 2 |Degothi Everilde | {{Scrapper}} |Degothia.7394 | 2853.19| <div class=\"xtooltip\"> 23.98% <span class=\"xtooltiptext\">112 state changes</span></div> |\n| 3 |Mikasa Ackermân | {{Scrapper}} |Ronin.4501 | 2756.08| <div class=\"xtooltip\"> 46.70% <span class=\"xtooltiptext\">73 state changes</span></div> |\n| 7 |Tsugi Nari | {{Scrapper}} |katoki.7869 | 1396.22| <div class=\"xtooltip\"> 18.28% <span class=\"xtooltiptext\">30 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202503272327-Personal-Buffs-Scrapper"
+}

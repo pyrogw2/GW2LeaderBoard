@@ -1,0 +1,5 @@
+{
+  "caption": "{{Harbinger}}-Personal-Buffs",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Signet of the Locust|https://wiki.guildwars2.com/images/a/a3/Signet_of_the_Locust.png]] |! [img width=24 [Blight|https://render.guildwars2.com/file/6B797B70EF545937F677BCD463BD23DC749B0801/2479350.png]] |! [img width=24 [Harbinger Shroud|https://wiki.guildwars2.com/images/a/ab/Harbinger_Shroud.png]] |h\n| 1 |<span data-tooltip=\"saku.2180\">Crhysal</span> | {{Harbinger}} | 304.54| <div class=\"xtooltip\"> 84.57% <span class=\"xtooltiptext\">7 state changes</span></div> | <div class=\"xtooltip\"> 36.77% <span class=\"xtooltiptext\">22 state changes</span></div> | <div class=\"xtooltip\"> 10.40% <span class=\"xtooltiptext\">3 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
+  "title": "202504142312-Personal-Buffs-Harbinger"
+}

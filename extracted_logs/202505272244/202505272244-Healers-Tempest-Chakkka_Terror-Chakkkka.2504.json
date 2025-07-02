@@ -1,0 +1,6 @@
+{
+  "caption": "{{Tempest}} - <span data-tooltip='Chakkkka.2504'>Chakkka Terror       </span>",
+  "tags": "202505272244",
+  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Vapor Form|https://render.guildwars2.com/file/0AFD20E6B71A0A967347EE55297079B80BB7AAA9/103346.png]]-Vapor Form | 1 | 0| 0| 0| 0.00%|\n|[img width=24 [Rebound|https://wiki.guildwars2.com/images/0/03/%22Rebound%21%22.png]]-Rebound | 1 | 1,950| 1,950| 1,950| 100.00%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Chakkka Terror | 0 | 43,981| 0|\n|Smokin Brand | 1,950 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
+  "title": "202505272244-Healers-Tempest-Chakkka Terror-Chakkkka.2504"
+}

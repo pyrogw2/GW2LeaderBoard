@@ -1,0 +1,5 @@
+{
+  "caption": "{{Mechanist}}",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Excessive Energy|https://render.guildwars2.com/file/B9CAA4643E9B7BD8CF7D61F67CB7C2C8F3FCEE07/1012389.png]]|![img width=24 [Barrier Signet|https://wiki.guildwars2.com/images/b/b8/Barrier_Signet.png]]|![img width=24 [Over Shield|https://render.guildwars2.com/file/F90CB6E3E23B6ECB761C062D92507799694CF4D2/1012366.png]]|h\n| 1 |<span data-tooltip=\"MDK.1967\">Little Poo Goblin</span> | Mechanist | 893.40| <div class=\"xtooltip\"> 3.38% <span class=\"xtooltiptext\">716 of 1424 (50.28% hits)<br>Damage Gained: 15,752<br></span></div>| <div class=\"xtooltip\"> -6.84% <span class=\"xtooltiptext\">731 of 921 (79.37% hits)<br>Damage Gained: -31,441<br></span></div>| <div class=\"xtooltip\"> -5.14% <span class=\"xtooltiptext\">176 of 265 (66.42% hits)<br>Damage Gained: -10,486<br></span></div>|",
+  "title": "202505192236-Damage-Modifiers-Mechanist"
+}

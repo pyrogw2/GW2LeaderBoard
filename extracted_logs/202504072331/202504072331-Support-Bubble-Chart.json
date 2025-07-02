@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Artämir', 'Dragonhunter', 0, 0.03, 1.38, '#50A7D3'], ['Elgar The Necro', 'Scourge', 239, 0.17, 4.94, '#6DB691'], ['Madam Vox', 'Chronomancer', 1085, 0.46, 13.04, '#A750A7'], ['Paralda', 'Dragonhunter', 96, 0.05, 7.59, '#50A7D3'], ['T A R Ancalimë', 'Dragonhunter', 103, 0.08, 4.18, '#50A7D3'], ['Katsu Nami', 'Scrapper', 0, 0.9, 36.33, '#A77B50'], ['Nammes', 'Chronomancer', 1014, 0.91, 8.44, '#A750A7'], ['Niffuries', 'Firebrand', 0, 0.38, 16.12, '#6DB6DA'], ['Prez Ashton', 'Dragonhunter', 0, 0.05, 3.91, '#50A7D3'], ['Dies On Tag', 'Dragonhunter', 105, 0.04, 3.05, '#50A7D3'], ['Flaudgîn', 'Scourge', 0, 0.24, 8.53, '#6DB691'], ['Holly Penner', 'Spellbreaker', 0, 0.25, 33.73, '#FFB66D'], ['Ïnterpretor', 'Reaper', 27, 0.03, 0.0, '#50A77B'], ['Smiles Phantom', 'Chronomancer', 0, 0.55, 12.31, '#A750A7'], ['Bailyen Arturius', 'Dragonhunter', 126, 0.05, 4.78, '#50A7D3'], ['Candie Cat', 'Dragonhunter', 0, 0.04, 2.23, '#50A7D3'], ['Havocus Imperator', 'Firebrand', 82, 0.14, 21.1, '#6DB6DA'], ['Too Huge', 'Dragonhunter', 0, 0.03, 3.24, '#50A7D3'], ['Eve Grim', 'Specter', 3824, 0.32, 18.62, '#E1A7A7'], ['Kyra Orpheus', 'Reaper', 0, 0.01, 0.0, '#50A77B'], ['Hunhildr', 'Firebrand', 267, 0.19, 25.09, '#6DB6DA'], ['Tia Melusine', 'Tempest', 0, 0.55, 7.66, '#EE6F6A'], ['Chrisy Bearbow', 'Druid', 0, 0.9, 22.47, '#7BD350'], ['Oscyn', 'Vindicator', 1372, 0.52, 15.57, '#E1A593'], ['Red Irís Flower', 'Druid', 0, 0.76, 14.9, '#7BD350'], ['Ty Ger Lilly', 'Tempest', 381, 0.29, 4.53, '#EE6F6A'], ['Myriad Slashes', 'Vindicator', 0, 0.04, 0.05, '#E1A593'], ['Dies On Tag', 'Firebrand', 247, 0.08, 29.21, '#6DB6DA'], ['M E L Li S', 'Firebrand', 242, 0.14, 15.79, '#6DB6DA'], ['Selvaria The Valk', 'Dragonhunter', 136, 0.03, 3.25, '#50A7D3']",
+  "max": "36.330000000000005",
+  "min": "0.0",
+  "tags": "202504072331",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202504072331-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202504072331-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

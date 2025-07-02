@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Freecar', 'Holosmith', 2878, 7.84, 12.0, '#B6916D'], ['Jarl Törmundson', 'Firebrand', 977, 3.53, 2.0, '#6DB6DA'], ['Flaudgîn', 'Scourge', 2321, 7.15, 5.0, '#6DB691'], ['Modus R', 'Druid', 19, 6.01, 4.0, '#7BD350'], ['My Names R Ok Chill', 'Untamed', 3688, 7.64, 9.0, '#A7E18A'], ['Nammes', 'Chronomancer', 137, 7.13, 4.0, '#A750A7'], ['Paralda', 'Dragonhunter', 453, 5.79, 6.0, '#50A7D3'], ['Folicity Smoke', 'Druid', 39, 5.75, 7.0, '#7BD350'], ['Interpretor R', 'Untamed', 1193, 24.52, 17.0, '#A7E18A'], ['Null Maiden', 'Firebrand', 1592, 7.11, 8.0, '#6DB6DA'], ['Penumbra Nightfall', 'Scourge', 2196, 6.69, 3.0, '#6DB691'], ['Prez Ashtonn', 'Chronomancer', 143, 6.84, 6.0, '#A750A7'], ['Havacado', 'Catalyst', 3257, 8.04, 8.0, '#F49F9C'], ['Hiraldo Iii', 'Druid', 47, 16.24, 21.0, '#7BD350'], ['Ill Eat Yer Boons', 'Scourge', 2056, 9.12, 4.0, '#6DB691'], ['Niffuries', 'Firebrand', 1008, 6.64, 12.0, '#6DB6DA'], ['Smiles Phantom', 'Chronomancer', 79, 6.88, 7.0, '#A750A7'], ['Arronn', 'Chronomancer', 143, 8.11, 8.0, '#A750A7'], ['Kyra Orpheus', 'Reaper', 1110, 10.71, 7.0, '#50A77B'], ['Midosaki', 'Scourge', 1980, 10.62, 6.0, '#6DB691'], ['Space Groove Chill', 'Druid', 17, 2.99, 3.0, '#7BD350'], ['Zeeb Rah', 'Firebrand', 780, 6.54, 7.0, '#6DB6DA'], ['Bounciness', 'Vindicator', 3643, 5.38, 7.0, '#E1A593'], ['Mellis N', 'Scourge', 1858, 7.6, 5.0, '#6DB691'], ['Mini Coil', 'Firebrand', 1419, 9.29, 16.0, '#6DB6DA'], ['Candy Guzzler', 'Daredevil', 1572, 1.2, 3.0, '#D37B7B'], ['Interpretor', 'Spellbreaker', 3783, 4.54, 6.0, '#FFB66D'], ['Too Huge', 'Willbender', 0, 0.0, 0.0, '#8AC4E1'], ['Psyche V', 'Chronomancer', 69, 6.94, 10.0, '#A750A7'], ['Allanlightstone', 'Druid', 47, 3.66, 13.0, '#7BD350'], ['Interpretor E', 'Catalyst', 4591, 10.42, 9.0, '#F49F9C'], ['Böther', 'Catalyst', 4434, 9.02, 18.0, '#F49F9C']",
+  "max": "21.0",
+  "min": "0.0",
+  "tags": "202506092225",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202506092225-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506092225-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

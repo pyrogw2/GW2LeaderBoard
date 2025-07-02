@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Candy Glazed', 'Weaver', 0, 0.02, 1.5, '#F18783'], ['Modus R', 'Druid', 3246, 1.06, 26.93, '#7BD350'], ['Prióri', 'Firebrand', 0, 0.07, 15.6, '#6DB6DA'], ['Smiles Phantom', 'Chronomancer', 0, 0.34, 16.77, '#A750A7'], ['Councillor Stash', 'Catalyst', 111, 0.06, 2.01, '#F49F9C'], ['Lellinya', 'Firebrand', 60, 0.3, 11.59, '#6DB6DA'], ['Neural Necro', 'Scourge', 0, 0.04, 1.71, '#6DB691'], ['Paralda', 'Dragonhunter', 269, 0.05, 14.2, '#50A7D3'], ['Peewee Stability', 'Firebrand', 30, 0.36, 12.41, '#6DB6DA'], ['Pewwwwwwwwwwwwwwwww', 'Chronomancer', 847, 0.44, 12.55, '#A750A7'], ['Primgar', 'Firebrand', 0, 0.19, 9.84, '#6DB6DA'], ['Time Turned Fragile', 'Chronomancer', 1391, 0.33, 23.79, '#A750A7'], ['Varda Grenths Hand', 'Reaper', 25, 0.02, 0.0, '#50A77B'], ['Aki Yuya', 'Catalyst', 0, 0.03, 0.62, '#F49F9C'], ['Chrisy Bearbow', 'Druid', 3657, 1.17, 36.09, '#7BD350'], ['Elite Dobby', 'Druid', 0, 0.44, 7.99, '#7BD350'], ['Johnny Da Reaper', 'Reaper', 14, 0.06, 0.69, '#50A77B'], ['Mellis N', 'Scourge', 16, 0.02, 1.24, '#6DB691'], ['Supp A', 'Druid', 2054, 0.43, 28.0, '#7BD350'], ['Havada Kedavra', 'Scourge', 55, 0.01, 2.02, '#6DB691'], ['Interpretor R', 'Untamed', 0, 0.01, 1.28, '#A7E18A'], ['Lightbeam Jack', 'Holosmith', 26, 0.01, 1.54, '#B6916D'], ['Leblanc Veil', 'Chronomancer', 0, 0.38, 11.52, '#A750A7'], ['Guars Conhuevo', 'Druid', 3120, 1.58, 31.69, '#7BD350'], ['Luck N', 'Scourge', 191, 0.06, 2.06, '#6DB691'], ['Boombmarley', 'Druid', 988, 0.62, 8.56, '#7BD350'], ['Tytluf Fierceclaw', 'Firebrand', 72, 0.44, 18.91, '#6DB6DA'], ['Brokmirror', 'Chronomancer', 782, 0.16, 10.27, '#A750A7'], ['Escäñör', 'Spellbreaker', 748, 0.21, 46.26, '#FFB66D'], ['Bounciness', 'Vindicator', 0, 0.02, 1.7, '#E1A593'], ['Pie Ele', 'Catalyst', 0, 0.03, 8.47, '#F49F9C'], ['Kïm Sïeghart', 'Catalyst', 122, 0.05, 5.52, '#F49F9C'], ['Jenasty', 'Chronomancer', 645, 0.25, 10.06, '#A750A7'], ['Kawaii Chill', 'Chronomancer', 1138, 0.41, 20.86, '#A750A7'], ['Lady Stéfany', 'Catalyst', 174, 0.08, 2.29, '#F49F9C'], ['Mirielnetta', 'Catalyst', 136, 0.02, 7.56, '#F49F9C'], ['Radburne', 'Firebrand', 0, 0.17, 19.76, '#6DB6DA'], ['Too Huge', 'Willbender', 0, 0.11, 2.7, '#8AC4E1'], ['Pie Ele', 'Tempest', 0, 1.12, 64.31, '#EE6F6A']",
+  "max": "64.31",
+  "min": "0.0",
+  "tags": "202505292229",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202505292229-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202505292229-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

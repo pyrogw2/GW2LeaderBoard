@@ -1,0 +1,6 @@
+{
+  "caption": "{{Firebrand}} - <span data-tooltip='Fibbs.1623'>Only Fíbbs       </span>",
+  "tags": "202505280122",
+  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Chapter 4: Shining River|https://wiki.guildwars2.com/images/1/16/Chapter_4-_Shining_River.png]]-Chapter 4: Shining River | 1 | 68| 68| 68| 13.13%|\n|[img width=24 [Tome of Resolve|https://wiki.guildwars2.com/images/a/a9/Tome_of_Resolve.png]]-Tome of Resolve | 4 | 450| 112| 118| 86.87%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Mr Pinguinô | 68 | 0| 0|\n|Only Fíbbs | 450 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
+  "title": "202505280122-Healers-Firebrand-Only Fíbbs-Fibbs.1623"
+}

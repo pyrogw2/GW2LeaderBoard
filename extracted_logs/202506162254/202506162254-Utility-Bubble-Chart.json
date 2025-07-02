@@ -1,0 +1,13 @@
+{
+  "caption": "Utility Bubble Chart",
+  "data": "['Name', 'Profession', 'Condition Score', 'Strips/Sec', 'Boon Score', 'color'], ['Arronn', 'Chronomancer', 0.01, 0.81, 19.7, '#A750A7'], ['Kyra Orpheus', 'Reaper', 0.39, 2.15, 0.0, '#50A77B'], ['Mellis N', 'Scourge', 0.26, 3.97, 1.64, '#6DB691'], ['Modus R', 'Druid', 0.0, 0.2, 18.46, '#7BD350'], ['Paralda', 'Dragonhunter', 0.03, 0.76, 12.77, '#50A7D3'], ['Allanlightstone', 'Druid', 0.0, 0.18, 13.26, '#7BD350'], ['Baleyen Arturius', 'Chronomancer', 0.09, 0.92, 27.55, '#A750A7'], ['Candygram Cupid', 'Soulbeast', 0.04, 0.98, 4.12, '#91DA6D'], ['Flawed Jin', 'Firebrand', 0.0, 3.64, 21.41, '#6DB6DA'], ['Ïnterpretor', 'Scourge', 0.38, 5.2, 3.64, '#6DB691'], ['Bounciness', 'Vindicator', 0.0, 2.16, 3.53, '#E1A593'], ['Chrisy Bearbow', 'Druid', 0.0, 0.22, 28.51, '#7BD350'], ['Null Maiden', 'Firebrand', 0.0, 3.75, 15.6, '#6DB6DA'], ['Penumbra Nightfall', 'Scourge', 0.32, 4.98, 3.61, '#6DB691'], ['Persueas', 'Spellbreaker', 0.55, 0.79, 12.44, '#FFB66D'], ['Aelius Oathbreaker', 'Warrior', 0.0, 1.43, 4.56, '#FF9933'], ['Folicity Smoke', 'Druid', 0.0, 0.05, 8.36, '#7BD350'], ['Havacado', 'Catalyst', 0.01, 0.93, 4.72, '#F49F9C'], ['Niffuries', 'Firebrand', 0.0, 1.77, 14.56, '#6DB6DA'], ['Onigitsune', 'Scourge', 0.29, 4.15, 3.92, '#6DB691'], ['Harg Gardfur', 'Firebrand', 0.0, 0.34, 30.46, '#6DB6DA'], ['Muted Girl', 'Chronomancer', 0.0, 0.83, 19.41, '#A750A7'], ['Too Huge', 'Dragonhunter', 0.0, 1.24, 5.91, '#50A7D3'], ['Pie Ele', 'Catalyst', 0.01, 1.4, 12.95, '#F49F9C'], ['Robotic Cucumber', 'Scourge', 0.42, 3.15, 5.03, '#6DB691'], ['Shot Across The Bow', 'Druid', 0.0, 0.29, 15.4, '#7BD350'], ['Mirielnetta', 'Catalyst', 0.0, 0.67, 8.13, '#F49F9C'], ['Councillor Stash', 'Catalyst', 0.0, 0.74, 3.31, '#F49F9C'], ['Persueas', 'Warrior', 0.03, 0.42, 6.86, '#FF9933'], ['Dis Vanish', 'Chronomancer', 0.04, 0.33, 14.48, '#A750A7'], ['My Names R Ok Chill', 'Druid', 0.0, 0.05, 13.81, '#7BD350'], ['Zeeb Rah', 'Firebrand', 0.0, 0.47, 12.66, '#6DB6DA'], ['Luck N', 'Scourge', 0.13, 1.87, 2.63, '#6DB691'], ['Synco E', 'Catalyst', 0.0, 0.66, 2.35, '#F49F9C']",
+  "max": "30.46",
+  "min": "0.0",
+  "tags": "202506162254",
+  "text": "__''Utility Bubble Chart''__\n\n,,Bubble size based on boon score,,\n\n{{202506162254-Utility-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506162254-Utility-Bubble-Chart",
+  "xAxis": "Strips/Sec",
+  "xData": "Strips/Sec",
+  "yAxis": "Condition Score",
+  "yData": "Condition Score"
+}

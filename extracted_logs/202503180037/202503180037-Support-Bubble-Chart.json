@@ -1,0 +1,13 @@
+{
+  "caption": "Support Bubble Chart",
+  "data": "['Name', 'Profession', 'Hps + Bps', 'Cleanse/Sec', 'Boon Score', 'color'], ['Chrisy Bear', 'Firebrand', 0, 0.2, 21.66, '#6DB6DA'], ['Degothi Everild', 'Druid', 0, 1.21, 18.82, '#7BD350'], ['Muted Girl', 'Chronomancer', 0, 0.75, 14.06, '#A750A7'], ['Paralda', 'Dragonhunter', 0, 0.11, 5.1, '#50A7D3'], ['Smile Has Minion', 'Scourge', 0, 0.08, 3.83, '#6DB691'], ['Dadonk', 'Scourge', 0, 0.32, 15.66, '#6DB691'], ['Interpretor', 'Berserker', 0, 0.09, 1.62, '#FFA750'], ['King Modus', 'Firebrand', 0, 0.15, 23.5, '#6DB6DA'], ['Nammes', 'Chronomancer', 0, 0.38, 13.61, '#A750A7'], ['Prof Gi', 'Spellbreaker', 0, 0.3, 13.75, '#FFB66D'], ['Biogg', 'Chronomancer', 0, 0.55, 9.77, '#A750A7'], ['Elgar The Necro', 'Scourge', 0, 0.36, 10.07, '#6DB691'], ['Hammarian', 'Scrapper', 0, 1.1, 13.69, '#A77B50'], ['Ookla The Mök', 'Firebrand', 0, 0.15, 20.81, '#6DB6DA'], ['T A R Ancalimë', 'Dragonhunter', 0, 0.14, 4.45, '#50A7D3'], ['Havocus Rex', 'Berserker', 0, 0.07, 1.34, '#FFA750'], ['Niffuries', 'Firebrand', 0, 0.34, 13.31, '#6DB6DA'], ['Shady Sandz', 'Scourge', 0, 0.19, 9.64, '#6DB691'], ['Too Huge', 'Willbender', 0, 0.38, 8.4, '#8AC4E1'], ['Varda Lyssas Cursed', 'Chronomancer', 0, 0.12, 13.18, '#A750A7'], ['Candyland Queen', 'Weaver', 0, 0.02, 1.63, '#F18783'], ['Dumberica', 'Berserker', 0, 0.16, 0, '#FFA750'], ['Nomosaurus', 'Chronomancer', 0, 0.22, 14.11, '#A750A7'], ['Patrícia Windfinder', 'Spellbreaker', 0, 0.07, 2.41, '#FFB66D'], ['Too Huge', 'Dragonhunter', 0, 0.07, 6.03, '#50A7D3'], ['Dumberica', 'Spellbreaker', 0, 0.07, 0.98, '#FFB66D'], ['Nammes', 'Mirage', 0, 0.27, 4.43, '#B66DB6'], ['Phobos Wrench', 'Firebrand', 0, 0.0, 0, '#6DB6DA'], ['Raffey Pewpew', 'Druid', 0, 1.01, 15.5, '#7BD350'], ['Ham N Cream', 'Firebrand', 0, 0.53, 14.98, '#6DB6DA'], ['Interpretor', 'Warrior', 0, 0.11, 2.2, '#FF9933'], ['Phobos Dei Mos', 'Firebrand', 0, 0.34, 11.08, '#6DB6DA'], ['Fromfallen', 'Spellbreaker', 0, 0.04, 3.66, '#FFB66D'], ['Frozen Delirious', 'Scourge', 0, 0.58, 18.57, '#6DB691'], ['Z Y A N', 'Tempest', 0, 1.34, 12.28, '#EE6F6A'], ['Ty Ger Lilly', 'Tempest', 0, 0.71, 7.54, '#EE6F6A'], ['Creamy Sun Tea', 'Reaper', 0, 0.0, 0, '#50A77B']",
+  "max": "23.5",
+  "min": "0",
+  "tags": "202503180037",
+  "text": "__''Support Bubble Chart''__\n\n,,Bubble size based on weighted boon generation,,\n\n{{202503180037-Support-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202503180037-Support-Bubble-Chart",
+  "xAxis": "Cleanse/Sec",
+  "xData": "Cleanse/Sec",
+  "yAxis": "Hps + Bps",
+  "yData": "Hps + Bps"
+}

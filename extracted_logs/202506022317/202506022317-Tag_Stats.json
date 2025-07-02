@@ -1,0 +1,5 @@
+{
+  "caption": "Tag Summary",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Summary by Command Tag |c\n| | | | Enemy |<| Squad|<| |h\n|Name | Prof | Fights | {{DownedEnemy}} | {{killed}} | {{DownedAlly}} | {{DeadAlly}} | KDR |h\n|<span data-tooltip=\"ParaldaWind.4523\">Paralda</span> | {{Dragonhunter}} | 31 | 763 | 442 | 789 | 522 | 0.85|\n|<span data-tooltip=\"Interpretor.3091\">Interpretor</span> | {{Spellbreaker}} | 1 | 2 | 0 | 23 | 19 | 0.00|\n|Totals |<| 32 | 765 | 442 | 812 | 541 | 0.82|f\n\n\n</div>",
+  "title": "202506022317-Tag_Stats"
+}

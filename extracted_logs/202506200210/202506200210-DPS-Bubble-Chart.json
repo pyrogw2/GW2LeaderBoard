@@ -1,0 +1,13 @@
+{
+  "caption": "DPS Bubble Chart",
+  "data": "['Name', 'Profession', 'Damage/Sec', 'Down Contr %', 'Dmg to Down %', 'color'], ['Candy Glazed', 'Weaver', 3274, 8.19, 21.0, '#F18783'], ['Dis Vanish', 'Chronomancer', 125, 15.57, 33.0, '#A750A7'], ['Foofoopig', 'Druid', 18, 12.61, 24.0, '#7BD350'], ['Havacado', 'Catalyst', 2381, 11.26, 22.0, '#F49F9C'], ['Hiraldo Iii', 'Druid', 43, 17.3, 39.0, '#7BD350'], ['Ill Illl Il Ill', 'Dragonhunter', 3316, 17.02, 35.0, '#50A7D3'], ['Mellis N', 'Reaper', 1402, 19.71, 32.0, '#50A77B'], ['Onigitsune', 'Reaper', 0, 0.0, 0.0, '#50A77B'], ['Robotic Cucumber', 'Reaper', 1762, 17.57, 30.0, '#50A77B'], ['Shea Butter', 'Tempest', 134, 13.91, 28.0, '#EE6F6A'], ['Smol Lozen', 'Druid', 0, 0.0, 0.0, '#7BD350'], ['Coileddarknight', 'Berserker', 1085, 21.56, 35.0, '#FFA750'], ['Harg Gardfur', 'Firebrand', 1040, 17.38, 30.0, '#6DB6DA'], ['Paralda', 'Dragonhunter', 2619, 17.14, 27.0, '#50A7D3'], ['Juicy Meat Enjoyer', 'Scourge', 2252, 16.76, 36.0, '#6DB691'], ['Tiny Baby Bear', 'Berserker', 1714, 6.73, 6.0, '#FFA750'], ['Tiny Baby Bear', 'Spellbreaker', 2580, 14.45, 20.0, '#FFB66D'], ['Mirielnetta', 'Catalyst', 1274, 13.55, 33.0, '#F49F9C'], ['T A R Ancalimë', 'Dragonhunter', 2721, 15.07, 23.0, '#50A7D3'], ['Sorrow Silver', 'Spellbreaker', 631, 8.57, 16.0, '#FFB66D'], ['Bounciness', 'Vindicator', 1666, 10.95, 22.0, '#E1A593'], ['Robotic Cucumber', 'Scourge', 750, 6.9, 19.0, '#6DB691'], ['Shot Across The Bow', 'Untamed', 474, 22.41, 15.0, '#A7E18A'], ['Time Turned Fragile', 'Chronomancer', 57, 5.37, 61.0, '#A750A7'], ['Ephemeral Summer', 'Chronomancer', 92, 18.03, 19.0, '#A750A7']",
+  "max": "61.0",
+  "min": "0.0",
+  "tags": "202506200210",
+  "text": "__''DPS Bubble Chart''__\n\n,,Bubble size based on against downed damage % of Damage{{202506200210-DPS-Bubble-Chart||BubbleChart_Template}}",
+  "title": "202506200210-DPS-Bubble-Chart",
+  "xAxis": "Down Contr %",
+  "xData": "Down Contr %",
+  "yAxis": "Damage/Sec",
+  "yData": "Damage/Sec"
+}

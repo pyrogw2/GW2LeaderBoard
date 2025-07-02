@@ -1,0 +1,5 @@
+{
+  "caption": "Tag Summary",
+  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Summary by Command Tag |c\n| | | | | Enemy |<| Squad|<| |h\n|Name |Account | Prof | Fights | {{DownedEnemy}} | {{killed}} | {{DownedAlly}} | {{DeadAlly}} | KDR |h\n|Uncle Donk |Dadonk.7514 | {{Dragonhunter}} | 8 | 5 | 0 | 125 | 78 | 0.00|\n|Paralda |ParaldaWind.4523 | {{Firebrand}} | 1 | 0 | 0 | 14 | 8 | 0.00|\n|Paralda |ParaldaWind.4523 | {{Dragonhunter}} | 9 | 55 | 26 | 106 | 54 | 0.48|\n|Totals |<|<| 18 | 60 | 26 | 245 | 140 | 0.19|f\n\n\n</div>",
+  "title": "202503202243-Tag_Stats"
+}
