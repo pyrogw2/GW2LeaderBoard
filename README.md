@@ -1,20 +1,23 @@
 # GW2 WvW Leaderboard System
 
-An automated system for parsing Guild Wars 2 World vs World combat logs and generating skill-based rankings using the Glicko rating system.
+An automated system for parsing Guild Wars 2 World vs World combat logs and generating skill-based rankings using the Glicko-2 rating system with advanced statistical analysis.
 
 ## 🏆 Features
 
-- **9 Performance Metrics**: DPS, healing, barrier, cleanses, strips, stability, resistance, might, and down contribution
-- **Glicko Rating System**: Advanced skill ratings with uncertainty and volatility tracking
-- **Profession-Specific Rankings**: Weighted leaderboards for different WvW roles
-- **Time-Based Filtering**: View performance across different time periods
+- **11 Performance Metrics**: DPS, healing, barrier, cleanses, strips, stability, resistance, might, protection, down contribution, and burst consistency
+- **High Scores System**: Record-breaking single performance instances (highest burst damage, skill damage, single-fight DPS)
+- **Glicko-2 Rating System**: Pure skill ratings with uncertainty and volatility tracking
+- **Player Summary Modal**: Click any player name for detailed performance breakdowns by profession and metric
+- **Profession-Specific Rankings**: Weighted leaderboards for different WvW roles with automatic build detection
+- **Guild Integration**: GW2 API integration for guild member filtering and tracking
+- **Time-Based Filtering**: View performance across different time periods (All Time, 30d, 90d, 180d)
 - **Automated Sync**: Smart detection and processing of new combat logs
-- **Static Web Interface**: Deploy anywhere with interactive sorting and filtering
+- **Static Web Interface**: Deploy anywhere with interactive sorting, filtering, and dark mode support
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. Check for new logs and process them
+# 1. Check for new logs and process them automatically
 python sync_logs.py --auto-confirm
 
 # 2. Or manually process existing logs
@@ -39,16 +42,38 @@ python generate_web_ui.py gw2_comprehensive.db -o web_ui_output
 | **Stability** | Stability generation | Support |
 | **Resistance** | Resistance generation | Support |
 | **Might** | Might generation | Support |
-| **Down Contribution** | Damage to down enemies | All |
+| **Protection** | Protection generation | Support |
+| **Down Contribution** | Damage to downed enemies | All |
+| **Burst Consistency** | Sustained high burst damage | DPS |
+
+## 🎯 Advanced Features
+
+### High Scores System
+- **Highest 1 Sec Burst**: Peak burst damage in a single second
+- **Highest Outgoing Skill Damage**: Single highest skill damage dealt
+- **Highest Incoming Skill Damage**: Single highest skill damage received
+- **Highest Single Fight DPS**: Best DPS performance in a single encounter
+
+### Player Analysis
+- **Interactive Player Modals**: Click any player name to view detailed breakdowns
+- **Profession-Based Filtering**: View metrics filtered by specific professions/builds
+- **Guild Member Integration**: Automatic detection and filtering of guild members
+- **Performance Trends**: Track improvement over different time periods
+
+### Profession Recognition
+- **Automatic Build Detection**: China DH, Boon Vindicator, and other variants
+- **Weighted Metrics**: Different professions evaluated on role-appropriate metrics
+- **Specialized Leaderboards**: Separate rankings for each profession with custom weightings
 
 ## ⚙️ Requirements
 
-- **Python 3.7+** with `requests` library
+- **Python 3.7+** with `requests` and `beautifulsoup4` libraries
 - **TiddlyWiki combat logs** (extracted or direct)
 - **Modern web browser** for viewing leaderboards
+- **GW2 API Key** (optional, for guild features)
 
 ```bash
-pip install requests
+pip install requests beautifulsoup4
 ```
 
 ## 📖 Documentation
@@ -66,42 +91,49 @@ Comprehensive documentation is available in the `docs/` directory:
 ## 🔧 Core Components
 
 - **`parse_logs_enhanced.py`** - Extracts performance data from TiddlyWiki logs
-- **`glicko_rating_system.py`** - Calculates skill ratings using Glicko algorithm
-- **`generate_web_ui.py`** - Creates interactive web interface
+- **`glicko_rating_system.py`** - Calculates skill ratings using Glicko-2 algorithm
+- **`generate_web_ui.py`** - Creates interactive web interface with player modals
 - **`sync_logs.py`** - Automated log discovery and processing
+- **`guild_manager.py`** - GW2 API integration for guild member management
 
 ## 🌐 Example Output
 
 The system generates professional leaderboards with:
 
 - **Individual metric rankings** (DPS, Healing, etc.)
+- **High Scores leaderboards** with record-breaking performances
 - **Profession-specific leaderboards** with role-appropriate weightings
+- **Interactive player modals** showing detailed performance by profession
 - **Date filtering** (All Time, 30d, 90d, 180d)
-- **Glicko ratings** showing skill level and confidence
-- **Composite scores** combining multiple performance factors
+- **Guild member filtering** with GW2 API integration
+- **Glicko-2 ratings** showing pure skill level with uncertainty tracking
+- **Dark mode support** and responsive design
 
 ## 🎯 Use Cases
 
-- **Guild Performance Tracking** - Monitor member improvement over time
-- **Meta Analysis** - Understand profession effectiveness in different periods
-- **Recruitment** - Identify skilled players across different roles
-- **Personal Improvement** - Track your own skill development
-- **Community Leaderboards** - Public rankings for server communities
+- **Guild Performance Tracking** - Monitor member improvement with detailed player analysis
+- **Meta Analysis** - Understand profession effectiveness across different time periods
+- **Recruitment** - Identify skilled players across different roles with comprehensive metrics
+- **Personal Improvement** - Track your own skill development with profession-specific insights
+- **Community Leaderboards** - Public rankings with interactive features for server communities
+- **Record Tracking** - High scores system for celebrating exceptional performances
 
 ## 🔄 Automated Workflow
 
 1. **Sync** detects new logs from configured sources
-2. **Parser** extracts performance metrics from TiddlyWiki format
-3. **Rating System** calculates Glicko ratings using session-based z-scores
-4. **Generator** creates updated web interface with latest rankings
-5. **Deploy** static files to any web hosting platform
+2. **Parser** extracts 11 performance metrics from TiddlyWiki format
+3. **Rating System** calculates pure Glicko-2 ratings using session-based z-scores
+4. **Guild Manager** integrates GW2 API data for member filtering
+5. **Generator** creates updated web interface with interactive player modals
+6. **Deploy** static files to any web hosting platform
 
 ## 📈 Rating System
 
-Uses the **Glicko rating system** (enhanced Elo) with:
+Uses the **Glicko-2 rating system** (enhanced Elo) with:
 
 - **Session-based comparison** - Players ranked against others in same fight
 - **Z-score normalization** - Fair comparison across different group skill levels  
+- **Pure skill ratings** - No artificial bonuses or composite scoring
 - **Uncertainty tracking** - More/less confident ratings based on game count
 - **Volatility measurement** - Consistency of performance over time
 - **Profession weighting** - Different metrics matter for different roles
@@ -110,14 +142,15 @@ Uses the **Glicko rating system** (enhanced Elo) with:
 
 ```
 Combat Logs (TiddlyWiki) → Parser → Database (SQLite) → Rating Engine → Web UI
-                            ↑                              ↑
-                      Sync Service ←------------------  Automation
+                            ↑                              ↑         ↑
+                      Sync Service ←------------------  Guild API  Modal System
 ```
 
-**Database**: SQLite with performance data and calculated ratings  
-**Web Interface**: Static HTML/CSS/JS (deploy anywhere)  
+**Database**: SQLite with performance data, ratings, and guild member cache  
+**Web Interface**: Static HTML/CSS/JS with interactive modals and dark mode  
 **Sync**: Automated detection and processing of new logs  
-**Rating Engine**: Glicko algorithm with WvW-specific adaptations
+**Rating Engine**: Pure Glicko-2 algorithm with WvW-specific adaptations  
+**Guild Integration**: GW2 API v2 for member validation and filtering
 
 ## 🤝 Contributing
 
@@ -125,9 +158,10 @@ This system is designed for the Guild Wars 2 WvW community. Contributions welcom
 
 - New metrics and profession support
 - Performance optimizations  
-- UI improvements
+- UI improvements and accessibility
 - Documentation enhancements
 - Bug fixes and testing
+- Guild and API integrations
 
 ## 📄 License
 
