@@ -137,7 +137,8 @@ METRIC_CATEGORIES = {
     'Stability': 'stability_gen_per_sec',
     'Resistance': 'resistance_gen_per_sec',
     'Might': 'might_gen_per_sec',
-    'Downs': 'down_contribution_per_sec'
+    'Downs': 'down_contribution_per_sec',
+    'Burst Consistency': 'burst_consistency_1s'
 }
 
 # Profession-specific metric weightings for composite scores

@@ -323,6 +323,41 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     return results
 
 
+def get_high_scores_data(db_path: str, limit: int = 100):
+    """Get top burst damage records for High Scores section (non-Glicko based)."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Check if guild_members table exists for guild membership info
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = cursor.fetchone() is not None
+    
+    if guild_table_exists:
+        # Query with guild membership info
+        cursor.execute('''
+            SELECT p.account_name, p.profession, p.burst_damage_1s, p.timestamp,
+                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+            FROM player_performances p
+            LEFT JOIN guild_members gm ON p.account_name = gm.account_name
+            WHERE p.burst_damage_1s > 0
+            ORDER BY p.burst_damage_1s DESC
+            LIMIT ?
+        ''', (limit,))
+    else:
+        # Query without guild membership info
+        cursor.execute('''
+            SELECT account_name, profession, burst_damage_1s, timestamp, 0 as is_guild_member
+            FROM player_performances
+            WHERE burst_damage_1s > 0
+            ORDER BY burst_damage_1s DESC
+            LIMIT ?
+        ''', (limit,))
+    
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
+
 def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[str, Any]:
     """Generate all leaderboard data in JSON format. 
     
@@ -534,12 +569,13 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
         filter_data = {
             "individual_metrics": {},
             "profession_leaderboards": {},
-            "overall_leaderboard": []
+            "overall_leaderboard": [],
+            "high_scores": {}
         }
 
         individual_categories = [
             "DPS", "Healing", "Barrier", "Cleanses", "Strips",
-            "Stability", "Resistance", "Might", "Downs"
+            "Stability", "Resistance", "Might", "Downs", "Burst Consistency"
         ]
 
         # When using a date filter, we need to recalculate ratings. For thread safety,
@@ -673,6 +709,21 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                     timestamp = datetime.now().strftime('%H:%M:%S')
                     print(f"[{worker_id}] ❌ {timestamp} Profession {profession} failed ({completed_professions}/{len(prof_futures)}): {e}")
                     filter_data["profession_leaderboards"][profession] = None
+
+        print(f"[{worker_id}] Processing high scores...")
+        # Get high scores data (top burst damage records)
+        high_scores_results = get_high_scores_data(db_path, limit=100)
+        filter_data["high_scores"]["Highest 1 Sec Burst"] = [
+            {
+                "rank": i + 1,
+                "account_name": account,
+                "profession": profession,
+                "burst_damage": int(burst_damage),
+                "timestamp": timestamp,
+                "is_guild_member": bool(is_guild_member)
+            }
+            for i, (account, profession, burst_damage, timestamp, is_guild_member) in enumerate(high_scores_results)
+        ]
         
         print(f"[{worker_id}] Worker completed successfully")
         return filter_data
@@ -711,6 +762,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
 
         <nav class="nav-tabs">
             <button class="tab-button active" data-tab="individual">Individual Metrics</button>
+            <button class="tab-button" data-tab="high-scores">High Scores</button>
             <button class="tab-button" data-tab="professions">Professions</button>
             <button class="tab-button" data-tab="about">About</button>
         </nav>
@@ -745,9 +797,22 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="metric-button" data-metric="Resistance">Resistance</button>
                     <button class="metric-button" data-metric="Might">Might</button>
                     <button class="metric-button" data-metric="Downs">DownCont</button>
+                    <button class="metric-button" data-metric="Burst Consistency">Burst Consistency</button>
                 </div>
                 
                 <div id="individual-leaderboard" class="leaderboard-container"></div>
+            </div>
+
+            <!-- High Scores -->
+            <div id="high-scores" class="tab-content">
+                <h2>High Scores</h2>
+                <p class="description">Top single-instance burst damage records (non-Glicko based).</p>
+                
+                <div class="metric-selector">
+                    <button class="metric-button active" data-metric="Highest 1 Sec Burst">Highest 1 Sec Burst</button>
+                </div>
+                
+                <div id="high-scores-leaderboard" class="leaderboard-container"></div>
             </div>
 
             <!-- Profession Leaderboards -->
@@ -1197,6 +1262,7 @@ let currentDateFilter = 'overall';
 let currentTab = 'individual';
 let currentMetric = 'DPS';
 let currentProfession = 'Firebrand';
+let currentHighScore = 'Highest 1 Sec Burst';
 let currentGuildFilter = 'all_players';
 
 // GW2 Wiki profession icons
@@ -1343,10 +1409,13 @@ function switchTab(tabName) {{
 
 function selectMetric(metric) {{
     currentMetric = metric;
+    currentHighScore = metric;  // Also update high score selection
     document.querySelectorAll('.metric-button').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`[data-metric="${{metric}}"]`).classList.add('active');
     if (currentTab === 'individual') {{
         loadIndividualMetric(metric);
+    }} else if (currentTab === 'high-scores') {{
+        loadHighScores(metric);
     }}
 }}
 
@@ -1366,6 +1435,9 @@ function loadCurrentData() {{
             break;
         case 'individual':
             loadIndividualMetric(currentMetric);
+            break;
+        case 'high-scores':
+            loadHighScores(currentHighScore);
             break;
         case 'professions':
             loadProfessionLeaderboard(currentProfession);
@@ -1483,6 +1555,40 @@ function loadProfessionLeaderboard(profession) {{
     // Add guild member column if guild filtering is enabled
     if (leaderboardData.guild_enabled) {{
         columns.splice(2, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+    }}
+    
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+}}
+
+function loadHighScores(metric) {{
+    const container = document.getElementById('high-scores-leaderboard');
+    const rawData = getCurrentData().high_scores[metric];
+    
+    if (!rawData || rawData.length === 0) {{
+        container.innerHTML = '<p>No high scores data available.</p>';
+        return;
+    }}
+    
+    // Filter data based on guild membership
+    const filteredData = filterDataByGuildMembership(rawData);
+    
+    // Reassign ranks after filtering
+    const dataWithNewRanks = filteredData.map((player, index) => ({{
+        ...player,
+        rank: index + 1
+    }}));
+    
+    const columns = [
+        {{ key: 'rank', label: 'Rank', type: 'rank' }},
+        {{ key: 'account_name', label: 'Account', type: 'account' }},
+        {{ key: 'profession', label: 'Profession', type: 'profession' }},
+        {{ key: 'burst_damage', label: 'Burst Damage', type: 'number' }},
+        {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+    ];
+    
+    // Add guild member column if guild filtering is enabled
+    if (leaderboardData.guild_enabled) {{
+        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);

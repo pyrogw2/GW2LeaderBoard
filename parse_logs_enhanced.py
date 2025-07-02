@@ -40,6 +40,9 @@ class PlayerPerformance:
     might_gen_per_sec: float = 0.0
     # Downstate Metrics (per second)
     down_contribution_per_sec: float = 0.0
+    # Burst Metrics
+    burst_damage_1s: int = 0  # Bur-Total (1)s - for High Scores section
+    burst_consistency_1s: int = 0  # Ch5Ca-Total (1)s - for Glicko rating
     # Date fields
     parsed_date: date = None
 
@@ -59,7 +62,8 @@ def parse_timestamp_to_date(timestamp: str) -> date:
 
 def extract_tooltip(text: str) -> str:
     """Extract account name from tooltip attribute."""
-    match = re.search(r'data-tooltip="([^"]+)"', text)
+    # Try both single and double quotes
+    match = re.search(r'data-tooltip=["\']([^"\']+)["\']', text)
     return match.group(1) if match else ""
 
 
@@ -375,6 +379,96 @@ def parse_boon_generation_table(boon_text: str) -> Dict[str, Dict]:
     return boon_stats
 
 
+def parse_burst_damage_table(burst_text: str) -> Dict[str, Dict]:
+    """Parse Bur-Total (1)s data for highest 1-second burst damage."""
+    burst_stats = {}
+    
+    lines = burst_text.split('\n')
+    data_rows = [line for line in lines if line.startswith('|') and not line.startswith('|!') and not line.startswith('|thead')]
+    
+    for row in data_rows:
+        if '|h' in row or not row.strip() or '|!' in row or '|c' in row:
+            continue
+            
+        try:
+            cells = [cell.strip() for cell in row.split('|')[1:-1]]  # Remove empty first/last
+            if len(cells) < 6:
+                continue
+            
+            # Extract account name from tooltip
+            name_cell = cells[0]
+            account_name = extract_tooltip(name_cell)
+            if not account_name:
+                continue
+                
+            # Parse profession
+            prof_cell = cells[1]
+            prof_match = re.search(r'{{(\w+)}}', prof_cell)
+            profession = prof_match.group(1) if prof_match else ""
+            
+            # Extract Bur-Total (1)s value - should be column 5 (0-indexed)
+            burst_1s_cell = cells[5] if len(cells) > 5 else ""
+            burst_1s = extract_span_value(burst_1s_cell) if burst_1s_cell else 0
+            
+            key = f"{account_name}_{profession}"
+            burst_stats[key] = {
+                'account_name': account_name,
+                'profession': profession,
+                'burst_damage_1s': int(burst_1s)
+            }
+            
+        except (ValueError, IndexError) as e:
+            print(f"Error parsing burst damage row: {row[:100]}... - {e}")
+            continue
+    
+    return burst_stats
+
+
+def parse_burst_consistency_table(consistency_text: str) -> Dict[str, Dict]:
+    """Parse Ch5Ca-Total (1)s data for burst consistency (Glicko rating)."""
+    consistency_stats = {}
+    
+    lines = consistency_text.split('\n')
+    data_rows = [line for line in lines if line.startswith('|') and not line.startswith('|!') and not line.startswith('|thead')]
+    
+    for row in data_rows:
+        if '|h' in row or not row.strip() or '|!' in row or '|c' in row:
+            continue
+            
+        try:
+            cells = [cell.strip() for cell in row.split('|')[1:-1]]  # Remove empty first/last
+            if len(cells) < 6:
+                continue
+            
+            # Extract account name from tooltip
+            name_cell = cells[0]
+            account_name = extract_tooltip(name_cell)
+            if not account_name:
+                continue
+                
+            # Parse profession
+            prof_cell = cells[1]
+            prof_match = re.search(r'{{(\w+)}}', prof_cell)
+            profession = prof_match.group(1) if prof_match else ""
+            
+            # Extract Ch5Ca-Total (1)s value - should be column 5 (0-indexed)
+            consistency_1s_cell = cells[5] if len(cells) > 5 else ""
+            consistency_1s = extract_span_value(consistency_1s_cell) if consistency_1s_cell else 0
+            
+            key = f"{account_name}_{profession}"
+            consistency_stats[key] = {
+                'account_name': account_name,
+                'profession': profession,
+                'burst_consistency_1s': int(consistency_1s)
+            }
+            
+        except (ValueError, IndexError) as e:
+            print(f"Error parsing burst consistency row: {row[:100]}... - {e}")
+            continue
+    
+    return consistency_stats
+
+
 def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     """Parse a single log directory and extract comprehensive player performance data."""
     timestamp = log_dir.name
@@ -423,6 +517,22 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
             boon_data = json.load(f)
         boon_stats = parse_boon_generation_table(boon_data.get('text', ''))
     
+    # Read burst damage data (Bur-Total)
+    burst_damage_stats = {}
+    burst_damage_file = log_dir / f"{timestamp}-DPS-Stats-Bur-Total.json"
+    if burst_damage_file.exists():
+        with open(burst_damage_file, 'r', encoding='utf-8') as f:
+            burst_damage_data = json.load(f)
+        burst_damage_stats = parse_burst_damage_table(burst_damage_data.get('text', ''))
+    
+    # Read burst consistency data (Ch5Ca-Total)
+    burst_consistency_stats = {}
+    burst_consistency_file = log_dir / f"{timestamp}-DPS-Stats-Ch5Ca-Total.json"
+    if burst_consistency_file.exists():
+        with open(burst_consistency_file, 'r', encoding='utf-8') as f:
+            burst_consistency_data = json.load(f)
+        burst_consistency_stats = parse_burst_consistency_table(burst_consistency_data.get('text', ''))
+    
     # Combine all stats into PlayerPerformance objects
     performances = []
     for player_data in players_data:
@@ -438,6 +548,8 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
         support_data = support_stats.get(key, {})
         boon_data = boon_stats.get(key, {})
         offensive_data = offensive_stats.get(key, {})
+        burst_damage_data = burst_damage_stats.get(key, {})
+        burst_consistency_data = burst_consistency_stats.get(key, {})
         
         
         performance = PlayerPerformance(
@@ -460,7 +572,9 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
             stability_gen_per_sec=boon_data.get('stability_gen_per_sec', 0.0),
             resistance_gen_per_sec=boon_data.get('resistance_gen_per_sec', 0.0),
             might_gen_per_sec=boon_data.get('might_gen_per_sec', 0.0),
-            down_contribution_per_sec=offensive_data.get('down_contribution', 0) / player_data['fight_time'] if player_data['fight_time'] > 0 else 0.0
+            down_contribution_per_sec=offensive_data.get('down_contribution', 0) / player_data['fight_time'] if player_data['fight_time'] > 0 else 0.0,
+            burst_damage_1s=burst_damage_data.get('burst_damage_1s', 0),
+            burst_consistency_1s=burst_consistency_data.get('burst_consistency_1s', 0)
         )
         performances.append(performance)
     
@@ -528,7 +642,9 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
             stability_gen_per_sec=performance.stability_gen_per_sec,
             resistance_gen_per_sec=performance.resistance_gen_per_sec,
             might_gen_per_sec=performance.might_gen_per_sec,
-            down_contribution_per_sec=performance.down_contribution_per_sec
+            down_contribution_per_sec=performance.down_contribution_per_sec,
+            burst_damage_1s=performance.burst_damage_1s,
+            burst_consistency_1s=performance.burst_consistency_1s
         )
         updated_performances.append(updated_performance)
     
@@ -566,6 +682,8 @@ def create_database(db_path: str):
             resistance_gen_per_sec REAL DEFAULT 0.0,
             might_gen_per_sec REAL DEFAULT 0.0,
             down_contribution_per_sec REAL DEFAULT 0.0,
+            burst_damage_1s INTEGER DEFAULT 0,
+            burst_consistency_1s INTEGER DEFAULT 0,
             UNIQUE(timestamp, account_name, profession)
         )
     ''')
@@ -602,8 +720,9 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
             (timestamp, parsed_date, player_name, account_name, profession, party, fight_time,
              target_damage, target_dps, all_damage, target_condition_damage, target_condition_dps,
              healing_per_sec, barrier_per_sec, condition_cleanses_per_sec, boon_strips_per_sec, 
-             stability_gen_per_sec, resistance_gen_per_sec, might_gen_per_sec, down_contribution_per_sec)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             stability_gen_per_sec, resistance_gen_per_sec, might_gen_per_sec, down_contribution_per_sec,
+             burst_damage_1s, burst_consistency_1s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             perf.timestamp, perf.parsed_date.isoformat() if perf.parsed_date else None,
             perf.player_name, perf.account_name, perf.profession,
@@ -611,7 +730,8 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
             perf.all_damage, perf.target_condition_damage, perf.target_condition_dps,
             perf.healing_per_sec, perf.barrier_per_sec, perf.condition_cleanses_per_sec, 
             perf.boon_strips_per_sec, perf.stability_gen_per_sec, perf.resistance_gen_per_sec, 
-            perf.might_gen_per_sec, perf.down_contribution_per_sec
+            perf.might_gen_per_sec, perf.down_contribution_per_sec,
+            perf.burst_damage_1s, perf.burst_consistency_1s
         ))
     
     conn.commit()
