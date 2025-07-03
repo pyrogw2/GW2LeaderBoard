@@ -1,6 +1,0 @@
-{
-  "caption": "{{Berserker}} - Persueas",
-  "tags": "202503122135",
-  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Arc Divider|https://render.guildwars2.com/file/0CC6E97CF3DD32E5B57001980702C10F1538F97E/1058639.png]]-Arc Divider | 1 | 985| 985| 985| 83.83%|\n|[img width=24 [Frost Burst (Superior Sigil of Hydromancy)|https://wiki.guildwars2.com/images/3/33/Superior_Sigil_of_Hydromancy.png]]-Frost Burst (Superior Sigil of Hydromancy) | 1 | 190| 190| 190| 16.17%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Persueas | 1,175 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
-  "title": "202503122135-Healers-Berserker-Persueas"
-}

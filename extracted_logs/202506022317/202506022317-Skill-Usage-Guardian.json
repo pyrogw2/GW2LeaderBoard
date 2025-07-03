@@ -1,5 +1,0 @@
-{
-  "caption": "{{Guardian}}-Guardian",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Skill Usage |c\n|!Name | !Prof |!Account | !{{FightTime}} |! <div class=\"xtooltip\"> APM <span class=\"xtooltiptext\">Total Actions per Minute /<br>APM without Autos</span></div>|![img width=24 [Dodge|https://wiki.guildwars2.com/images/archive/b/b2/20150601155307%21Dodge.png]]|![img width=24 [Whirling Inferno|https://wiki.guildwars2.com/images/1/1b/Whirling_Inferno.png]]|![img width=24 [Weapon Swap|https://wiki.guildwars2.com/images/c/ce/Weapon_Swap_Button.png]]|h\n|Santa Mcslippy Fist | {{Guardian}} |DetCord.1094 |92.59| 6/6 | 5.18| 0.65| 0.65|\n|Skill Usage / Minute|c\n\n\n</div>",
-  "title": "202506022317-Skill-Usage-Guardian"
-}

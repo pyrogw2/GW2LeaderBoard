@@ -1,6 +1,0 @@
-{
-  "caption": "{{Scrapper}}-Minions",
-  "tags": "202506190151",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top-left table-hover sortable freeze-col|k\n|,!Player |, Fights|, Fight Time| !Function Gyro |<|<| !Flame Turret |<|<| !Net Turret |<|<| !Healing Turret |<|<| Total Minion Data |<|<|h\n|~|~|~| !Count | !{{damageTaken}}| {{Healing}}| !Count | !{{damageTaken}}| {{Healing}}| !Count | !{{damageTaken}}| {{Healing}}| !Count | !{{damageTaken}}| {{Healing}}| !Count | !{{damageTaken}}| {{Healing}}|h\n|<span data-tooltip=\"Knightmare.6849\">Drop Bandages</span>| 9| 1,881.8| 16 | 118.9K| 13.4K| 6 | 23.9K| 0.0K| 3 | 6.3K| 0.0K| 7 | 26.8K| 0.0K| 32 | 175.9K| 13.4K|\n\n\n</div>\n\n",
-  "title": "202506190151-Minions-Scrapper"
-}

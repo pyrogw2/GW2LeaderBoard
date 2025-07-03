@@ -1,5 +1,0 @@
-{
-  "caption": "{{Holosmith}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Explosive Entrance|https://render.guildwars2.com/file/61510F0752BC696F210F92CA0E13AD290F13AD33/2261507.png]] |! [img width=24 [Explosive Temper|https://render.guildwars2.com/file/273E26303F072C3EEEF0DA25D5ACC1E59AECACF6/2261504.png]] |! [img width=24 [Big Boomer|https://render.guildwars2.com/file/0122FE72473C12BA0661EABA18F5B83022066EDB/2261506.png]] |h\n| 4 |<span data-tooltip=\"Icy Violin.9213\">Pablo Dablo Diablo</span> | {{Holosmith}} | 905.98| <div class=\"xtooltip\"> 29.16% <span class=\"xtooltiptext\">31 state changes</span></div> | <div class=\"xtooltip\"> 48.60% <span class=\"xtooltiptext\">133 state changes</span></div> | <div class=\"xtooltip\"> 27.50% <span class=\"xtooltiptext\">46 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202506120247-Personal-Buffs-Holosmith"
-}

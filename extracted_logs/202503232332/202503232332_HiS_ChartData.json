@@ -1,8 +1,0 @@
-{
-  "title": "202503232332_HiS_ChartData",
-  "created": "20250323233208000",
-  "creator": "Drevarr",
-  "tags": "ChartData",
-  "type": "text/vnd.tiddlywiki",
-  "text": "\r\noption = {\r\n\tlegend: {},\r\n\tgrid: {left: '20%'},\r\n\ttooltip: {},\r\n\tdataset: [\r\n\t\t{\r\n\t\tsource: [\r\n\t\t\t['Hide in Shadows/Sec','Total Hide in Shadows', 'Name', 'Profession', 'Fights', 'Duration' ],\r\n\t\t\t[0.2955, 1334, 'Time Turned Fragile', '{{Chronomancer}}', '21', '4514'],\r\n\t\t\t]\r\n\t\t},\r\n\t],\r\n    xAxis: [\r\n    {},\r\n  ],\r\n  yAxis: { \r\n    type: 'category'\r\n  },\r\n  visualMap: {\r\n    orient: 'horizontal',\r\n    left: 'center',\r\n    min: 0.2955,\r\n    max: 0.2955,\r\n    precision: 2,\r\n    text: ['High Hide in Shadows /Sec', 'Low Hide in Shadows/Sec'],\r\n    // Map the score column to color\r\n    dimension: 0,\r\n    inRange: {\r\n      color: ['#FD665F', '#FFCE34', '#65B581']\r\n    }\r\n  },\r\n  series: [\r\n    {\r\n      name: 'Total Hide in Shadows',\r\n      type: 'bar',\r\n      encode: {\r\n        // Map 'Total Stat' column to x-axis.\r\n        x: 'Total Hide in Shadows',\r\n        // Map 'Name' row to y-axis.\r\n        y: 'Name',\r\n        tooltip: [3, 4, 5, 1, 0]\r\n      }\r\n    },\r\n    {\r\n      name: 'Hide in Shadows/Sec',\r\n      type: 'bar',\r\n      encode: {\r\n        // Map 'Total Stat' column to x-axis.\r\n        x: 'Total Hide in Shadows/Sec',\r\n        // Map 'Name' row to y-axis.\r\n        y: 'Name',\r\n        tooltip: [3, 4, 5, 1, 0]\r\n      }\r\n    }\r\n  ]\r\n};\n\n"
-}

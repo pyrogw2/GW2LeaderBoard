@@ -1,5 +1,0 @@
-{
-  "caption": "{{Soulbeast}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Ferocious|https://wiki.guildwars2.com/images/e/e9/Ferocious_%28Archetype%29.png]] |! [img width=24 [Opening Strike|https://render.guildwars2.com/file/A537B362D8AC54BC7907E050B596BA93E4CBE5F2/1012627.png]] |! [img width=24 [Signet of the Wild|https://wiki.guildwars2.com/images/2/23/Signet_of_the_Wild.png]] |! [img width=24 [Twice as Vicious|https://wiki.guildwars2.com/images/0/00/Twice_as_Vicious.png]] |h\n| 6 |<span data-tooltip=\"Uriah.7082\">Shot Across The Bow</span> | {{Soulbeast}} | 61.51| <div class=\"xtooltip\"> 82.19% <span class=\"xtooltiptext\">4 state changes</span></div> | <div class=\"xtooltip\"> 70.19% <span class=\"xtooltiptext\">4 state changes</span></div> | <div class=\"xtooltip\"> 82.18% <span class=\"xtooltiptext\">4 state changes</span></div> | <div class=\"xtooltip\"> 16.26% <span class=\"xtooltiptext\">1 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202505082314-Personal-Buffs-Soulbeast"
-}

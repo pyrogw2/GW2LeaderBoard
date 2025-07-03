@@ -1,5 +1,0 @@
-{
-  "caption": "{{Scrapper}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Med Kit|https://render.guildwars2.com/file/206FCC2A05035FDB306AB5136E5F3AC0FC6467F3/103395.png]] |h\n| 1 |<span data-tooltip=\"limbrose.3079\">Limbrose Taylor</span> | {{Scrapper}} | 691.31| <div class=\"xtooltip\"> 54.97% <span class=\"xtooltiptext\">11 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202506022317-Personal-Buffs-Scrapper"
-}

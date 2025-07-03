@@ -1,5 +1,0 @@
-{
-  "caption": "{{Scourge}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Locust Swarm|https://wiki.guildwars2.com/images/7/77/Locust_Swarm.png]] |h\n| 5 |<span data-tooltip=\"FlawedDjinn.3217\">Flaudgîn</span> | {{Scourge}} | 503.81| <div class=\"xtooltip\"> 10.91% <span class=\"xtooltiptext\">11 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202504282345-Personal-Buffs-Scourge"
-}

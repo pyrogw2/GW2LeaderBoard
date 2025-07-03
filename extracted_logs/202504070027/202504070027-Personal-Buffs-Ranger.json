@@ -1,5 +1,0 @@
-{
-  "caption": "{{Ranger}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof |!Account | !{{FightTime}} |! [img width=24 [Opening Strike|https://render.guildwars2.com/file/A537B362D8AC54BC7907E050B596BA93E4CBE5F2/1012627.png]] |! [img width=24 [Signet of the Wild|https://wiki.guildwars2.com/images/2/23/Signet_of_the_Wild.png]] |! [img width=24 [Signet of the Hunt|https://wiki.guildwars2.com/images/d/df/Signet_of_the_Hunt.png]] |h\n| 8 |Rhoonii | {{Ranger}} |Rhooni.2679 | 486.75| <div class=\"xtooltip\"> 61.41% <span class=\"xtooltiptext\">12 state changes</span></div> | <div class=\"xtooltip\"> 0.53% <span class=\"xtooltiptext\">1 state changes</span></div> | <div class=\"xtooltip\"> 0.53% <span class=\"xtooltiptext\">1 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202504070027-Personal-Buffs-Ranger"
-}

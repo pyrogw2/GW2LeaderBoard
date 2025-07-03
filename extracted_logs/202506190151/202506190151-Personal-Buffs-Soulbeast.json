@@ -1,5 +1,0 @@
-{
-  "caption": "{{Soulbeast}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Signet of the Wild|https://render.guildwars2.com/file/C5C6F15A60FA590B2810DE5023E7402964190496/103542.png]] |! [img width=24 [Twice as Vicious|https://render.guildwars2.com/file/42AE5234142F3045D5B665EC60D6E3FF7C564D62/1769986.png]] |h\n| 1 |<span data-tooltip=\"Laroong.7629\">Valroza</span> | {{Soulbeast}} | 265.35| <div class=\"xtooltip\"> 63.40% <span class=\"xtooltiptext\">8 state changes</span></div> | <div class=\"xtooltip\"> 7.53% <span class=\"xtooltiptext\">2 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202506190151-Personal-Buffs-Soulbeast"
-}

@@ -1,7 +1,0 @@
-{
-  "caption": "Profession Damage Modifiers",
-  "creator": "Drevarr@github.com",
-  "tags": "202503242343",
-  "text": "<$macrocall $name=\"tabs\" tabsList=\"[prefix[202503242343-Damage-Modifiers-]]\" default={{{[prefix[202503242343-Damage-Modifiers-]first[]]}}} state=\"$:/temp/sel_dmgMod\"/>",
-  "title": "202503242343-Profession_Damage_Mods"
-}

@@ -1,5 +1,0 @@
-{
-  "caption": "{{Mesmer}}",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Damage Modifiers |c\n|!Party |!Name | !Prof | !{{FightTime}} |![img width=24 [Illusionary Membrane|https://render.guildwars2.com/file/0DF6A27A24B01D069DCD7609ADD305C7C557A82A/1012472.png]]|h\n| 1 |<span data-tooltip=\"merytogo.1365\">Rosenrot Sc</span> | Mesmer | 59.18| <div class=\"xtooltip\"> 1.14% <span class=\"xtooltiptext\">8 of 31 (25.81% hits)<br>Damage Gained: 44<br></span></div>|",
-  "title": "202505280122-Damage-Modifiers-Mesmer"
-}

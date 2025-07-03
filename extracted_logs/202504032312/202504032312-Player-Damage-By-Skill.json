@@ -1,6 +1,0 @@
-{
-  "caption": "Player Damage by Skill",
-  "tags": "202504032312",
-  "text": "\n!!!Select players(ctrl+click):\n<$let state=<<qualify $:/temp/selectedPlayer>>>\n<$select tiddler=<<state>> multiple>\n   <$list filter=\"[prefix[202504032312-Damage-By-Skill-]]\">\n      <option value=<<currentTiddler>>>{{!!caption}}</option>\n   </$list>\n</$select>\n\n<<vspace height:\"55px\">>\n\n<div class=\"flex-row\">\n   <$list filter=\"[<state>get[text]enlist-input[]]\">\n    <div class=\"flex-col\">\n      <$transclude mode=\"block\"/>\n</div>\n   </$list>\n\n\n</div>",
-  "title": "202504032312-Player-Damage-By-Skill"
-}

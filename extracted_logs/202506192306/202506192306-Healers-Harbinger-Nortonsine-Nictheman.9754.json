@@ -1,6 +1,0 @@
-{
-  "caption": "{{Harbinger}} - <span data-tooltip='Nictheman.9754'>Nortonsine       </span>",
-  "tags": "202506192306",
-  "text": "---\n\n\n<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-borderless w-75 table-center|k\n|!Healer Outgoing Stats - excludes downed healing|\n\n\n\n\n<div class=\"flex-row\">\n\n    <div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Skill Name |!Hits | !Total Healing| !Avg Healing| !Max Heal| !Pct|h\n|[img width=24 [Vampiric Strikes|https://render.guildwars2.com/file/0DF523B154B8FD9F2E2B95F72A534E7C80352D2A/1012544.png]]-Vampiric Strikes | 3 | 135| 45| 45| 23.81%|\n|[img width=24 [Blight|https://render.guildwars2.com/file/6B797B70EF545937F677BCD463BD23DC749B0801/2479350.png]]-Blight | 5 | 432| 86| 108| 76.19%|\n| Total Healing |c\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Total Barrier |c\n|!Skill Name |!Hits | !Total Barrier| !Avg Barrier| !Max Barrier| !Pct|h\n\n\n</div>\n\n\n\n\n<div class=\"flex-col\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n| Heal/Barrier by Target |c\n|!Player |!Total Healing | !Downed Healing| !Total Barrier|h\n|Nortonsine | 567 | 0| 0|\n\n\n</div>\n\n</div>\n\n\n</div>",
-  "title": "202506192306-Healers-Harbinger-Nortonsine-Nictheman.9754"
-}

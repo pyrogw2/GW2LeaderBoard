@@ -1,5 +1,0 @@
-{
-  "caption": "{{Scrapper}}-Personal-Buffs",
-  "text": "<div style=\"overflow-x:auto;\">\n\n\n|thead-dark table-caption-top table-hover sortable|k\n|!Party |!Name | !Prof | !{{FightTime}} |! [img width=24 [Med Kit|https://wiki.guildwars2.com/images/1/14/Med_Kit.png]] |h\n| 5 |<span data-tooltip=\"Xhil.9316\">Xhilll</span> | {{Scrapper}} | 85.72| <div class=\"xtooltip\"> 46.99% <span class=\"xtooltiptext\">4 state changes</span></div> |\n| 8 |<span data-tooltip=\"Dave.1706\">Crappy Inventus</span> | {{Scrapper}} | 1191.86| <div class=\"xtooltip\"> 40.46% <span class=\"xtooltiptext\">50 state changes</span></div> |\n| 10 |<span data-tooltip=\"limbrose.3079\">Limbrose Taylor</span> | {{Scrapper}} | 845.89| <div class=\"xtooltip\"> 44.71% <span class=\"xtooltiptext\">18 state changes</span></div> |\n|Personal Buffs Table|c\n\n\n</div>",
-  "title": "202505192236-Personal-Buffs-Scrapper"
-}
