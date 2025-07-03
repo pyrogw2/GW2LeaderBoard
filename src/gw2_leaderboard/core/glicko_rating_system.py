@@ -235,6 +235,106 @@ def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, 
     
     metric_column = METRIC_CATEGORIES[metric_category]
     
+    # First, get all non-zero values to calculate dynamic floor for support metrics
+    if guild_filter:
+        initial_query = f'''
+            SELECT p.{metric_column}
+            FROM player_performances p
+            INNER JOIN guild_members g ON p.account_name = g.account_name
+            WHERE p.timestamp = ? AND p.{metric_column} > 0
+            ORDER BY p.{metric_column} DESC
+        '''
+    else:
+        initial_query = f'''
+            SELECT {metric_column}
+            FROM player_performances 
+            WHERE timestamp = ? AND {metric_column} > 0
+            ORDER BY {metric_column} DESC
+        '''
+    
+    cursor.execute(initial_query, (timestamp,))
+    all_values = [row[0] for row in cursor.fetchall()]
+    
+    # Calculate dynamic floor for support metrics (non-DPS)
+    dynamic_floor = 0
+    support_metrics = ['Healing', 'Barrier', 'Cleanses', 'Strips', 'Stability', 'Resistance', 'Might', 'Protection']
+    
+    if metric_category in support_metrics and len(all_values) >= 4:
+        # Use 25th percentile as dynamic floor to exclude low outliers
+        # This ensures we only include players who are meaningfully contributing to this metric
+        all_values_sorted = sorted(all_values)
+        percentile_25_index = max(0, int(len(all_values_sorted) * 0.25) - 1)
+        dynamic_floor = all_values_sorted[percentile_25_index]
+        
+        # Fallback: if 25th percentile is still very low, use median for stricter filtering
+        if dynamic_floor < (statistics.mean(all_values_sorted) * 0.1):  # Less than 10% of mean
+            median_index = len(all_values_sorted) // 2
+            dynamic_floor = all_values_sorted[median_index]
+    
+    # Now get filtered results using the dynamic floor
+    if guild_filter:
+        query = f'''
+            SELECT p.account_name, p.profession, p.{metric_column}
+            FROM player_performances p
+            INNER JOIN guild_members g ON p.account_name = g.account_name
+            WHERE p.timestamp = ? AND p.{metric_column} > ?
+            ORDER BY p.{metric_column} DESC
+        '''
+    else:
+        query = f'''
+            SELECT account_name, profession, {metric_column}
+            FROM player_performances 
+            WHERE timestamp = ? AND {metric_column} > ?
+            ORDER BY {metric_column} DESC
+        '''
+    
+    cursor.execute(query, (timestamp, dynamic_floor))
+    results = cursor.fetchall()
+    conn.close()
+    
+    # Ensure we have minimum participants for meaningful z-scores
+    if len(results) < 2:
+        # If dynamic floor filtered too aggressively, fall back to simple > 0 filter
+        if dynamic_floor > 0:
+            return calculate_session_stats_fallback(db_path, timestamp, metric_category, guild_filter)
+        return 0.0, 1.0, []  # Not enough data
+    
+    values = [row[2] for row in results]
+    mean_val = statistics.mean(values)
+    std_val = statistics.stdev(values) if len(values) > 1 else 1.0
+    
+    # Avoid division by zero
+    if std_val == 0:
+        std_val = 1.0
+    
+    total_players = len(results)
+    players = []
+    
+    for rank, (account_name, profession, metric_value) in enumerate(results, 1):
+        z_score = (metric_value - mean_val) / std_val
+        # Calculate normalized rank as percentile (0-100)
+        normalized_rank = (rank / total_players) * 100
+        
+        players.append({
+            'account_name': account_name,
+            'profession': profession,
+            'metric_value': metric_value,
+            'z_score': z_score,
+            'rank': rank,
+            'total_players': total_players,
+            'normalized_rank': normalized_rank
+        })
+    
+    return mean_val, std_val, players
+
+
+def calculate_session_stats_fallback(db_path: str, timestamp: str, metric_category: str, guild_filter: bool = False) -> Tuple[float, float, List[Dict]]:
+    """Fallback function using simple > 0 filter when dynamic floor is too aggressive."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    metric_column = METRIC_CATEGORIES[metric_category]
+    
     if guild_filter:
         query = f'''
             SELECT p.account_name, p.profession, p.{metric_column}
@@ -262,7 +362,6 @@ def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, 
     mean_val = statistics.mean(values)
     std_val = statistics.stdev(values) if len(values) > 1 else 1.0
     
-    # Avoid division by zero
     if std_val == 0:
         std_val = 1.0
     
@@ -271,7 +370,6 @@ def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, 
     
     for rank, (account_name, profession, metric_value) in enumerate(results, 1):
         z_score = (metric_value - mean_val) / std_val
-        # Calculate normalized rank as percentile (0-100)
         normalized_rank = (rank / total_players) * 100
         
         players.append({
