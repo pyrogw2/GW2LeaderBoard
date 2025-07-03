@@ -614,10 +614,10 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
         support_sb_threshold = max(mean_resistance_gen * 1.2, 0.5)
     
     # Detect Boon Catalyst: Catalyst with resistance generation significantly above average
-    boon_cata_threshold = 0.5  # Default minimum threshold (resistance/sec)
+    boon_cata_threshold = 0.4  # Default minimum threshold (resistance/sec)
     if len(all_resistance_gen) >= 2:
         mean_resistance_gen = statistics.mean(all_resistance_gen)
-        boon_cata_threshold = max(mean_resistance_gen * 1.2, 0.5)
+        boon_cata_threshold = max(mean_resistance_gen * 1.2, 0.4)
     
     # Detect China DH: Dragonhunter with stability generation significantly above average
     china_dh_threshold = 3.0  # Default minimum threshold (stability/sec)
