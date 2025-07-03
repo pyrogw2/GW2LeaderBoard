@@ -2148,22 +2148,33 @@ function setupEventListeners() {{
     searchInputs.forEach(search => {{
         const input = document.getElementById(search.id);
         if (input) {{
+            let searchTimeout;
+            
             input.addEventListener('input', function() {{
                 const searchValue = this.value.trim();
                 
-                if (searchValue === '') {{
-                    // If search is cleared, reload fresh data like clearSearch does
-                    clearSearch(search.tableId);
-                }} else {{
-                    // Otherwise filter the current data
-                    filterTable(search.tableId, searchValue);
-                }}
+                // Clear any existing timeout to debounce input
+                clearTimeout(searchTimeout);
+                
+                // Set a small delay to avoid excessive filtering
+                searchTimeout = setTimeout(() => {{
+                    if (searchValue === '') {{
+                        // If search is cleared, reload fresh data like clearSearch does
+                        clearSearch(search.tableId);
+                    }} else {{
+                        // Otherwise filter the current data
+                        filterTable(search.tableId, searchValue);
+                    }}
+                }}, 150); // 150ms delay
             }});
             
             input.addEventListener('keyup', function(e) {{
                 const searchValue = this.value.trim();
                 
                 if (e.key === 'Enter') {{
+                    // Clear any pending timeout on Enter key
+                    clearTimeout(searchTimeout);
+                    
                     if (searchValue === '') {{
                         clearSearch(search.tableId);
                     }} else {{
