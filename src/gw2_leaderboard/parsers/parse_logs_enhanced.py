@@ -595,37 +595,43 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
 def filter_fight_time_outliers(performances: List[PlayerPerformance]) -> List[PlayerPerformance]:
     """
     Filter out players with extremely short fight times that dilute the data.
-    Uses a more targeted approach: removes players with less than 25% of the median fight time
-    if they also represent less than 20% of the total players.
+    Hard threshold: Always keep players with >= 300 seconds (5 minutes) of fight time.
+    For shorter durations, uses median-based filtering for clear outliers.
     """
     if not performances or len(performances) < 5:  # Need minimum sample size
         return performances
+    
+    # Hard threshold: always keep players with >= 300 seconds
+    HARD_MINIMUM = 300.0
     
     # Extract fight times for analysis
     fight_times = [p.fight_time for p in performances]
     fight_times.sort()
     
-    # Calculate statistics
+    # Count players below hard minimum
+    below_hard_minimum = [p for p in performances if p.fight_time < HARD_MINIMUM]
+    
+    if len(below_hard_minimum) == 0:
+        return performances  # No one below 5 minutes, no filtering needed
+    
+    # For players below 300s, use median-based filtering for very short outliers
     import statistics
     median_time = statistics.median(fight_times)
     
-    # Define outliers as those with less than 25% of median fight time
-    threshold = median_time * 0.25
+    # Define very short outliers as those with less than 25% of median fight time
+    outlier_threshold = min(median_time * 0.25, HARD_MINIMUM)
     
-    # Count potential outliers
-    outliers = [p for p in performances if p.fight_time < threshold]
+    # Find outliers: those below the calculated threshold
+    outliers = [p for p in performances if p.fight_time < outlier_threshold]
     outlier_percentage = len(outliers) / len(performances)
     
-    # Only filter if:
-    # 1. There are clear outliers (< 25% of median)
-    # 2. They represent a small fraction of players (< 20%)
-    # 3. The threshold is at least 300 seconds (avoid filtering short but legitimate fights)
-    if len(outliers) > 0 and outlier_percentage < 0.2 and threshold >= 300:
-        filtered_performances = [p for p in performances if p.fight_time >= threshold]
+    # Only filter if there are clear outliers representing a small fraction of players
+    if len(outliers) > 0 and outlier_percentage < 0.2:
+        filtered_performances = [p for p in performances if p.fight_time >= outlier_threshold]
         removed_count = len(performances) - len(filtered_performances)
         
         if removed_count > 0:
-            print(f"  Filtered {removed_count} fight time outliers (< {threshold:.1f}s, median: {median_time:.1f}s)")
+            print(f"  Filtered {removed_count} fight time outliers (< {outlier_threshold:.1f}s, median: {median_time:.1f}s)")
             for outlier in outliers[:5]:  # Show first 5 outliers
                 print(f"    Removed: {outlier.account_name} ({outlier.profession}) - {outlier.fight_time:.1f}s")
             if len(outliers) > 5:
