@@ -142,7 +142,7 @@ class ProgressManager:
 
 
 
-def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 300, date_filter: str = None):
+def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None):
     """Extract leaderboard data from database with guild membership info."""
     if date_filter:
         # For date filtering, we need to recalculate ratings on filtered data
@@ -331,7 +331,7 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     return results
 
 
-def get_new_high_scores_data(db_path: str, limit: int = 300, date_filter: str = None):
+def get_new_high_scores_data(db_path: str, limit: int = 500, date_filter: str = None):
     """Get high scores data from the new high_scores table."""
     from ..core.glicko_rating_system import build_date_filter_clause
     
@@ -402,7 +402,7 @@ def get_new_high_scores_data(db_path: str, limit: int = 300, date_filter: str = 
     return high_scores_data
 
 
-def get_high_scores_data(db_path: str, limit: int = 300, date_filter: str = None):
+def get_high_scores_data(db_path: str, limit: int = 500, date_filter: str = None):
     """Get top burst damage records for High Scores section (non-Glicko based)."""
     from ..core.glicko_rating_system import build_date_filter_clause
     
@@ -446,7 +446,7 @@ def get_high_scores_data(db_path: str, limit: int = 300, date_filter: str = None
     return results
 
 
-def get_most_played_professions_data(db_path: str, limit: int = 300, date_filter: str = None):
+def get_most_played_professions_data(db_path: str, limit: int = 500, date_filter: str = None):
     """Get most played professions data for Player Stats section (non-Glicko based)."""
     from ..core.glicko_rating_system import build_date_filter_clause
     
@@ -766,7 +766,7 @@ def _process_single_metric(db_path: str, category: str, filter_value: str, worke
     timestamp = datetime.now().strftime('%H:%M:%S')
     try:
         print(f"[{worker_id}:{thread_name}] 🚀 {timestamp} STARTING metric: {category}")
-        results = get_glicko_leaderboard_data(db_path, category, limit=300, date_filter=filter_value)
+        results = get_glicko_leaderboard_data(db_path, category, limit=500, date_filter=filter_value)
         end_time = time.time()
         end_timestamp = datetime.now().strftime('%H:%M:%S')
         print(f"[{worker_id}:{thread_name}] ✅ {end_timestamp} COMPLETED metric: {category} ({len(results)} results) in {end_time - start_time:.2f}s")
@@ -803,7 +803,7 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
         guild_table_exists = cursor.fetchone() is not None
 
         players_with_guild_info = []
-        for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:300]):
+        for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:500]):
             is_guild_member = False
             if guild_table_exists:
                 cursor.execute("SELECT 1 FROM guild_members WHERE account_name = ?", (account,))
@@ -945,7 +945,7 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
         for category in individual_categories:
             print(f"[{worker_id}] Processing metric: {category}")
             # Use the temp database directly instead of recalculating
-            results = get_glicko_leaderboard_data(db_path, category, limit=300, date_filter=None)  # No date filter since db is already filtered
+            results = get_glicko_leaderboard_data(db_path, category, limit=500, date_filter=None)  # No date filter since db is already filtered
             filter_data["individual_metrics"][category] = [
                 {
                     "rank": i + 1,
@@ -960,7 +960,7 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                 for i, (account, profession, composite, rating, games, avg_rank, avg_stat, is_guild_member) in enumerate(results)
             ]
 
-        results = get_glicko_leaderboard_data(db_path, "Overall", limit=300, date_filter=None)  # Use temp db directly
+        results = get_glicko_leaderboard_data(db_path, "Overall", limit=500, date_filter=None)  # Use temp db directly
         filter_data["overall_leaderboard"] = [
             {
                 "rank": i + 1,
@@ -1008,7 +1008,7 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
 
         print(f"[{worker_id}] Processing high scores...")
         # Get high scores data (top burst damage records) with date filtering
-        high_scores_results = get_high_scores_data(db_path, limit=300, date_filter=filter_value)
+        high_scores_results = get_high_scores_data(db_path, limit=500, date_filter=filter_value)
         filter_data["high_scores"]["Highest 1 Sec Burst"] = [
             {
                 "rank": i + 1,
@@ -1022,13 +1022,13 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
         ]
         
         # Get new high scores data (skill damage and single fight DPS) with date filtering
-        new_high_scores_results = get_new_high_scores_data(db_path, limit=300, date_filter=filter_value)
+        new_high_scores_results = get_new_high_scores_data(db_path, limit=500, date_filter=filter_value)
         for metric_name, metric_data in new_high_scores_results.items():
             filter_data["high_scores"][metric_name] = metric_data
         
         print(f"[{worker_id}] Processing player stats...")
         # Get most played professions data with date filtering
-        most_played_results = get_most_played_professions_data(db_path, limit=300, date_filter=filter_value)
+        most_played_results = get_most_played_professions_data(db_path, limit=500, date_filter=filter_value)
         filter_data["player_stats"]["Most Played Professions"] = [
             {
                 "rank": i + 1,

@@ -277,7 +277,7 @@ Updates a single Glicko rating based on performance.
 
 #### Functions
 
-##### `get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 300, date_filter: str = None) -> List[Tuple]`
+##### `get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None) -> List[Tuple]`
 
 Retrieves leaderboard data from database.
 
@@ -426,7 +426,7 @@ ORDER BY g.composite_score DESC NULLS LAST;
 #### Leaderboard Export
 
 ```sql
--- Export top 300 for external use
+-- Export top 500 for external use
 SELECT 
     ROW_NUMBER() OVER (ORDER BY composite_score DESC) as rank,
     account_name,
@@ -439,7 +439,7 @@ SELECT
 FROM glicko_ratings
 WHERE metric_category = 'DPS'
 ORDER BY composite_score DESC
-LIMIT 300;
+LIMIT 500;
 ```
 
 ## Performance Considerations
