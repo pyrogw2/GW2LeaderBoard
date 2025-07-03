@@ -165,22 +165,32 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
     if metric_category and metric_category != "Overall":
         # Specific metric category with guild membership info
         if guild_table_exists:
-            cursor.execute('''
+            # Add special filter for Distance to Tag to exclude N/A distance with only 1 raid
+            where_clause = "WHERE g.metric_category = ?"
+            if metric_category == "Distance to Tag":
+                where_clause += " AND NOT (g.average_stat_value = 0 AND g.games_played = 1)"
+            
+            cursor.execute(f'''
                 SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
                        g.average_rank, g.average_stat_value,
                        CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
                 FROM glicko_ratings g
                 LEFT JOIN guild_members gm ON g.account_name = gm.account_name
-                WHERE g.metric_category = ?
+                {where_clause}
                 ORDER BY g.composite_score DESC
                 LIMIT ?
             ''', (metric_category, limit))
         else:
-            cursor.execute('''
+            # Add special filter for Distance to Tag to exclude N/A distance with only 1 raid
+            where_clause = "WHERE metric_category = ?"
+            if metric_category == "Distance to Tag":
+                where_clause += " AND NOT (average_stat_value = 0 AND games_played = 1)"
+            
+            cursor.execute(f'''
                 SELECT account_name, profession, composite_score, rating, games_played, 
                        average_rank, average_stat_value, 0 as is_guild_member
                 FROM glicko_ratings 
-                WHERE metric_category = ?
+                {where_clause}
                 ORDER BY composite_score DESC
                 LIMIT ?
             ''', (metric_category, limit))
@@ -266,22 +276,32 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     if metric_category and metric_category != "Overall":
         # Specific metric category with guild membership info
         if guild_table_exists:
-            cursor.execute('''
+            # Add special filter for Distance to Tag to exclude N/A distance with only 1 raid
+            where_clause = "WHERE g.metric_category = ?"
+            if metric_category == "Distance to Tag":
+                where_clause += " AND NOT (g.average_stat_value = 0 AND g.games_played = 1)"
+            
+            cursor.execute(f'''
                 SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
                        g.average_rank, g.average_stat_value,
                        CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
                 FROM glicko_ratings g
                 LEFT JOIN guild_members gm ON g.account_name = gm.account_name
-                WHERE g.metric_category = ?
+                {where_clause}
                 ORDER BY g.composite_score DESC
                 LIMIT ?
             ''', (metric_category, limit))
         else:
-            cursor.execute('''
+            # Add special filter for Distance to Tag to exclude N/A distance with only 1 raid
+            where_clause = "WHERE metric_category = ?"
+            if metric_category == "Distance to Tag":
+                where_clause += " AND NOT (average_stat_value = 0 AND games_played = 1)"
+            
+            cursor.execute(f'''
                 SELECT account_name, profession, composite_score, rating, games_played, 
                        average_rank, average_stat_value, 0 as is_guild_member
                 FROM glicko_ratings 
-                WHERE metric_category = ?
+                {where_clause}
                 ORDER BY composite_score DESC
                 LIMIT ?
             ''', (metric_category, limit))
