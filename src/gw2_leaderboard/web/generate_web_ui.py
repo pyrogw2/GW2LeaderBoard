@@ -576,13 +576,25 @@ def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[st
 
     guild_name = "Guild"
     guild_tag = "UNK"
-    if GUILD_MANAGER_AVAILABLE and guild_table_exists:
-        try:
-            guild_manager = GuildManager()
-            guild_name = guild_manager.guild_config.get("guild_name", "Guild")
-            guild_tag = guild_manager.guild_config.get("guild_tag", "UNK")
-        except Exception as e:
-            print(f"Could not load guild config, using defaults: {e}")
+    
+    # Try to load guild config from sync_config.json directly first
+    try:
+        with open("sync_config.json", 'r') as f:
+            config = json.load(f)
+            guild_config = config.get("guild", {})
+            guild_name = guild_config.get("guild_name", "Guild")
+            guild_tag = guild_config.get("guild_tag", "UNK")
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+        print(f"Could not load sync_config.json, trying GuildManager: {e}")
+        
+        # Fallback to GuildManager if available
+        if GUILD_MANAGER_AVAILABLE and guild_table_exists:
+            try:
+                guild_manager = GuildManager()
+                guild_name = guild_manager.guild_config.get("guild_name", "Guild")
+                guild_tag = guild_manager.guild_config.get("guild_tag", "UNK")
+            except Exception as e:
+                print(f"Could not load guild config from GuildManager, using defaults: {e}")
 
     data = {
         "generated_at": datetime.now().isoformat(),
@@ -1016,6 +1028,10 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="metric-button" data-metric="Burst Consistency">Burst Consistency</button>
                 </div>
                 
+                <div class="search-container">
+                    <input type="text" id="individual-search" class="search-input" placeholder="Search players, professions, or accounts...">
+                    <button class="search-clear" onclick="clearSearch('individual')">&times;</button>
+                </div>
                 <div id="individual-leaderboard" class="leaderboard-container"></div>
             </div>
 
@@ -1031,6 +1047,10 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="metric-button" data-metric="Highest Single Fight DPS">Highest Single Fight DPS</button>
                 </div>
                 
+                <div class="search-container">
+                    <input type="text" id="high-scores-search" class="search-input" placeholder="Search players, professions, or accounts...">
+                    <button class="search-clear" onclick="clearSearch('high-scores')">&times;</button>
+                </div>
                 <div id="high-scores-leaderboard" class="leaderboard-container"></div>
             </div>
 
@@ -1049,6 +1069,10 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                 </div>
                 
                 <div id="profession-info" class="profession-info"></div>
+                <div class="search-container">
+                    <input type="text" id="profession-search" class="search-input" placeholder="Search players or accounts...">
+                    <button class="search-clear" onclick="clearSearch('profession')">&times;</button>
+                </div>
                 <div id="profession-leaderboard" class="leaderboard-container"></div>
             </div>
 
@@ -1409,6 +1433,63 @@ h2 {
     overflow-x: auto;
 }
 
+.search-container {
+    position: relative;
+    margin-bottom: 15px;
+    max-width: 400px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 25px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-input::placeholder {
+    color: var(--text-color-secondary);
+}
+
+.search-clear {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.search-clear:hover {
+    color: var(--text-color);
+}
+
+.search-stats {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--text-color-secondary);
+    text-align: right;
+}
+
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
@@ -1430,6 +1511,42 @@ h2 {
     position: sticky;
     top: 0;
     border-bottom: 2px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: background-color 0.2s ease;
+}
+
+.leaderboard-table th:hover {
+    background: var(--hover-bg);
+}
+
+.leaderboard-table th.sortable {
+    padding-right: 30px;
+    min-width: 80px;
+}
+
+.leaderboard-table th.sortable::after {
+    content: '↕';
+    position: absolute;
+    right: 8px;
+    opacity: 0.5;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.leaderboard-table th.sort-asc::after {
+    content: '↑';
+    opacity: 1;
+    color: #667eea;
+    font-weight: bold;
+}
+
+.leaderboard-table th.sort-desc::after {
+    content: '↓';
+    opacity: 1;
+    color: #667eea;
+    font-weight: bold;
 }
 
 .leaderboard-table tr:hover {
@@ -2020,6 +2137,42 @@ function setupEventListeners() {{
             selectGuildFilter(this.dataset.guildFilter);
         }});
     }});
+    
+    // Search functionality
+    const searchInputs = [
+        {{ id: 'individual-search', tableId: 'individual' }},
+        {{ id: 'high-scores-search', tableId: 'high-scores' }},
+        {{ id: 'profession-search', tableId: 'profession' }}
+    ];
+    
+    searchInputs.forEach(search => {{
+        const input = document.getElementById(search.id);
+        if (input) {{
+            input.addEventListener('input', function() {{
+                const searchValue = this.value.trim();
+                
+                if (searchValue === '') {{
+                    // If search is cleared, reload fresh data like clearSearch does
+                    clearSearch(search.tableId);
+                }} else {{
+                    // Otherwise filter the current data
+                    filterTable(search.tableId, searchValue);
+                }}
+            }});
+            
+            input.addEventListener('keyup', function(e) {{
+                const searchValue = this.value.trim();
+                
+                if (e.key === 'Enter') {{
+                    if (searchValue === '') {{
+                        clearSearch(search.tableId);
+                    }} else {{
+                        filterTable(search.tableId, searchValue);
+                    }}
+                }}
+            }});
+        }}
+    }});
 }}
 
 function selectDateFilter(filter) {{
@@ -2180,7 +2333,7 @@ function loadIndividualMetric(metric) {{
         columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
-    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'individual');
     
     // Make player names clickable after updating the table
     setTimeout(() => makePlayerNamesClickable(), 10);
@@ -2229,7 +2382,7 @@ function loadProfessionLeaderboard(profession) {{
         columns.splice(2, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
-    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'profession');
     
     // Make player names clickable after updating the table
     setTimeout(() => makePlayerNamesClickable(), 10);
@@ -2297,21 +2450,21 @@ function loadHighScores(metric) {{
         columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
     }}
     
-    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'high-scores');
     
     // Make player names clickable after updating the table
     setTimeout(() => makePlayerNamesClickable(), 10);
 }}
 
-function createLeaderboardTable(data, columns) {{
+function createLeaderboardTable(data, columns, tableId = 'leaderboard') {{
     if (!data || data.length === 0) {{
         return '<p>No data available.</p>';
     }}
     
-    let html = '<table class="leaderboard-table"><thead><tr>';
+    let html = `<table class="leaderboard-table" id="${{tableId}}-table"><thead><tr>`;
     
-    columns.forEach(col => {{
-        html += `<th>${{col.label}}</th>`;
+    columns.forEach((col, index) => {{
+        html += `<th class="sortable" data-column="${{col.key}}" data-type="${{col.type}}" onclick="sortTable('${{tableId}}', '${{col.key}}', '${{col.type}}')">${{col.label}}</th>`;
     }});
     
     html += '</tr></thead><tbody>';
@@ -2327,8 +2480,16 @@ function createLeaderboardTable(data, columns) {{
     
     html += '</tbody></table>';
     
+    // Store original data for filtering and sorting
+    window[`${{tableId}}_originalData`] = data;
+    window[`${{tableId}}_columns`] = columns;
+    window[`${{tableId}}_currentSort`] = {{ column: null, direction: 'asc' }};
+    
     // Apply raids gradient coloring after table creation
-    setTimeout(() => applyRaidsGradient(), 10);
+    setTimeout(() => {{
+        applyRaidsGradient();
+        updateSearchStats(tableId, data.length, data.length);
+    }}, 10);
     
     return html;
 }}
@@ -2427,6 +2588,203 @@ function applyRaidsGradient() {{
             element.style.color = ratio > 0.5 ? '#2d5a2d' : '#5a2d2d'; // Dark green/red text
         }}
     }});
+}}
+
+// Sorting and Search Functions
+function sortTable(tableId, column, type) {{
+    const data = window[`${{tableId}}_originalData`];
+    const columns = window[`${{tableId}}_columns`];
+    const currentSort = window[`${{tableId}}_currentSort`];
+    
+    if (!data || !columns) return;
+    
+    // Determine sort direction
+    let direction = 'asc';
+    if (currentSort.column === column && currentSort.direction === 'asc') {{
+        direction = 'desc';
+    }}
+    
+    // Sort the data
+    const sortedData = [...data].sort((a, b) => {{
+        let valueA = a[column];
+        let valueB = b[column];
+        
+        // Handle different data types
+        if (type === 'number' || type === 'raids' || type === 'rank' || type === 'stat' || type === 'avg_rank') {{
+            valueA = parseFloat(valueA) || 0;
+            valueB = parseFloat(valueB) || 0;
+        }} else if (type === 'percent') {{
+            valueA = parseFloat(valueA) || 0;
+            valueB = parseFloat(valueB) || 0;
+        }} else {{
+            // String comparison
+            valueA = String(valueA || '').toLowerCase();
+            valueB = String(valueB || '').toLowerCase();
+        }}
+        
+        if (direction === 'asc') {{
+            return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+        }} else {{
+            return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+        }}
+    }});
+    
+    // Reassign ranks after sorting
+    const dataWithNewRanks = sortedData.map((player, index) => ({{
+        ...player,
+        rank: index + 1
+    }}));
+    
+    // Update the table
+    const container = document.getElementById(`${{tableId}}-leaderboard`);
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, tableId);
+    
+    // Update sort indicators
+    updateSortIndicators(tableId, column, direction);
+    
+    // Store current sort state
+    window[`${{tableId}}_currentSort`] = {{ column, direction }};
+    
+    // Reapply search if active
+    const searchInput = document.getElementById(`${{tableId}}-search`);
+    if (searchInput && searchInput.value.trim()) {{
+        filterTable(tableId, searchInput.value);
+    }}
+    
+    // Make player names clickable again
+    setTimeout(() => makePlayerNamesClickable(), 10);
+}}
+
+function updateSortIndicators(tableId, activeColumn, direction) {{
+    const table = document.getElementById(`${{tableId}}-table`);
+    if (!table) return;
+    
+    // Remove all sort classes
+    const headers = table.querySelectorAll('th');
+    headers.forEach(th => {{
+        th.classList.remove('sort-asc', 'sort-desc');
+    }});
+    
+    // Add sort class to active column
+    const activeHeader = table.querySelector(`th[data-column="${{activeColumn}}"]`);
+    if (activeHeader) {{
+        activeHeader.classList.add(`sort-${{direction}}`);
+    }}
+}}
+
+function filterTable(tableId, searchTerm) {{
+    const originalData = window[`${{tableId}}_originalData`];
+    const columns = window[`${{tableId}}_columns`];
+    const currentSort = window[`${{tableId}}_currentSort`];
+    
+    if (!originalData || !columns) return;
+    
+    const term = searchTerm.toLowerCase().trim();
+    let workingData = originalData;
+    
+    if (term) {{
+        // Filter data based on search term
+        workingData = originalData.filter(player => {{
+            return (
+                (player.account_name && player.account_name.toLowerCase().includes(term)) ||
+                (player.player_name && player.player_name.toLowerCase().includes(term)) ||
+                (player.profession && player.profession.toLowerCase().includes(term)) ||
+                (player.skill_name && player.skill_name.toLowerCase().includes(term))
+            );
+        }});
+    }}
+    
+    // Apply current sort if any
+    if (currentSort && currentSort.column) {{
+        const {{ column, direction }} = currentSort;
+        const sortType = columns.find(col => col.key === column)?.type || 'string';
+        
+        workingData = [...workingData].sort((a, b) => {{
+            let valueA = a[column];
+            let valueB = b[column];
+            
+            // Handle different data types
+            if (sortType === 'number' || sortType === 'raids' || sortType === 'rank' || sortType === 'stat' || sortType === 'avg_rank') {{
+                valueA = parseFloat(valueA) || 0;
+                valueB = parseFloat(valueB) || 0;
+            }} else if (sortType === 'percent') {{
+                valueA = parseFloat(valueA) || 0;
+                valueB = parseFloat(valueB) || 0;
+            }} else {{
+                // String comparison
+                valueA = String(valueA || '').toLowerCase();
+                valueB = String(valueB || '').toLowerCase();
+            }}
+            
+            if (direction === 'asc') {{
+                return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+            }} else {{
+                return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
+            }}
+        }});
+    }}
+    
+    // Reassign ranks for final data
+    const dataWithNewRanks = workingData.map((player, index) => ({{
+        ...player,
+        rank: index + 1
+    }}));
+    
+    const container = document.getElementById(`${{tableId}}-leaderboard`);
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, tableId);
+    
+    // Restore sort indicators if sorting is active
+    if (currentSort && currentSort.column) {{
+        updateSortIndicators(tableId, currentSort.column, currentSort.direction);
+    }}
+    
+    updateSearchStats(tableId, workingData.length, originalData.length);
+    
+    // Make player names clickable again
+    setTimeout(() => makePlayerNamesClickable(), 10);
+}}
+
+function clearSearch(tableId) {{
+    const searchInput = document.getElementById(`${{tableId}}-search`);
+    if (searchInput) {{
+        searchInput.value = '';
+        
+        // Instead of using filterTable, reload the data using the same method as metric switching
+        // This ensures we get fresh data with proper guild filtering and current state
+        switch (tableId) {{
+            case 'individual':
+                loadIndividualMetric(currentMetric);
+                break;
+            case 'high-scores':
+                loadHighScores(currentHighScore);
+                break;
+            case 'profession':
+                loadProfessionLeaderboard(currentProfession);
+                break;
+        }}
+    }}
+}}
+
+function updateSearchStats(tableId, filtered, total) {{
+    let statsContainer = document.querySelector(`#${{tableId}}-leaderboard .search-stats`);
+    
+    if (!statsContainer) {{
+        // Create stats container if it doesn't exist
+        const leaderboardContainer = document.getElementById(`${{tableId}}-leaderboard`);
+        if (leaderboardContainer) {{
+            statsContainer = document.createElement('div');
+            statsContainer.className = 'search-stats';
+            leaderboardContainer.appendChild(statsContainer);
+        }}
+    }}
+    
+    if (statsContainer) {{
+        if (filtered === total) {{
+            statsContainer.textContent = `Showing all ${{total}} entries`;
+        }} else {{
+            statsContainer.textContent = `Showing ${{filtered}} of ${{total}} entries`;
+        }}
+    }}
 }}
 
 // Player Modal Functions
