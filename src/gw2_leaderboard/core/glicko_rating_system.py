@@ -654,8 +654,8 @@ def calculate_composite_score(glicko_rating: float, average_rank_percentile: flo
     # Calculate participation confidence multiplier based on Rating Deviation
     # Much more significant bonus for experienced players
     # RD starts at 350 (new player), decreases with more games
-    # Formula gives 0-15% bonus for experienced players (much more meaningful)
-    confidence_multiplier = 1.0 + max(0, (350 - rd) / 350 * 0.15)
+    # Formula gives 0-10% bonus for experienced players (meaningful but not overwhelming)
+    confidence_multiplier = 1.0 + max(0, (350 - rd) / 350 * 0.10)
     
     # Experience scaling: reduce rank bonus impact for players with very few games
     # Players with 1-2 games get reduced impact from extreme performances

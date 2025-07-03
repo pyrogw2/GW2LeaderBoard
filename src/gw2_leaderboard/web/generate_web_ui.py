@@ -1202,6 +1202,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                         <li><strong>Session-Based Evaluation:</strong> Each combat session is analyzed independently to calculate player rankings within that specific battle</li>
                         <li><strong>Z-Score Calculation:</strong> Player performance is normalized using z-scores: <code>(player_value - session_mean) / session_std</code></li>
                         <li><strong>Glicko-2 Rating:</strong> Dynamic rating system starting at 1500 that increases/decreases based on performance outcomes converted from z-scores</li>
+                        <li><strong>Composite Rating:</strong> Final displayed rating combining Glicko (50%) + rank performance (50%) + participation bonus (0-10%) + experience scaling</li>
                         <li><strong>Rating Deviation (RD):</strong> Measures uncertainty in a player's rating (starts at 350, decreases with more games)</li>
                     </ul>
                     
@@ -1216,8 +1217,8 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     
                     <h3>📈 Key Metrics Explained</h3>
                     <ul>
-                        <li><strong>Glicko Rating:</strong> Base skill rating around 1500 ± 500 (higher = more skilled, used for primary ranking)</li>
-                        <li><strong>Raids:</strong> Number of combat sessions analyzed (more sessions = lower uncertainty in rating)</li>
+                        <li><strong>Rating:</strong> Composite score around 1500-2200 (higher = better overall performance, used for ranking)</li>
+                        <li><strong>Raids:</strong> Number of combat sessions analyzed (more sessions = lower uncertainty and participation bonus)</li>
                         <li><strong>Avg Rank:</strong> Average percentile rank in sessions (lower percentage = consistently better performance)</li>
                         <li><strong>Avg Stat:</strong> Average raw statistical value for the specific metric being ranked</li>
                         <li><strong>Rating Deviation:</strong> Uncertainty measure that decreases with more games played</li>
@@ -1227,8 +1228,9 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <ul>
                         <li><strong>Context-Aware:</strong> Performance evaluated relative to session participants, not absolute values</li>
                         <li><strong>Battle-Type Neutral:</strong> Works equally well for GvG fights, zerg battles, and keep sieges</li>
-                        <li><strong>Skill-Based Rankings:</strong> Pure Glicko-2 ratings without artificial bonuses or penalties</li>
-                        <li><strong>Uncertainty Handling:</strong> Rating Deviation ensures new/infrequent players don't dominate experienced players</li>
+                        <li><strong>Experience Scaling:</strong> New players get reduced impact from extreme performances (1-2 games: 50%, 3-4 games: 75%, 5-8 games: 90%, 9+ games: full impact)</li>
+                        <li><strong>Participation Rewards:</strong> 0-10% bonus for consistent participation encourages regular play without overwhelming skill</li>
+                        <li><strong>Dynamic Filtering:</strong> Support metrics exclude low-outlier performances (25th percentile threshold) for meaningful comparisons</li>
                         <li><strong>Profession Recognition:</strong> Automatic detection of build variants (China DH, Boon Vindicator, etc.)</li>
                     </ul>
                 </div>
