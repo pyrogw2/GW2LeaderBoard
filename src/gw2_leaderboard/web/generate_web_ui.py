@@ -2888,6 +2888,8 @@ function filterTable(tableId, searchTerm) {{
                 (player.account_name && player.account_name.toLowerCase().includes(term)) ||
                 (player.player_name && player.player_name.toLowerCase().includes(term)) ||
                 (player.profession && player.profession.toLowerCase().includes(term)) ||
+                (player.primary_profession && player.primary_profession.toLowerCase().includes(term)) ||
+                (player.professions_played && player.professions_played.toLowerCase().includes(term)) ||
                 (player.skill_name && player.skill_name.toLowerCase().includes(term))
             );
         }});
