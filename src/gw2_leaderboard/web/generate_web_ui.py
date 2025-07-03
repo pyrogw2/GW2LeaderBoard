@@ -873,7 +873,7 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
 
         individual_categories = [
             "DPS", "Healing", "Barrier", "Cleanses", "Strips",
-            "Stability", "Resistance", "Might", "Protection", "Downs", "Burst Consistency"
+            "Stability", "Resistance", "Might", "Protection", "Downs", "Burst Consistency", "Distance to Tag"
         ]
 
         # When using a date filter, we need to recalculate ratings. For thread safety,
@@ -1124,6 +1124,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="metric-button" data-metric="Protection">Protection</button>
                     <button class="metric-button" data-metric="Downs">DownCont</button>
                     <button class="metric-button" data-metric="Burst Consistency">Burst Consistency</button>
+                    <button class="metric-button" data-metric="Distance to Tag">Distance to Tag</button>
                 </div>
                 
                 <div class="search-container">
@@ -1208,7 +1209,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     
                     <h3>🏅 Leaderboard Types</h3>
                     <ul>
-                        <li><strong>Individual Metrics:</strong> Rankings for specific performance areas (DPS, Healing, Barrier, Cleanses, Strips, Stability, Resistance, Might, Protection, Down Contribution, Burst Consistency)</li>
+                        <li><strong>Individual Metrics:</strong> Rankings for specific performance areas (DPS, Healing, Barrier, Cleanses, Strips, Stability, Resistance, Might, Protection, Down Contribution, Burst Consistency, Distance to Tag)</li>
                         <li><strong>High Scores:</strong> Record-breaking single performance instances (highest burst damage, skill damage, single-fight DPS)</li>
                         <li><strong>Profession-Specific:</strong> Role-based rankings using weighted combinations of relevant metrics for each profession</li>
                         <li><strong>Time Filters:</strong> All-time, 30-day, 90-day, and 180-day rankings to show recent vs historical performance</li>

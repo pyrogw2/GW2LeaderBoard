@@ -138,3 +138,9 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - Context managers for resource handling
 - Progress reporting in long-running operations
 - Modular design with clear separation of concerns
+
+### Documentation Standards
+- **Always update documentation before committing** - Update API_REFERENCE.md, GLICKO_SYSTEM.md, and other relevant docs when adding new features
+- Keep CLAUDE.md synchronized with new commands and capabilities
+- Document database schema changes in API_REFERENCE.md
+- Update metric lists in documentation when adding new performance metrics

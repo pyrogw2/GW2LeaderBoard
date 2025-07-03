@@ -45,6 +45,8 @@ class PlayerPerformance:
     # Burst Metrics
     burst_damage_1s: int = 0  # Bur-Total (1)s - for High Scores section
     burst_consistency_1s: int = 0  # Ch5Ca-Total (1)s - for Glicko rating
+    # Positioning Metrics
+    distance_from_tag_avg: float = 0.0  # Average distance from tag in game units
     # Date fields
     parsed_date: date = None
 
@@ -473,6 +475,51 @@ def parse_burst_consistency_table(consistency_text: str) -> Dict[str, Dict]:
     return consistency_stats
 
 
+def parse_on_tag_review_table(on_tag_text: str) -> Dict[str, Dict]:
+    """Parse Player On Tag Review data for average distance from tag."""
+    on_tag_stats = {}
+    
+    lines = on_tag_text.split('\n')
+    data_rows = [line for line in lines if line.startswith('|') and not line.startswith('|!') and not line.startswith('|thead')]
+    
+    for row in data_rows:
+        if '|h' in row or not row.strip() or '|!' in row or '|c' in row or 'On Tag Review' in row:
+            continue
+            
+        try:
+            cells = [cell.strip() for cell in row.split('|') if cell.strip()]
+            if len(cells) < 3:
+                continue
+            
+            # Extract account name from tooltip
+            name_cell = cells[0]
+            account_name = extract_tooltip(name_cell)
+            if not account_name:
+                continue
+                
+            # Parse profession
+            prof_cell = cells[1]
+            prof_match = re.search(r'{{(\w+)}}', prof_cell)
+            profession = prof_match.group(1) if prof_match else ""
+            
+            # Extract Avg Dist value (column 2, 0-indexed)
+            avg_dist_cell = cells[2] if len(cells) > 2 else "0"
+            avg_dist = float(avg_dist_cell) if avg_dist_cell.isdigit() else 0.0
+            
+            key = f"{account_name}_{profession}"
+            on_tag_stats[key] = {
+                'account_name': account_name,
+                'profession': profession,
+                'distance_from_tag_avg': avg_dist
+            }
+            
+        except (ValueError, IndexError) as e:
+            print(f"Error parsing on-tag review row: {row[:100]}... - {e}")
+            continue
+    
+    return on_tag_stats
+
+
 def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     """Parse a single log directory and extract comprehensive player performance data."""
     timestamp = log_dir.name
@@ -537,6 +584,14 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
             burst_consistency_data = json.load(f)
         burst_consistency_stats = parse_burst_consistency_table(burst_consistency_data.get('text', ''))
     
+    # Read on-tag review data
+    on_tag_stats = {}
+    on_tag_file = log_dir / f"{timestamp}-On-Tag-Review.json"
+    if on_tag_file.exists():
+        with open(on_tag_file, 'r', encoding='utf-8') as f:
+            on_tag_data = json.load(f)
+        on_tag_stats = parse_on_tag_review_table(on_tag_data.get('text', ''))
+    
     # Combine all stats into PlayerPerformance objects
     performances = []
     for player_data in players_data:
@@ -547,14 +602,14 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
         profession = player_data['profession']
         key = f"{account}_{profession}"
         
-        # Get additional stats
+        # Get additional stats (using original profession name for key matching)
         heal_data = heal_stats.get(key, {})
         support_data = support_stats.get(key, {})
         boon_data = boon_stats.get(key, {})
         offensive_data = offensive_stats.get(key, {})
         burst_damage_data = burst_damage_stats.get(key, {})
         burst_consistency_data = burst_consistency_stats.get(key, {})
-        
+        on_tag_player_data = on_tag_stats.get(key, {})
         
         performance = PlayerPerformance(
             timestamp=timestamp,
@@ -579,7 +634,8 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
             protection_gen_per_sec=boon_data.get('protection_gen_per_sec', 0.0),
             down_contribution_per_sec=offensive_data.get('down_contribution', 0) / player_data['fight_time'] if player_data['fight_time'] > 0 else 0.0,
             burst_damage_1s=burst_damage_data.get('burst_damage_1s', 0),
-            burst_consistency_1s=burst_consistency_data.get('burst_consistency_1s', 0)
+            burst_consistency_1s=burst_consistency_data.get('burst_consistency_1s', 0),
+            distance_from_tag_avg=on_tag_player_data.get('distance_from_tag_avg', 0.0)
         )
         performances.append(performance)
     
@@ -735,7 +791,8 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
             protection_gen_per_sec=performance.protection_gen_per_sec,
             down_contribution_per_sec=performance.down_contribution_per_sec,
             burst_damage_1s=performance.burst_damage_1s,
-            burst_consistency_1s=performance.burst_consistency_1s
+            burst_consistency_1s=performance.burst_consistency_1s,
+            distance_from_tag_avg=performance.distance_from_tag_avg
         )
         updated_performances.append(updated_performance)
     
@@ -776,6 +833,7 @@ def create_database(db_path: str):
             down_contribution_per_sec REAL DEFAULT 0.0,
             burst_damage_1s INTEGER DEFAULT 0,
             burst_consistency_1s INTEGER DEFAULT 0,
+            distance_from_tag_avg REAL DEFAULT 0.0,
             UNIQUE(timestamp, account_name, profession)
         )
     ''')
@@ -866,8 +924,8 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
              target_damage, target_dps, all_damage, target_condition_damage, target_condition_dps,
              healing_per_sec, barrier_per_sec, condition_cleanses_per_sec, boon_strips_per_sec, 
              stability_gen_per_sec, resistance_gen_per_sec, might_gen_per_sec, protection_gen_per_sec, down_contribution_per_sec,
-             burst_damage_1s, burst_consistency_1s)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             burst_damage_1s, burst_consistency_1s, distance_from_tag_avg)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             perf.timestamp, perf.parsed_date.isoformat() if perf.parsed_date else None,
             perf.player_name, perf.account_name, perf.profession,
@@ -876,7 +934,7 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
             perf.healing_per_sec, perf.barrier_per_sec, perf.condition_cleanses_per_sec, 
             perf.boon_strips_per_sec, perf.stability_gen_per_sec, perf.resistance_gen_per_sec, 
             perf.might_gen_per_sec, perf.protection_gen_per_sec, perf.down_contribution_per_sec,
-            perf.burst_damage_1s, perf.burst_consistency_1s
+            perf.burst_damage_1s, perf.burst_consistency_1s, perf.distance_from_tag_avg
         ))
     
     conn.commit()

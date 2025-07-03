@@ -138,7 +138,8 @@ METRIC_CATEGORIES = {
     'Might': 'might_gen_per_sec',
     'Protection': 'protection_gen_per_sec',
     'Downs': 'down_contribution_per_sec',
-    'Burst Consistency': 'burst_consistency_1s'
+    'Burst Consistency': 'burst_consistency_1s',
+    'Distance to Tag': 'distance_from_tag_avg'
 }
 
 # Profession-specific metric weightings for composite scores
@@ -235,21 +236,26 @@ def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, 
     
     metric_column = METRIC_CATEGORIES[metric_category]
     
-    # First, get all non-zero values to calculate dynamic floor for support metrics
+    # Determine sort order based on metric type
+    sort_order = "ASC" if metric_category in ['Distance to Tag'] else "DESC"
+    
+    # Get values for dynamic floor calculation. For Distance to Tag, include 0 values (tag driver)
+    value_filter = ">= 0" if metric_category == 'Distance to Tag' else "> 0"
+    
     if guild_filter:
         initial_query = f'''
             SELECT p.{metric_column}
             FROM player_performances p
             INNER JOIN guild_members g ON p.account_name = g.account_name
-            WHERE p.timestamp = ? AND p.{metric_column} > 0
-            ORDER BY p.{metric_column} DESC
+            WHERE p.timestamp = ? AND p.{metric_column} {value_filter}
+            ORDER BY p.{metric_column} {sort_order}
         '''
     else:
         initial_query = f'''
             SELECT {metric_column}
             FROM player_performances 
-            WHERE timestamp = ? AND {metric_column} > 0
-            ORDER BY {metric_column} DESC
+            WHERE timestamp = ? AND {metric_column} {value_filter}
+            ORDER BY {metric_column} {sort_order}
         '''
     
     cursor.execute(initial_query, (timestamp,))
@@ -259,7 +265,10 @@ def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, 
     dynamic_floor = 0
     support_metrics = ['Healing', 'Barrier', 'Cleanses', 'Strips', 'Stability', 'Resistance', 'Might', 'Protection']
     
-    if metric_category in support_metrics and len(all_values) >= 4:
+    # For Distance to Tag, don't apply dynamic floor filtering - include all values including 0 (tag driver)
+    if metric_category == 'Distance to Tag':
+        dynamic_floor = 0  # Include tag drivers with 0 distance
+    elif metric_category in support_metrics and len(all_values) >= 4:
         # Use 25th percentile as dynamic floor to exclude low outliers
         # This ensures we only include players who are meaningfully contributing to this metric
         all_values_sorted = sorted(all_values)
@@ -272,20 +281,23 @@ def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, 
             dynamic_floor = all_values_sorted[median_index]
     
     # Now get filtered results using the dynamic floor
+    # Use appropriate comparison operator based on metric type
+    comparison_op = ">=" if metric_category == 'Distance to Tag' else ">"
+    
     if guild_filter:
         query = f'''
             SELECT p.account_name, p.profession, p.{metric_column}
             FROM player_performances p
             INNER JOIN guild_members g ON p.account_name = g.account_name
-            WHERE p.timestamp = ? AND p.{metric_column} > ?
-            ORDER BY p.{metric_column} DESC
+            WHERE p.timestamp = ? AND p.{metric_column} {comparison_op} ?
+            ORDER BY p.{metric_column} {sort_order}
         '''
     else:
         query = f'''
             SELECT account_name, profession, {metric_column}
             FROM player_performances 
-            WHERE timestamp = ? AND {metric_column} > ?
-            ORDER BY {metric_column} DESC
+            WHERE timestamp = ? AND {metric_column} {comparison_op} ?
+            ORDER BY {metric_column} {sort_order}
         '''
     
     cursor.execute(query, (timestamp, dynamic_floor))
@@ -312,6 +324,11 @@ def calculate_session_stats(db_path: str, timestamp: str, metric_category: str, 
     
     for rank, (account_name, profession, metric_value) in enumerate(results, 1):
         z_score = (metric_value - mean_val) / std_val
+        
+        # For metrics where lower values are better, invert the z-score
+        if metric_category in ['Distance to Tag']:
+            z_score = -z_score
+        
         # Calculate normalized rank as percentile (0-100)
         normalized_rank = (rank / total_players) * 100
         
@@ -335,20 +352,24 @@ def calculate_session_stats_fallback(db_path: str, timestamp: str, metric_catego
     
     metric_column = METRIC_CATEGORIES[metric_category]
     
+    # Determine sort order and filter based on metric type
+    sort_order = "ASC" if metric_category in ['Distance to Tag'] else "DESC"
+    value_filter = ">= 0" if metric_category == 'Distance to Tag' else "> 0"
+    
     if guild_filter:
         query = f'''
             SELECT p.account_name, p.profession, p.{metric_column}
             FROM player_performances p
             INNER JOIN guild_members g ON p.account_name = g.account_name
-            WHERE p.timestamp = ? AND p.{metric_column} > 0
-            ORDER BY p.{metric_column} DESC
+            WHERE p.timestamp = ? AND p.{metric_column} {value_filter}
+            ORDER BY p.{metric_column} {sort_order}
         '''
     else:
         query = f'''
             SELECT account_name, profession, {metric_column}
             FROM player_performances 
-            WHERE timestamp = ? AND {metric_column} > 0
-            ORDER BY {metric_column} DESC
+            WHERE timestamp = ? AND {metric_column} {value_filter}
+            ORDER BY {metric_column} {sort_order}
         '''
     
     cursor.execute(query, (timestamp,))
@@ -370,6 +391,11 @@ def calculate_session_stats_fallback(db_path: str, timestamp: str, metric_catego
     
     for rank, (account_name, profession, metric_value) in enumerate(results, 1):
         z_score = (metric_value - mean_val) / std_val
+        
+        # For metrics where lower values are better, invert the z-score
+        if metric_category in ['Distance to Tag']:
+            z_score = -z_score
+        
         normalized_rank = (rank / total_players) * 100
         
         players.append({

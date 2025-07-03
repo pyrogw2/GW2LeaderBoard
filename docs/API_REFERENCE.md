@@ -26,6 +26,7 @@ CREATE TABLE player_performances (
     resistance_gen_per_sec REAL DEFAULT 0.0,  -- Resistance generation per second
     might_gen_per_sec REAL DEFAULT 0.0,       -- Might generation per second
     down_contribution_per_sec REAL DEFAULT 0.0, -- Down contribution per second
+    distance_from_tag_avg REAL DEFAULT 0.0,   -- Average distance from tag in game units
     parsed_date TEXT,                          -- Date in YYYY-MM-DD format for filtering
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Record creation time
 );
@@ -59,6 +60,7 @@ INSERT INTO player_performances VALUES (
     0.2,                           -- resistance_gen_per_sec
     8.5,                           -- might_gen_per_sec
     117.13,                        -- down_contribution_per_sec
+    245.7,                         -- distance_from_tag_avg
     '2025-06-30',                  -- parsed_date
     '2025-07-01 16:00:00'          -- created_at
 );
@@ -168,6 +170,7 @@ class PlayerPerformance:
     resistance_gen_per_sec: float = 0.0        # Resistance generation per second
     might_gen_per_sec: float = 0.0             # Might generation per second
     down_contribution_per_sec: float = 0.0     # Down contribution per second
+    distance_from_tag_avg: float = 0.0         # Average distance from tag (game units)
     parsed_date: str = ""                      # YYYY-MM-DD format
 ```
 

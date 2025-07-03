@@ -105,7 +105,7 @@ composite_score = glicko_rating + (100 - average_rank_percent) * 10
 
 ### Metric Categories
 
-The system tracks 9 distinct performance metrics:
+The system tracks 10 distinct performance metrics:
 
 ```python
 METRIC_CATEGORIES = {
@@ -117,11 +117,14 @@ METRIC_CATEGORIES = {
     'Stability': 'stability_gen_per_sec',
     'Resistance': 'resistance_gen_per_sec', 
     'Might': 'might_gen_per_sec',
-    'Downs': 'down_contribution_per_sec'
+    'Downs': 'down_contribution_per_sec',
+    'Distance to Tag': 'distance_from_tag_avg'
 }
 ```
 
 Each metric gets its own independent Glicko rating, allowing players to excel in different areas.
+
+**Special Handling for Distance to Tag**: Unlike other metrics where higher values indicate better performance, Distance to Tag uses "lower is better" logic. The system automatically inverts z-scores and uses ascending sort order to properly rank players who stay closer to the tag commander.
 
 ## Profession-Specific Rankings
 
