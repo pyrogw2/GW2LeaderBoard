@@ -2152,7 +2152,8 @@ const professionIcons = {{
     'Renegade': 'https://wiki.guildwars2.com/images/b/be/Renegade_icon_small.png',
     'Vindicator': 'https://wiki.guildwars2.com/images/6/6d/Vindicator_icon_small.png',
     'Condi Firebrand': 'https://wiki.guildwars2.com/images/0/0e/Firebrand_icon_small.png',
-    'Support Spb': 'https://wiki.guildwars2.com/images/0/08/Spellbreaker_icon_small.png'
+    'Support Spb': 'https://wiki.guildwars2.com/images/0/08/Spellbreaker_icon_small.png',
+    'Boon Cata': 'https://wiki.guildwars2.com/images/c/c5/Catalyst_icon_small.png'
 }};
 
 // Initialize the page

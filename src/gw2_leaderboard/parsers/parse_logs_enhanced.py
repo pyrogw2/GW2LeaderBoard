@@ -613,6 +613,12 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
         mean_resistance_gen = statistics.mean(all_resistance_gen)
         support_sb_threshold = max(mean_resistance_gen * 1.2, 0.5)
     
+    # Detect Boon Catalyst: Catalyst with resistance generation significantly above average
+    boon_cata_threshold = 0.5  # Default minimum threshold (resistance/sec)
+    if len(all_resistance_gen) >= 2:
+        mean_resistance_gen = statistics.mean(all_resistance_gen)
+        boon_cata_threshold = max(mean_resistance_gen * 1.2, 0.5)
+    
     # Detect China DH: Dragonhunter with stability generation significantly above average
     china_dh_threshold = 3.0  # Default minimum threshold (stability/sec)
     if len(all_stability_gen) >= 2:
@@ -639,6 +645,11 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
         elif (performance.profession == "Spellbreaker" and 
               performance.resistance_gen_per_sec >= support_sb_threshold):
             new_profession = "Support Spb"
+        
+        # Check for Boon Catalyst
+        elif (performance.profession == "Catalyst" and 
+              performance.resistance_gen_per_sec >= boon_cata_threshold):
+            new_profession = "Boon Cata"
         
         # Check for China DH
         elif (performance.profession == "Dragonhunter" and 
