@@ -1228,6 +1228,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <ul>
                         <li><strong>Context-Aware:</strong> Performance evaluated relative to session participants, not absolute values</li>
                         <li><strong>Battle-Type Neutral:</strong> Works equally well for GvG fights, zerg battles, and keep sieges</li>
+                        <li><strong>Fight Time Filtering:</strong> Players with ≥5 minutes participation are always included; ultra-short outliers (profession swaps, disconnects) are filtered to maintain data quality</li>
                         <li><strong>Experience Scaling:</strong> New players get reduced impact from extreme performances (1-2 games: 50%, 3-4 games: 75%, 5-8 games: 90%, 9+ games: full impact)</li>
                         <li><strong>Participation Rewards:</strong> 0-10% bonus for consistent participation encourages regular play without overwhelming skill</li>
                         <li><strong>Dynamic Filtering:</strong> Support metrics exclude low-outlier performances (25th percentile threshold) for meaningful comparisons</li>

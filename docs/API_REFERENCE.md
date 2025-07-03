@@ -16,7 +16,7 @@ CREATE TABLE player_performances (
     timestamp TEXT NOT NULL,                    -- Session timestamp (YYYYMMDDHHMM)
     account_name TEXT NOT NULL,                 -- Player account name
     profession TEXT NOT NULL,                   -- Player profession/specialization
-    fight_time REAL NOT NULL,                   -- Duration of combat participation (seconds)
+    fight_time REAL NOT NULL,                   -- Duration of combat participation (seconds, ≥300s after filtering)
     target_dps REAL DEFAULT 0.0,              -- Damage per second to enemy players
     healing_per_sec REAL DEFAULT 0.0,         -- Healing output per second
     barrier_per_sec REAL DEFAULT 0.0,         -- Barrier generation per second
@@ -113,6 +113,38 @@ INSERT INTO glicko_ratings VALUES (
     '2025-07-01 16:15:00'          -- last_updated
 );
 ```
+
+## Data Quality and Filtering
+
+### Fight Time Outlier Filtering
+
+The system automatically filters out players with extremely short participation times to maintain data quality:
+
+#### Filtering Rules
+- **Hard Minimum**: Players with ≥ 300 seconds (5 minutes) are always included
+- **Outlier Detection**: Players below 25% of median fight time are filtered
+- **Threshold Safety**: Only applies when outliers represent < 20% of session participants
+- **Purpose**: Removes brief profession swaps, disconnections, or late arrivals that don't reflect true performance
+
+#### Implementation
+```python
+def filter_fight_time_outliers(performances):
+    HARD_MINIMUM = 300.0  # Always keep players with >= 5 minutes
+    
+    # Calculate outlier threshold
+    median_time = statistics.median([p.fight_time for p in performances])
+    outlier_threshold = min(median_time * 0.25, HARD_MINIMUM)
+    
+    # Filter outliers if they represent < 20% of players
+    outliers = [p for p in performances if p.fight_time < outlier_threshold]
+    if len(outliers) / len(performances) < 0.2:
+        return [p for p in performances if p.fight_time >= outlier_threshold]
+    return performances
+```
+
+#### Examples
+- **Filtered**: 32s Willbender (profession swap), 75s Guardian (disconnect)
+- **Preserved**: 319s Guardian (late joiner), 474s Scrapper (mid-raid arrival)
 
 ## Data Structures
 

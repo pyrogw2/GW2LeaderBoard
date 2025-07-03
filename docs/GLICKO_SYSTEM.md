@@ -53,7 +53,26 @@ def calculate_z_scores(session_data, metric):
 - Accounts for varying group sizes and compositions
 - Makes performance comparable across time periods
 
-#### 2. Glicko Rating Updates
+#### 2. Fight Time Outlier Filtering
+
+Before rating calculations, the system filters out players with extremely short participation times that don't represent meaningful performance data:
+
+```python
+def filter_fight_time_outliers(performances):
+    HARD_MINIMUM = 300.0  # Always keep players with >= 5 minutes
+    
+    # For players below 300s, use median-based filtering for clear outliers
+    outlier_threshold = min(median_time * 0.25, HARD_MINIMUM)
+    return [p for p in performances if p.fight_time >= outlier_threshold]
+```
+
+**Filtering Rules:**
+- **Hard Minimum**: Players with ≥ 300 seconds (5 minutes) are always included
+- **Outlier Detection**: Players below 25% of median fight time are filtered
+- **Threshold Safety**: Only applies when outliers represent < 20% of session
+- **Purpose**: Removes brief profession swaps, disconnections, or late arrivals that don't reflect true performance
+
+#### 3. Glicko Rating Updates
 
 Each player's rating is updated based on their z-score performance:
 
@@ -71,7 +90,7 @@ def update_glicko_rating(rating, rd, volatility, z_score, opponent_rating=1500, 
 - **Initial RD**: 350 (high uncertainty for new players)
 - **Initial Volatility**: 0.06 (moderate performance consistency expectation)
 
-#### 3. Composite Score Calculation
+#### 4. Composite Score Calculation
 
 The final ranking score combines multiple factors:
 
