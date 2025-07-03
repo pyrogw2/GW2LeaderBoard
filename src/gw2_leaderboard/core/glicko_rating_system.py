@@ -568,7 +568,7 @@ def recalculate_profession_ratings(db_path: str, profession: str, date_filter: s
             new_average_rank = new_total_rank_sum / new_games
             
             # Calculate composite score with participation bonus
-            composite_score = calculate_composite_score(new_rating, new_average_rank, new_rd)
+            composite_score = calculate_composite_score(new_rating, new_average_rank, new_rd, new_games)
             
             # Store weighted average stats for display
             prof_config = PROFESSION_METRICS[profession]
@@ -607,7 +607,7 @@ def recalculate_profession_ratings(db_path: str, profession: str, date_filter: s
     return results
 
 
-def calculate_composite_score(glicko_rating: float, average_rank_percentile: float, rd: float = 350.0) -> float:
+def calculate_composite_score(glicko_rating: float, average_rank_percentile: float, rd: float = 350.0, games_played: int = 0) -> float:
     """
     Calculate composite score combining Glicko rating (50%) and rank performance (50%) with participation bonus.
     
@@ -615,10 +615,11 @@ def calculate_composite_score(glicko_rating: float, average_rank_percentile: flo
         glicko_rating: Base Glicko rating (around 1500 +/- 500)
         average_rank_percentile: Average rank as percentile (0-100, lower is better)
         rd: Rating Deviation (lower = more confident/experienced player)
+        games_played: Number of games played (for experience scaling)
     
     Returns:
         Composite score where rank performance heavily influences final ranking, 
-        with bonus for frequent participation (lower RD)
+        with significant bonus for frequent participation and experience scaling
     """
     if average_rank_percentile <= 0:
         return glicko_rating  # No rank data yet
@@ -651,15 +652,29 @@ def calculate_composite_score(glicko_rating: float, average_rank_percentile: flo
         rank_bonus = -100 - ((average_rank_percentile - 85) * 10)
     
     # Calculate participation confidence multiplier based on Rating Deviation
-    # Lower RD (more games) = higher confidence = rating boost
+    # Much more significant bonus for experienced players
     # RD starts at 350 (new player), decreases with more games
-    # Formula gives 0-2% bonus for experienced players
-    confidence_multiplier = 1.0 + max(0, (350 - rd) / 350 * 0.02)
+    # Formula gives 0-15% bonus for experienced players (much more meaningful)
+    confidence_multiplier = 1.0 + max(0, (350 - rd) / 350 * 0.15)
     
-    # Combine: 50% Glicko + 50% rank performance (much higher rank impact)
-    base_composite = (glicko_rating * 0.5) + ((glicko_rating + rank_bonus) * 0.5)
+    # Experience scaling: reduce rank bonus impact for players with very few games
+    # Players with 1-2 games get reduced impact from extreme performances
+    experience_factor = 1.0
+    if games_played <= 2:
+        experience_factor = 0.5  # 50% of rank bonus impact
+    elif games_played <= 4:
+        experience_factor = 0.75  # 75% of rank bonus impact
+    elif games_played <= 8:
+        experience_factor = 0.9   # 90% of rank bonus impact
+    # games_played > 8 gets full impact (experience_factor = 1.0)
     
-    # Apply participation confidence multiplier
+    # Apply experience scaling to rank bonus
+    scaled_rank_bonus = rank_bonus * experience_factor
+    
+    # Combine: 50% Glicko + 50% rank performance (with experience scaling)
+    base_composite = (glicko_rating * 0.5) + ((glicko_rating + scaled_rank_bonus) * 0.5)
+    
+    # Apply participation confidence multiplier (now much more significant)
     composite = base_composite * confidence_multiplier
     
     return composite
@@ -670,7 +685,7 @@ def update_glicko_rating(db_path: str, account_name: str, profession: str, metri
                         total_rank_sum: float, average_rank: float, total_stat_value: float, average_stat_value: float):
     """Update Glicko rating and composite score in database."""
     # Calculate composite score with participation bonus
-    composite_score = calculate_composite_score(rating, average_rank, rd)
+    composite_score = calculate_composite_score(rating, average_rank, rd, games_played)
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()

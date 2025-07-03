@@ -813,7 +813,6 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
                 "rank": i + 1,
                 "account_name": account,
                 "composite_score": float(composite),
-                "glicko_rating": float(rating),
                 "games_played": int(games),
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                 "key_stats": stats_breakdown,
@@ -953,8 +952,7 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                     "account_name": account,
                     "profession": profession,
                     "composite_score": float(composite),
-                    "glicko_rating": float(rating),
-                    "games_played": int(games),
+                        "games_played": int(games),
                     "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                     "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
                     "is_guild_member": bool(is_guild_member)
@@ -969,7 +967,6 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                 "account_name": account,
                 "profession": profession,
                 "composite_score": float(composite),
-                "glicko_rating": float(rating),
                 "games_played": int(games),
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                 "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
@@ -2434,7 +2431,7 @@ function loadOverallLeaderboard() {{
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
-        {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
+        {{ key: 'composite_score', label: 'Rating', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
         {{ key: 'average_rank_percent', label: 'Avg Rank Per Raid', type: 'avg_rank' }}
     ];
@@ -2472,7 +2469,7 @@ function loadIndividualMetric(metric) {{
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
         {{ key: 'profession', label: 'Profession', type: 'profession' }},
-        {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
+        {{ key: 'composite_score', label: 'Rating', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
         {{ key: 'average_rank_percent', label: 'Avg Rank', type: 'avg_rank' }},
         {{ key: 'average_stat_value', label: `Avg ${{metric === 'Downs' ? 'DownCont' : metric}}`, type: 'stat' }}
@@ -2522,7 +2519,7 @@ function loadProfessionLeaderboard(profession) {{
     const columns = [
         {{ key: 'rank', label: 'Rank', type: 'rank' }},
         {{ key: 'account_name', label: 'Account', type: 'account' }},
-        {{ key: 'glicko_rating', label: 'Glicko', type: 'number' }},
+        {{ key: 'composite_score', label: 'Rating', type: 'number' }},
         {{ key: 'games_played', label: 'Raids', type: 'raids' }},
         {{ key: 'key_stats', label: 'Key Stats', type: 'stats' }}
     ];
@@ -3134,7 +3131,7 @@ function filterMetricsByProfession(profession) {{
                 <div class="metric-name">${{metric === 'Downs' ? 'DownCont' : metric}}</div>
                 <div class="metric-value">
                     <div>Rank: #${{bestInstance.rank}}</div>
-                    <div>Rating: ${{bestInstance.glicko_rating?.toFixed(0) || 'N/A'}}</div>
+                    <div>Rating: ${{bestInstance.composite_score?.toFixed(0) || 'N/A'}}</div>
                     <div>Games: ${{bestInstance.games_played}}</div>
                     <div>Profession: ${{bestInstance.profession}}</div>
                     <div>Avg Value: ${{bestInstance.average_stat_value?.toFixed(1) || 'N/A'}}</div>
@@ -3640,7 +3637,7 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
                                     return `
                                         <tr>
                                             <td><strong>${metric.metric_name}${sampleSizeWarning}</strong></td>
-                                            <td>${metric.glicko_rating.toFixed(0)}</td>
+                                            <td>${metric.composite_score.toFixed(0)}</td>
                                             <td>${metric.games_played}</td>
                                             <td>${formatNumber(metric.average_value)}</td>
                                             <td>${formatNumber(metric.best_value)}</td>
@@ -3720,7 +3717,7 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
             
             // Find average Glicko rating across all metrics
             const avgGlicko = playerData.metric_summaries.length > 0 
-                ? playerData.metric_summaries.reduce((sum, m) => sum + m.glicko_rating, 0) / playerData.metric_summaries.length
+                ? playerData.metric_summaries.reduce((sum, m) => sum + m.composite_score, 0) / playerData.metric_summaries.length
                 : 1500;
             
             performanceStats.innerHTML = `
