@@ -446,6 +446,89 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
     return results
 
 
+def get_most_played_professions_data(db_path: str, limit: int = 100, date_filter: str = None):
+    """Get most played professions data for Player Stats section (non-Glicko based)."""
+    from ..core.glicko_rating_system import build_date_filter_clause
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Check if guild_members table exists for guild membership info
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = cursor.fetchone() is not None
+    
+    # Build date filter clause
+    date_clause, date_params = build_date_filter_clause(date_filter)
+    
+    if guild_table_exists:
+        # Query with guild membership info
+        query = f'''
+            SELECT p.account_name, p.profession, COUNT(*) as session_count,
+                   CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+            FROM player_performances p
+            LEFT JOIN guild_members gm ON p.account_name = gm.account_name
+            WHERE 1=1 {date_clause}
+            GROUP BY p.account_name, p.profession, gm.account_name
+            ORDER BY p.account_name, session_count DESC
+        '''
+        params = date_params
+        cursor.execute(query, params)
+    else:
+        # Query without guild membership info
+        query = f'''
+            SELECT account_name, profession, COUNT(*) as session_count, 0 as is_guild_member
+            FROM player_performances
+            WHERE 1=1 {date_clause}
+            GROUP BY account_name, profession
+            ORDER BY account_name, session_count DESC
+        '''
+        params = date_params
+        cursor.execute(query, params)
+    
+    # Get all results and group by account_name
+    all_results = cursor.fetchall()
+    conn.close()
+    
+    # Group professions by account name and format for display
+    player_data = {}
+    for account_name, profession, session_count, is_guild_member in all_results:
+        if account_name not in player_data:
+            player_data[account_name] = {
+                'account_name': account_name,
+                'professions': [],
+                'total_sessions': 0,
+                'is_guild_member': bool(is_guild_member)
+            }
+        
+        player_data[account_name]['professions'].append({
+            'profession': profession,
+            'session_count': session_count
+        })
+        player_data[account_name]['total_sessions'] += session_count
+    
+    # Convert to list and sort by total sessions played
+    result_list = []
+    for account_name, data in player_data.items():
+        # Sort professions by session count (most played first)
+        data['professions'].sort(key=lambda x: x['session_count'], reverse=True)
+        
+        # Format profession string similar to player modal: "Profession (count)"
+        profession_strings = [f"{prof['profession']} ({prof['session_count']})" for prof in data['professions']]
+        
+        result_list.append({
+            'account_name': account_name,
+            'professions_played': ', '.join(profession_strings),
+            'total_sessions': data['total_sessions'],
+            'profession_count': len(data['professions']),
+            'primary_profession': data['professions'][0]['profession'] if data['professions'] else 'Unknown',
+            'is_guild_member': data['is_guild_member']
+        })
+    
+    # Sort by total sessions (most active players first) and limit results
+    result_list.sort(key=lambda x: x['total_sessions'], reverse=True)
+    return result_list[:limit]
+
+
 def generate_player_summaries_for_filter(db_path: str, output_dir: Path, date_filter: str, active_players: List[tuple]) -> List[str]:
     """Generate player summaries for a specific date filter."""
     filter_suffix = f"_{date_filter}" if date_filter != "overall" else ""
@@ -785,7 +868,8 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
             "individual_metrics": {},
             "profession_leaderboards": {},
             "overall_leaderboard": [],
-            "high_scores": {}
+            "high_scores": {},
+            "player_stats": {}
         }
 
         individual_categories = [
@@ -945,6 +1029,22 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
         for metric_name, metric_data in new_high_scores_results.items():
             filter_data["high_scores"][metric_name] = metric_data
         
+        print(f"[{worker_id}] Processing player stats...")
+        # Get most played professions data with date filtering
+        most_played_results = get_most_played_professions_data(db_path, limit=100, date_filter=filter_value)
+        filter_data["player_stats"]["Most Played Professions"] = [
+            {
+                "rank": i + 1,
+                "account_name": player["account_name"],
+                "professions_played": player["professions_played"],
+                "total_sessions": player["total_sessions"],
+                "profession_count": player["profession_count"],
+                "primary_profession": player["primary_profession"],
+                "is_guild_member": player["is_guild_member"]
+            }
+            for i, player in enumerate(most_played_results)
+        ]
+        
         print(f"[{worker_id}] Worker completed successfully")
         return filter_data
     
@@ -991,6 +1091,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
             <button class="tab-button active" data-tab="individual">Individual Metrics</button>
             <button class="tab-button" data-tab="high-scores">High Scores</button>
             <button class="tab-button" data-tab="professions">Professions</button>
+            <button class="tab-button" data-tab="player-stats">Player Stats</button>
             <button class="tab-button" data-tab="about">About</button>
         </nav>
 
@@ -1074,6 +1175,22 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="search-clear" onclick="clearSearch('profession')">&times;</button>
                 </div>
                 <div id="profession-leaderboard" class="leaderboard-container"></div>
+            </div>
+
+            <!-- Player Stats -->
+            <div id="player-stats" class="tab-content">
+                <h2>Player Stats</h2>
+                <p class="description">Player activity and profession usage statistics (non-Glicko based).</p>
+                
+                <div class="metric-selector">
+                    <button class="metric-button active" data-metric="Most Played Professions">Most Played Professions</button>
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" id="player-stats-search" class="search-input" placeholder="Search players, professions, or accounts...">
+                    <button class="search-clear" onclick="clearSearch('player-stats')">&times;</button>
+                </div>
+                <div id="player-stats-leaderboard" class="leaderboard-container"></div>
             </div>
 
             <!-- About -->
@@ -1993,6 +2110,7 @@ let currentTab = 'individual';
 let currentMetric = 'DPS';
 let currentProfession = 'Firebrand';
 let currentHighScore = 'Highest 1 Sec Burst';
+let currentPlayerStat = 'Most Played Professions';
 let currentGuildFilter = 'all_players';
 
 // GW2 Wiki profession icons
@@ -2124,6 +2242,13 @@ function setupEventListeners() {{
         }});
     }});
     
+    // Player stats selection
+    document.querySelectorAll('#player-stats .metric-button').forEach(button => {{
+        button.addEventListener('click', function() {{
+            selectPlayerStat(this.dataset.metric);
+        }});
+    }});
+    
     // Profession selection
     document.querySelectorAll('.profession-button').forEach(button => {{
         button.addEventListener('click', function() {{
@@ -2142,7 +2267,8 @@ function setupEventListeners() {{
     const searchInputs = [
         {{ id: 'individual-search', tableId: 'individual' }},
         {{ id: 'high-scores-search', tableId: 'high-scores' }},
-        {{ id: 'profession-search', tableId: 'profession' }}
+        {{ id: 'profession-search', tableId: 'profession' }},
+        {{ id: 'player-stats-search', tableId: 'player-stats' }}
     ];
     
     searchInputs.forEach(search => {{
@@ -2261,6 +2387,16 @@ function selectProfession(profession) {{
     }}
 }}
 
+function selectPlayerStat(metric) {{
+    currentPlayerStat = metric;
+    // For player stats tab, update the metric buttons in the player stats section
+    if (currentTab === 'player-stats') {{
+        document.querySelectorAll('#player-stats .metric-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`#player-stats [data-metric="${{metric}}"]`).classList.add('active');
+        loadPlayerStats(metric);
+    }}
+}}
+
 function loadCurrentData() {{
     switch(currentTab) {{
         case 'overall':
@@ -2274,6 +2410,9 @@ function loadCurrentData() {{
             break;
         case 'professions':
             loadProfessionLeaderboard(currentProfession);
+            break;
+        case 'player-stats':
+            loadPlayerStats(currentPlayerStat);
             break;
     }}
 }}
@@ -2462,6 +2601,55 @@ function loadHighScores(metric) {{
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'high-scores');
+    
+    // Make player names clickable after updating the table
+    setTimeout(() => makePlayerNamesClickable(), 10);
+}}
+
+function loadPlayerStats(metric) {{
+    const container = document.getElementById('player-stats-leaderboard');
+    const rawData = getCurrentData().player_stats[metric];
+    
+    if (!rawData || rawData.length === 0) {{
+        container.innerHTML = '<p>No player stats data available.</p>';
+        return;
+    }}
+    
+    // Filter data based on guild membership
+    const filteredData = filterDataByGuildMembership(rawData);
+    
+    // Reassign ranks after filtering
+    const dataWithNewRanks = filteredData.map((player, index) => ({{
+        ...player,
+        rank: index + 1
+    }}));
+    
+    // Define columns based on metric type
+    let columns;
+    if (metric === 'Most Played Professions') {{
+        columns = [
+            {{ key: 'rank', label: 'Rank', type: 'rank' }},
+            {{ key: 'account_name', label: 'Account', type: 'account' }},
+            {{ key: 'primary_profession', label: 'Primary', type: 'profession' }},
+            {{ key: 'professions_played', label: 'Professions Played', type: 'stats' }},
+            {{ key: 'total_sessions', label: 'Total Sessions', type: 'number' }},
+            {{ key: 'profession_count', label: 'Prof Count', type: 'number' }}
+        ];
+    }} else {{
+        // Default columns for any other metrics
+        columns = [
+            {{ key: 'rank', label: 'Rank', type: 'rank' }},
+            {{ key: 'account_name', label: 'Account', type: 'account' }},
+            {{ key: 'score_value', label: 'Score', type: 'number' }}
+        ];
+    }}
+    
+    // Add guild member column if guild filtering is enabled and we're showing all players
+    if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
+        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+    }}
+    
+    container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'player-stats');
     
     // Make player names clickable after updating the table
     setTimeout(() => makePlayerNamesClickable(), 10);
@@ -2771,6 +2959,9 @@ function clearSearch(tableId) {{
                 break;
             case 'profession':
                 loadProfessionLeaderboard(currentProfession);
+                break;
+            case 'player-stats':
+                loadPlayerStats(currentPlayerStat);
                 break;
         }}
     }}
