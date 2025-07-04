@@ -1644,7 +1644,7 @@ header h1 {
 }
 
 .toggle-switch input:checked + .toggle-slider {
-    background: var(--accent-color);
+    background: #4CAF50;
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
