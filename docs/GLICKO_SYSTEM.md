@@ -229,6 +229,91 @@ individual_categories = [
 <button class="metric-button" data-metric="NewMetric">New Metric</button>
 ```
 
+## Latest Change Feature
+
+### Overview
+
+The "Latest Change" feature displays rating changes since the most recent combat session, providing immediate feedback on performance improvements or declines.
+
+### How It Works
+
+#### 1. Rating History Storage
+
+The system maintains chronological rating history in the `player_rating_history` table:
+
+```sql
+CREATE TABLE player_rating_history (
+    account_name TEXT NOT NULL,
+    profession TEXT NOT NULL,
+    metric_category TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    rating REAL NOT NULL,
+    rating_deviation REAL NOT NULL,
+    volatility REAL NOT NULL
+);
+```
+
+#### 2. Delta Calculation
+
+For each player/profession/metric combination, the system:
+1. Retrieves the two most recent rating entries
+2. Calculates the difference: `current_rating - previous_rating`
+3. Displays the result with appropriate styling
+
+```python
+def calculate_rating_deltas_from_history(db_path: str, metric_category: str = None):
+    """Calculates rating deltas from the player_rating_history table."""
+    # Get last two ratings for each player/profession/metric
+    query = """
+        SELECT account_name, profession, metric_category, rating, timestamp
+        FROM (
+            SELECT *, ROW_NUMBER() OVER (
+                PARTITION BY account_name, profession, metric_category 
+                ORDER BY timestamp DESC
+            ) as rn
+            FROM player_rating_history
+            WHERE (? IS NULL OR metric_category = ?)
+        ) WHERE rn <= 2
+    """
+    
+    # Calculate deltas: current - previous
+    for key, ratings in player_ratings.items():
+        if len(ratings) == 2:
+            deltas[key] = ratings[0] - ratings[1]  # Latest - Previous
+        else:
+            deltas[key] = 0.0  # No previous data
+```
+
+#### 3. UI Integration
+
+The feature integrates with the modern UI design:
+
+- **Toggle Switch**: "📈 Latest Change" toggle in the filter bar
+- **Color Coding**: Green (+), Red (-), Gray (0) for visual feedback
+- **Live Updates**: Changes update when switching between metrics/time periods
+
+#### 4. Building Rating History
+
+To populate the rating history table:
+
+```bash
+# Rebuild complete rating history chronologically
+python glicko_rating_system.py gw2_comprehensive.db --rebuild-history
+```
+
+This command:
+1. Processes all combat sessions in chronological order
+2. Calculates ratings incrementally for each session
+3. Stores each rating calculation in the history table
+4. Enables delta calculations for the Latest Change feature
+
+### Usage Examples
+
+**Positive Change**: `+12.5` (Green) - Player improved performance
+**Negative Change**: `-8.2` (Red) - Player had worse performance  
+**No Change**: `0.0` (Gray) - No change or insufficient history
+**New Player**: `0.0` (Gray) - First session, no previous data
+
 ### Modifying Profession Weights
 
 #### 1. Edit Configuration

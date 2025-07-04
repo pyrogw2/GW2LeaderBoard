@@ -40,6 +40,9 @@ python simple_analysis.py gw2_comprehensive.db
 # Recalculate all Glicko ratings
 python glicko_rating_system.py gw2_comprehensive.db --recalculate
 
+# Rebuild rating history for Latest Change feature
+python glicko_rating_system.py gw2_comprehensive.db --rebuild-history
+
 # Rating system with date filtering
 python glicko_rating_system.py gw2_comprehensive.db --days 30
 
@@ -66,6 +69,7 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 ### Database Schema
 - **`player_performances`**: Raw session data with 9 metrics per player
 - **`glicko_ratings`**: Calculated skill ratings by metric and profession
+- **`player_rating_history`**: Chronological rating history for Latest Change feature
 - **`guild_members`**: Cached GW2 API guild member data
 - **Indexes**: Optimized for date filtering and metric queries
 
@@ -98,6 +102,14 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **Composite Scoring**: Weighted combination of Glicko rating and percentile rank
 - **Performance Analysis**: Statistical analysis within combat sessions
 - **Guild Integration**: GW2 API v2 for member validation
+- **Latest Change**: Chronological rating history with delta calculations
+
+### Modern UI Features
+- **iOS-style Segmented Control**: Time period selection (All, 30d, 90d, 180d)
+- **Material Design Chips**: Guild filter options with emoji icons
+- **Modern Toggle Switch**: Latest Change feature with smooth animations
+- **Responsive Design**: Mobile-optimized layout with touch-friendly controls
+- **Color-Coded Deltas**: Green (+), Red (-), Gray (0) for rating changes
 
 ## Configuration
 

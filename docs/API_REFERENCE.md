@@ -66,6 +66,37 @@ INSERT INTO player_performances VALUES (
 );
 ```
 
+### player_rating_history
+
+Stores chronological rating history for each player/profession/metric combination, enabling delta calculations.
+
+```sql
+CREATE TABLE player_rating_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_name TEXT NOT NULL,             -- Player account name
+    profession TEXT NOT NULL,               -- Player profession/specialization
+    metric_category TEXT NOT NULL,          -- Performance metric (DPS, Healing, etc.)
+    timestamp TEXT NOT NULL,                -- Session timestamp (YYYYMMDDHHMM)
+    rating REAL NOT NULL,                   -- Glicko-2 rating at this timestamp
+    rating_deviation REAL NOT NULL,        -- Rating uncertainty at this timestamp
+    volatility REAL NOT NULL,              -- Expected rating fluctuation
+    UNIQUE(account_name, profession, metric_category, timestamp)
+);
+```
+
+#### Sample Data
+
+```sql
+-- Example records showing rating progression
+INSERT INTO player_rating_history VALUES (
+    1, 'Dextra.8162', 'Weaver', 'DPS', '202506302308', 1878.56, 85.2, 0.045
+);
+INSERT INTO player_rating_history VALUES (
+    2, 'Dextra.8162', 'Weaver', 'DPS', '202507032317', 1884.22, 83.1, 0.044
+);
+-- Delta calculation: 1884.22 - 1878.56 = +5.66 rating change
+```
+
 ### glicko_ratings
 
 Stores calculated Glicko ratings for each player/profession/metric combination.

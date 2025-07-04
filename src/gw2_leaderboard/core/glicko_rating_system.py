@@ -4,14 +4,18 @@ Glicko-based rating system for GW2 WvW leaderboard.
 Uses session-relative z-scores to handle varying combat contexts (GvG vs keep takes).
 """
 
-import sqlite3
-import math
 import argparse
+import math
+import sqlite3
 import statistics
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+from gw2_leaderboard.core.rating_history import (
+    create_rating_history_table, save_rating_to_history)
+
 
 
 @dataclass
@@ -801,7 +805,7 @@ def _process_metric_for_session(db_path: str, timestamp: str, metric_category: s
     return f"[{thread_name}] {metric_category}: processed {len(players)} players"
 
 
-def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_filter: bool = False):
+def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_filter: bool = False, history_mode: bool = False):
     """Calculate Glicko rating changes for all players in a session."""
     # Due to SQLite write locking, process metrics sequentially but optimize individual operations
     glicko = GlickoSystem()
@@ -843,6 +847,10 @@ def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_fil
             update_glicko_rating(db_path, account_name, profession, metric_category,
                                new_rating, new_rd, new_volatility, new_games, 
                                new_total_rank_sum, new_average_rank, new_total_stat_value, new_average_stat_value)
+
+            if history_mode:
+                save_rating_to_history(db_path, account_name, profession, metric_category, timestamp, new_rating, new_rd, new_volatility)
+
 
 
 def get_most_recent_session_timestamp(db_path: str) -> str:
@@ -941,35 +949,32 @@ def calculate_rating_deltas_dual_glicko(db_path: str, metric_category: str = Non
             pass
 
 
-def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False, progress_callback=None):
-    """Recalculate all Glicko ratings chronologically."""
-    # Create Glicko table
-    create_glicko_database(db_path)
-    
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    
-    # Get all timestamps in chronological order with optional guild filtering
-    if guild_filter:
-        query = '''
-            SELECT DISTINCT p.timestamp 
-            FROM player_performances p
-            INNER JOIN guild_members g ON p.account_name = g.account_name
-            ORDER BY p.timestamp
-        '''
-    else:
-        query = 'SELECT DISTINCT timestamp FROM player_performances ORDER BY timestamp'
-    
-    cursor.execute(query)
-    timestamps = [row[0] for row in cursor.fetchall()]
-    
-    conn.close()
-    
-    total_sessions = len(timestamps)
-    for i, timestamp in enumerate(timestamps):
+def update_ratings_incrementally(db_path: str, guild_filter: bool = False, progress_callback=None):
+    """Incrementally updates Glicko ratings for unprocessed sessions."""
+    create_rating_history_table(db_path)
+    last_processed_timestamp = get_last_processed_timestamp(db_path)
+    unprocessed_sessions = get_unprocessed_sessions(db_path, last_processed_timestamp)
+
+    if not unprocessed_sessions:
+        if progress_callback:
+            print("No new sessions to process.")
+        return
+
+    total_sessions = len(unprocessed_sessions)
+    for i, timestamp in enumerate(unprocessed_sessions):
         if progress_callback:
             progress_callback(i + 1, total_sessions, timestamp)
-        calculate_glicko_ratings_for_session(db_path, timestamp, guild_filter)
+        calculate_glicko_ratings_for_session(db_path, timestamp, guild_filter, history_mode=True)
+
+def rebuild_rating_history(db_path: str, guild_filter: bool = False, progress_callback=None):
+    """Recalculates all Glicko ratings and rebuilds the history table."""
+    print("Rebuilding rating history...")
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS player_rating_history")
+    create_glicko_database(db_path)
+    update_ratings_incrementally(db_path, guild_filter, progress_callback)
+
 
 
 def calculate_date_filtered_ratings(db_path: str, date_filter: str, guild_filter: bool = False, progress_callback=None) -> str:
@@ -1222,10 +1227,32 @@ def show_glicko_player_profile(db_path: str, account_name: str):
     conn.close()
 
 
+def get_last_processed_timestamp(db_path: str) -> Optional[str]:
+    """Gets the timestamp of the last processed session from the rating history."""
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT MAX(timestamp) FROM player_rating_history")
+        result = cursor.fetchone()
+        return result[0] if result and result[0] else None
+
+
+def get_unprocessed_sessions(db_path: str, last_processed_timestamp: Optional[str]) -> List[str]:
+    """Gets all session timestamps that have not been processed yet."""
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        if last_processed_timestamp:
+            cursor.execute("SELECT DISTINCT timestamp FROM player_performances WHERE timestamp > ? ORDER BY timestamp", (last_processed_timestamp,))
+        else:
+            cursor.execute("SELECT DISTINCT timestamp FROM player_performances ORDER BY timestamp")
+        results = cursor.fetchall()
+        return [row[0] for row in results]
+
 def main():
     parser = argparse.ArgumentParser(description='Glicko-based GW2 Rating System')
     parser.add_argument('database', help='SQLite database file')
     parser.add_argument('--recalculate', action='store_true', help='Recalculate all Glicko ratings')
+    parser.add_argument('--rebuild-history', action='store_true', help='Rebuild the entire rating history from scratch')
+    parser.add_argument('--incremental', action='store_true', help='Incrementally update ratings for new sessions')
     parser.add_argument('--leaderboard', help='Show Glicko leaderboard for specific category')
     parser.add_argument('--all-leaderboards', action='store_true', help='Show leaderboards for all categories')
     parser.add_argument('--player', help='Show Glicko profile for specific player')
@@ -1240,9 +1267,13 @@ def main():
         print(f"Database {args.database} not found")
         return 1
     
-    if args.recalculate:
-        recalculate_all_glicko_ratings(args.database)
-        print("Glicko rating recalculation complete!")
+    if args.rebuild_history:
+        rebuild_rating_history(args.database)
+        print("Glicko rating history rebuild complete!")
+
+    if args.incremental:
+        update_ratings_incrementally(args.database)
+        print("Glicko rating incremental update complete!")
     
     if args.leaderboard:
         show_glicko_leaderboard(args.database, args.leaderboard, args.limit, args.date_filter, getattr(args, 'include_overall', False))

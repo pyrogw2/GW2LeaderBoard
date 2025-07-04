@@ -21,10 +21,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from ..core.glicko_rating_system import (
     PROFESSION_METRICS,
-    recalculate_all_glicko_ratings,
     recalculate_profession_ratings,
     calculate_date_filtered_ratings
 )
+from ..core.rating_history import calculate_rating_deltas_from_history
 
 # Optional guild manager import
 try:
@@ -41,6 +41,30 @@ try:
 except ImportError:
     PLAYER_SUMMARY_AVAILABLE = False
     PlayerSummaryGenerator = None
+
+
+def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False):
+    """Recalculate Glicko ratings for all professions and metrics."""
+    print("Recalculating ratings for all professions...")
+    
+    # Get all available professions
+    professions = list(PROFESSION_METRICS.keys())
+    
+    # Add special professions that might not be in PROFESSION_METRICS
+    additional_professions = ["Condi Firebrand", "Support Spb"]
+    for prof in additional_professions:
+        if prof not in professions:
+            professions.append(prof)
+    
+    for i, profession in enumerate(professions, 1):
+        print(f"  ({i}/{len(professions)}) Recalculating {profession}...")
+        try:
+            recalculate_profession_ratings(db_path, profession, guild_filter=guild_filter)
+        except Exception as e:
+            print(f"    Warning: Failed to recalculate {profession}: {e}")
+            continue
+    
+    print("✅ All profession ratings recalculated")
 
 
 class ProgressManager:
@@ -140,8 +164,6 @@ class ProgressManager:
 
 
 
-
-
 def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None, show_deltas: bool = False):
     """Extract leaderboard data from database with guild membership info."""
     if date_filter:
@@ -231,10 +253,8 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
     
     # Add delta information if requested
     if show_deltas:
-        from ..core.glicko_rating_system import calculate_rating_deltas_dual_glicko
-        
         try:
-            deltas = calculate_rating_deltas_dual_glicko(db_path, metric_category)
+            deltas = calculate_rating_deltas_from_history(db_path, metric_category)
             
             # Add delta to each result
             results_with_deltas = []
@@ -270,7 +290,6 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
             return [list(result) + [0.0] for result in results]
     
     return results
-
 
 def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int, date_filter: str, show_deltas: bool = False):
     """Get leaderboard data filtered by date - uses same method as CLI."""
@@ -391,7 +410,6 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
     
     return results
 
-
 def get_new_high_scores_data(db_path: str, limit: int = 500, date_filter: str = None):
     """Get high scores data from the new high_scores table."""
     from ..core.glicko_rating_system import build_date_filter_clause
@@ -462,7 +480,6 @@ def get_new_high_scores_data(db_path: str, limit: int = 500, date_filter: str = 
     conn.close()
     return high_scores_data
 
-
 def get_high_scores_data(db_path: str, limit: int = 500, date_filter: str = None):
     """Get top burst damage records for High Scores section (non-Glicko based)."""
     from ..core.glicko_rating_system import build_date_filter_clause
@@ -505,7 +522,6 @@ def get_high_scores_data(db_path: str, limit: int = 500, date_filter: str = None
     results = cursor.fetchall()
     conn.close()
     return results
-
 
 def get_most_played_professions_data(db_path: str, limit: int = 500, date_filter: str = None):
     """Get most played professions data for Player Stats section (non-Glicko based)."""
@@ -589,7 +605,6 @@ def get_most_played_professions_data(db_path: str, limit: int = 500, date_filter
     result_list.sort(key=lambda x: x['total_sessions'], reverse=True)
     return result_list[:limit]
 
-
 def generate_player_summaries_for_filter(db_path: str, output_dir: Path, date_filter: str, active_players: List[tuple]) -> List[str]:
     """Generate player summaries for a specific date filter."""
     filter_suffix = f"_{date_filter}" if date_filter != "overall" else ""
@@ -636,7 +651,6 @@ def generate_player_summaries_for_filter(db_path: str, output_dir: Path, date_fi
         generator.close()
     
     return generated_files
-
 
 def generate_player_summaries(db_path: str, output_dir: Path) -> List[str]:
     """Generate player summary JSON files for all active players with date filtering."""
@@ -703,7 +717,6 @@ def generate_player_summaries(db_path: str, output_dir: Path) -> List[str]:
     
     print(f"✅ Generated player summaries for {len(date_filters)} date filters")
     return all_generated_files.get('overall', [])
-
 
 def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[str, Any]:
     """Generate all leaderboard data in JSON format. 
@@ -816,7 +829,6 @@ def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[st
 
     return data
 
-
 def _process_single_metric(db_path: str, category: str, filter_value: str, worker_id: str) -> tuple:
     """Process a single metric category and return results."""
     import threading
@@ -827,7 +839,9 @@ def _process_single_metric(db_path: str, category: str, filter_value: str, worke
     timestamp = datetime.now().strftime('%H:%M:%S')
     try:
         print(f"[{worker_id}:{thread_name}] 🚀 {timestamp} STARTING metric: {category}")
-        results = get_glicko_leaderboard_data(db_path, category, limit=500, date_filter=filter_value)
+        # Calculate deltas only for "All Time" data (no date filter)
+        include_deltas = filter_value == "overall"
+        results = get_glicko_leaderboard_data(db_path, category, limit=500, date_filter=filter_value, show_deltas=include_deltas)
         end_time = time.time()
         end_timestamp = datetime.now().strftime('%H:%M:%S')
         print(f"[{worker_id}:{thread_name}] ✅ {end_timestamp} COMPLETED metric: {category} ({len(results)} results) in {end_time - start_time:.2f}s")
@@ -837,7 +851,6 @@ def _process_single_metric(db_path: str, category: str, filter_value: str, worke
         end_timestamp = datetime.now().strftime('%H:%M:%S')
         print(f"[{worker_id}:{thread_name}] ❌ {end_timestamp} ERROR processing {category} in {end_time - start_time:.2f}s: {e}")
         return category, []
-
 
 def _process_single_profession(db_path: str, profession: str, filter_value: str, worker_id: str, progress_callback) -> Dict[str, Any]:
     """Process a single profession leaderboard and return formatted data."""
@@ -864,13 +877,20 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
         guild_table_exists = cursor.fetchone() is not None
 
         players_with_guild_info = []
-        for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results[:500]):
+        for i, result_tuple in enumerate(results[:500]):
+            # Handle both with and without delta data
+            if len(result_tuple) == 7:  # With delta
+                account, rating, games, avg_rank, composite, stats_breakdown, delta = result_tuple
+            else:  # Without delta
+                account, rating, games, avg_rank, composite, stats_breakdown = result_tuple
+                delta = None
+                
             is_guild_member = False
             if guild_table_exists:
                 cursor.execute("SELECT 1 FROM guild_members WHERE account_name = ?", (account,))
                 is_guild_member = cursor.fetchone() is not None
             
-            players_with_guild_info.append({
+            player_data = {
                 "rank": i + 1,
                 "account_name": account,
                 "composite_score": float(composite),
@@ -878,7 +898,13 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                 "key_stats": stats_breakdown,
                 "is_guild_member": is_guild_member
-            })
+            }
+            
+            # Add delta data if available
+            if delta is not None:
+                player_data["rating_delta"] = float(delta)
+                
+            players_with_guild_info.append(player_data)
         
         conn.close()
         
@@ -1003,10 +1029,25 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
         # instead of calling get_filtered_leaderboard_data which recalculates everything
         print(f"[{worker_id}] Processing {len(individual_categories)} individual metrics directly from temp database...")
         
+        # Calculate deltas once for all metrics (only for overall filter to save time)
+        deltas_by_metric = {}
+        if filter_value is None:  # Overall filter
+            print(f"[{worker_id}] Pre-calculating deltas for all metrics...")
+            try:
+                for category in individual_categories:
+                    deltas_by_metric[category] = calculate_rating_deltas_from_history(db_path, category)
+                print(f"[{worker_id}] Delta calculation complete")
+            except Exception as e:
+                print(f"[{worker_id}] Delta calculation failed: {e}")
+                deltas_by_metric = {}
+        
         for category in individual_categories:
             print(f"[{worker_id}] Processing metric: {category}")
             # Use the temp database directly instead of recalculating
-            results = get_glicko_leaderboard_data(db_path, category, limit=500, date_filter=None)  # No date filter since db is already filtered
+            results = get_glicko_leaderboard_data(db_path, category, limit=500, date_filter=None)  # No deltas in static generation
+            # Get deltas for this category
+            category_deltas = deltas_by_metric.get(category, {})
+            
             filter_data["individual_metrics"][category] = [
                 {
                     "rank": i + 1,
@@ -1016,12 +1057,13 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                         "games_played": int(games),
                     "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                     "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
-                    "is_guild_member": bool(is_guild_member)
+                    "is_guild_member": bool(is_guild_member),
+                    "rating_delta": float(category_deltas.get((account, profession, category), 0.0))
                 }
                 for i, (account, profession, composite, rating, games, avg_rank, avg_stat, is_guild_member) in enumerate(results)
             ]
 
-        results = get_glicko_leaderboard_data(db_path, "Overall", limit=500, date_filter=None)  # Use temp db directly
+        results = get_glicko_leaderboard_data(db_path, "Overall", limit=500, date_filter=None)  # No deltas in static generation
         filter_data["overall_leaderboard"] = [
             {
                 "rank": i + 1,
@@ -1031,7 +1073,8 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                 "games_played": int(games),
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                 "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
-                "is_guild_member": bool(is_guild_member)
+                "is_guild_member": bool(is_guild_member),
+                "rating_delta": 0.0  # Placeholder, calculated on-demand
             }
             for i, (account, profession, composite, rating, games, avg_rank, avg_stat, is_guild_member) in enumerate(results)
         ]
@@ -1116,7 +1159,6 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
             except Exception as e:
                 print(f"[{worker_id}] Warning: Could not cleanup temporary database {temp_db_path}: {e}")
 
-
 def generate_html_ui(data: Dict[str, Any], output_dir: Path):
     """Generate the HTML UI files."""
     output_dir.mkdir(exist_ok=True)
@@ -1153,25 +1195,33 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
             <button class="tab-button" data-tab="about">About</button>
         </nav>
 
-        <div class="date-filters">
-            <span class="filter-label">Time Period:</span>
-            <button class="date-filter-button active" data-filter="overall">All Time</button>
-            <button class="date-filter-button" data-filter="30d">Last 30 Days</button>
-            <button class="date-filter-button" data-filter="90d">Last 90 Days</button>
-            <button class="date-filter-button" data-filter="180d">Last 180 Days</button>
-        </div>
+        <div class="modern-filters">
+            <!-- Segmented Control for Time Period -->
+            <div class="segmented-control">
+                <input type="radio" name="time-filter" id="time-all" value="overall" checked>
+                <label for="time-all">All</label>
+                <input type="radio" name="time-filter" id="time-30" value="30d">
+                <label for="time-30">30d</label>
+                <input type="radio" name="time-filter" id="time-90" value="90d">
+                <label for="time-90">90d</label>
+                <input type="radio" name="time-filter" id="time-180" value="180d">
+                <label for="time-180">180d</label>
+            </div>
 
-        <div class="guild-filters" id="guild-filters" style="display: none;">
-            <span class="filter-label">Players:</span>
-            <button class="guild-filter-button active" data-guild-filter="all_players">All Players</button>
-            <button class="guild-filter-button" data-guild-filter="guild_members" id="guild-members-button">Guild Members Only</button>
-        </div>
+            <!-- Guild Filter Chips -->
+            <div class="filter-chips" id="guild-chips" style="display: none;">
+                <div class="chip active" data-guild-filter="all_players">👥 All</div>
+                <div class="chip" data-guild-filter="guild_members" id="guild-chip">🛡️ Guild</div>
+            </div>
 
-        <div class="delta-filters">
-            <label class="delta-checkbox-label">
-                <input type="checkbox" id="show-rating-deltas" class="delta-checkbox">
-                <span class="checkbox-text">Show rating change since last log</span>
-            </label>
+            <!-- Modern Toggle for Rating Deltas -->
+            <div class="delta-toggle">
+                <span class="toggle-label">📈 Latest Change</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="show-rating-deltas">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
         </div>
 
         <main>
@@ -1470,32 +1520,136 @@ header h1 {
     backdrop-filter: blur(10px);
 }
 
-.date-filters, .guild-filters {
+/* Modern Filters Layout */
+.modern-filters {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 30px;
     margin-bottom: 20px;
     background: var(--button-bg);
-    border-radius: 10px;
-    padding: 15px;
+    border-radius: 15px;
+    padding: 12px 20px;
     backdrop-filter: blur(10px);
-    flex-wrap: wrap;
+}
+
+/* iOS-style Segmented Control */
+.segmented-control {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 3px;
+    position: relative;
+}
+
+.segmented-control input[type="radio"] {
+    display: none;
+}
+
+.segmented-control label {
+    padding: 6px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-color-light);
+    font-weight: 500;
+    font-size: 14px;
+    text-align: center;
+    min-width: 40px;
+}
+
+.segmented-control input[type="radio"]:checked + label {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Modern Filter Chips */
+.filter-chips {
+    display: flex;
+    gap: 8px;
+}
+
+.chip {
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-color-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent;
+}
+
+.chip:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.chip.active {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+/* Modern Toggle Switch */
+.delta-toggle {
+    display: flex;
+    align-items: center;
     gap: 10px;
 }
 
-.guild-filters {
-    margin-bottom: 30px;
+.toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color-light);
 }
 
-.delta-filters {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
-    background: var(--button-bg);
-    border-radius: 10px;
-    padding: 15px;
-    backdrop-filter: blur(10px);
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.2);
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--accent-color);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
 }
 
 .delta-checkbox-label {
@@ -2239,7 +2393,7 @@ const professionIcons = {{
     'Scrapper': 'https://wiki.guildwars2.com/images/7/7d/Scrapper_icon_small.png',
     'Holosmith': 'https://wiki.guildwars2.com/images/a/aa/Holosmith_icon_small.png',
     'Mechanist': 'https://wiki.guildwars2.com/images/6/6d/Mechanist_icon_small.png',
-    'Ranger': 'https://wiki.guildwars2.com/images/1/1e/Ranger_icon_small.png',
+    'Ranger': 'https://wiki.guildwars2.com/images/1/1e/Ranger_icon_small.npg',
     'Druid': 'https://wiki.guildwars2.com/images/9/9b/Druid_icon_small.png',
     'Soulbeast': 'https://wiki.guildwars2.com/images/f/f6/Soulbeast_icon_small.png',
     'Untamed': 'https://wiki.guildwars2.com/images/2/2d/Untamed_icon_small.png',
@@ -2285,12 +2439,12 @@ function initializePage() {{
     
     // Initialize guild filtering if enabled
     if (leaderboardData.guild_enabled) {{
-        const guildFilters = document.getElementById('guild-filters');
-        guildFilters.style.display = 'flex';
+        const guildChips = document.getElementById('guild-chips');
+        guildChips.style.display = 'flex';
         
-        // Update guild member button text
-        const guildButton = document.getElementById('guild-members-button');
-        guildButton.textContent = `${{leaderboardData.guild_tag}} Members Only`;
+        // Update guild member chip text
+        const guildChip = document.getElementById('guild-chip');
+        guildChip.textContent = `🛡️ ${{leaderboardData.guild_tag}}`;
     }}
 }}
 
@@ -2333,10 +2487,12 @@ function setupEventListeners() {{
         }});
     }});
     
-    // Date filter selection
-    document.querySelectorAll('.date-filter-button').forEach(button => {{
-        button.addEventListener('click', function() {{
-            selectDateFilter(this.dataset.filter);
+    // Modern segmented control for date filters
+    document.querySelectorAll('input[name="time-filter"]').forEach(radio => {{
+        radio.addEventListener('change', function() {{
+            if (this.checked) {{
+                selectDateFilter(this.value);
+            }}
         }});
     }});
     
@@ -2379,19 +2535,35 @@ function setupEventListeners() {{
         // TODO: Add delta support for other tabs if needed
     }});
     
-    // Guild filter selection
-    document.querySelectorAll('.guild-filter-button').forEach(button => {{
-        button.addEventListener('click', function() {{
+    // Modern chip-based guild filter selection
+    document.querySelectorAll('.chip').forEach(chip => {{
+        chip.addEventListener('click', function() {{
+            // Remove active class from all chips
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            // Add active class to clicked chip
+            this.classList.add('active');
             selectGuildFilter(this.dataset.guildFilter);
         }});
     }});
     
     // Search functionality
     const searchInputs = [
-        {{ id: 'individual-search', tableId: 'individual' }},
-        {{ id: 'high-scores-search', tableId: 'high-scores' }},
-        {{ id: 'profession-search', tableId: 'profession' }},
-        {{ id: 'player-stats-search', tableId: 'player-stats' }}
+        {{
+            id: 'individual-search',
+            tableId: 'individual'
+        }},
+        {{
+            id: 'high-scores-search',
+            tableId: 'high-scores'
+        }},
+        {{
+            id: 'profession-search',
+            tableId: 'profession'
+        }},
+        {{
+            id: 'player-stats-search',
+            tableId: 'player-stats'
+        }}
     ];
     
     searchInputs.forEach(search => {{
@@ -2437,15 +2609,13 @@ function setupEventListeners() {{
 
 function selectDateFilter(filter) {{
     currentDateFilter = filter;
-    document.querySelectorAll('.date-filter-button').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`[data-filter="${{filter}}"]`).classList.add('active');
+    // Radio buttons handle their own selection state
     loadCurrentData();
 }}
 
 function selectGuildFilter(guildFilter) {{
     currentGuildFilter = guildFilter;
-    document.querySelectorAll('.guild-filter-button').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`[data-guild-filter="${{guildFilter}}"]`).classList.add('active');
+    // Chips handle their own active state in the event listener
     loadCurrentData();
 }}
 
@@ -2554,17 +2724,45 @@ function loadOverallLeaderboard() {{
     }}));
     
     const columns = [
-        {{ key: 'rank', label: 'Rank', type: 'rank' }},
-        {{ key: 'account_name', label: 'Account', type: 'account' }},
-        {{ key: 'profession', label: 'Profession', type: 'profession' }},
-        {{ key: 'composite_score', label: 'Rating', type: 'number' }},
-        {{ key: 'games_played', label: 'Raids', type: 'raids' }},
-        {{ key: 'average_rank_percent', label: 'Avg Rank Per Raid', type: 'avg_rank' }}
+        {{
+            key: 'rank',
+            label: 'Rank',
+            type: 'rank'
+        }},
+        {{
+            key: 'account_name',
+            label: 'Account',
+            type: 'account'
+        }},
+        {{
+            key: 'profession',
+            label: 'Profession',
+            type: 'profession'
+        }},
+        {{
+            key: 'composite_score',
+            label: 'Rating',
+            type: 'number'
+        }},
+        {{
+            key: 'games_played',
+            label: 'Raids',
+            type: 'raids'
+        }},
+        {{
+            key: 'average_rank_percent',
+            label: 'Avg Rank Per Raid',
+            type: 'avg_rank'
+        }}
     ];
     
     // Add guild member column if guild filtering is enabled and we're showing all players
     if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
-        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+        columns.splice(3, 0, {{
+            key: 'is_guild_member',
+            label: 'Guild Member',
+            type: 'guild_member'
+        }});
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns);
@@ -2592,24 +2790,60 @@ function loadIndividualMetric(metric) {{
     }}));
     
     const columns = [
-        {{ key: 'rank', label: 'Rank', type: 'rank' }},
-        {{ key: 'account_name', label: 'Account', type: 'account' }},
-        {{ key: 'profession', label: 'Profession', type: 'profession' }},
-        {{ key: 'composite_score', label: 'Rating', type: 'number' }},
-        {{ key: 'games_played', label: 'Raids', type: 'raids' }},
-        {{ key: 'average_rank_percent', label: 'Avg Rank', type: 'avg_rank' }},
-        {{ key: 'average_stat_value', label: `Avg ${{metric === 'Downs' ? 'DownCont' : metric}}`, type: 'stat' }}
+        {{
+            key: 'rank',
+            label: 'Rank',
+            type: 'rank'
+        }},
+        {{
+            key: 'account_name',
+            label: 'Account',
+            type: 'account'
+        }},
+        {{
+            key: 'profession',
+            label: 'Profession',
+            type: 'profession'
+        }},
+        {{
+            key: 'composite_score',
+            label: 'Rating',
+            type: 'number'
+        }},
+        {{
+            key: 'games_played',
+            label: 'Raids',
+            type: 'raids'
+        }},
+        {{
+            key: 'average_rank_percent',
+            label: 'Avg Rank',
+            type: 'avg_rank'
+        }},
+        {{
+            key: 'average_stat_value',
+            label: `Avg ${{metric === 'Downs' ? 'DownCont' : metric}}`,
+            type: 'stat'
+        }}
     ];
     
     // Add guild member column if guild filtering is enabled and we're showing all players
     if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
-        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+        columns.splice(3, 0, {{
+            key: 'is_guild_member',
+            label: 'Guild Member',
+            type: 'guild_member'
+        }});
     }}
     
     // Add delta column if checkbox is checked
     const showDeltas = document.getElementById('show-rating-deltas').checked;
     if (showDeltas) {{
-        columns.splice(-1, 0, {{ key: 'rating_delta', label: 'Change', type: 'rating_delta' }});
+        columns.splice(-1, 0, {{
+            key: 'rating_delta',
+            label: 'Change',
+            type: 'rating_delta'
+        }});
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'individual');
@@ -2649,16 +2883,40 @@ function loadProfessionLeaderboard(profession) {{
     }}));
     
     const columns = [
-        {{ key: 'rank', label: 'Rank', type: 'rank' }},
-        {{ key: 'account_name', label: 'Account', type: 'account' }},
-        {{ key: 'composite_score', label: 'Rating', type: 'number' }},
-        {{ key: 'games_played', label: 'Raids', type: 'raids' }},
-        {{ key: 'key_stats', label: 'Key Stats', type: 'stats' }}
+        {{
+            key: 'rank',
+            label: 'Rank',
+            type: 'rank'
+        }},
+        {{
+            key: 'account_name',
+            label: 'Account',
+            type: 'account'
+        }},
+        {{
+            key: 'composite_score',
+            label: 'Rating',
+            type: 'number'
+        }},
+        {{
+            key: 'games_played',
+            label: 'Raids',
+            type: 'raids'
+        }},
+        {{
+            key: 'key_stats',
+            label: 'Key Stats',
+            type: 'stats'
+        }}
     ];
     
     // Add guild member column if guild filtering is enabled and we're showing all players
     if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
-        columns.splice(2, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+        columns.splice(2, 0, {{
+            key: 'is_guild_member',
+            label: 'Guild Member',
+            type: 'guild_member'
+        }});
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'profession');
@@ -2689,44 +2947,136 @@ function loadHighScores(metric) {{
     let columns;
     if (metric === 'Highest 1 Sec Burst') {{
         columns = [
-            {{ key: 'rank', label: 'Rank', type: 'rank' }},
-            {{ key: 'account_name', label: 'Account', type: 'account' }},
-            {{ key: 'profession', label: 'Profession', type: 'profession' }},
-            {{ key: 'burst_damage', label: 'Burst Damage', type: 'number' }},
-            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+            {{
+                key: 'rank',
+                label: 'Rank',
+                type: 'rank'
+            }},
+            {{
+                key: 'account_name',
+                label: 'Account',
+                type: 'account'
+            }},
+            {{
+                key: 'profession',
+                label: 'Profession',
+                type: 'profession'
+            }},
+            {{
+                key: 'burst_damage',
+                label: 'Burst Damage',
+                type: 'number'
+            }},
+            {{
+                key: 'timestamp',
+                label: 'Timestamp',
+                type: 'stats'
+            }}
         ];
     }} else if (metric === 'Highest Outgoing Skill Damage' || metric === 'Highest Incoming Skill Damage') {{
         columns = [
-            {{ key: 'rank', label: 'Rank', type: 'rank' }},
-            {{ key: 'player_name', label: 'Player', type: 'account' }},
-            {{ key: 'profession', label: 'Profession', type: 'profession' }},
-            {{ key: 'skill_name', label: 'Skill', type: 'stats' }},
-            {{ key: 'score_value', label: 'Damage', type: 'number' }},
-            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+            {{
+                key: 'rank',
+                label: 'Rank',
+                type: 'rank'
+            }},
+            {{
+                key: 'player_name',
+                label: 'Player',
+                type: 'account'
+            }},
+            {{
+                key: 'profession',
+                label: 'Profession',
+                type: 'profession'
+            }},
+            {{
+                key: 'skill_name',
+                label: 'Skill',
+                type: 'stats'
+            }},
+            {{
+                key: 'score_value',
+                label: 'Damage',
+                type: 'number'
+            }},
+            {{
+                key: 'timestamp',
+                label: 'Timestamp',
+                type: 'stats'
+            }}
         ];
     }} else if (metric === 'Highest Single Fight DPS') {{
         columns = [
-            {{ key: 'rank', label: 'Rank', type: 'rank' }},
-            {{ key: 'player_name', label: 'Player', type: 'account' }},
-            {{ key: 'profession', label: 'Profession', type: 'profession' }},
-            {{ key: 'score_value', label: 'DPS', type: 'number' }},
-            {{ key: 'fight_number', label: 'Fight', type: 'stats' }},
-            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+            {{
+                key: 'rank',
+                label: 'Rank',
+                type: 'rank'
+            }},
+            {{
+                key: 'player_name',
+                label: 'Player',
+                type: 'account'
+            }},
+            {{
+                key: 'profession',
+                label: 'Profession',
+                type: 'profession'
+            }},
+            {{
+                key: 'score_value',
+                label: 'DPS',
+                type: 'number'
+            }},
+            {{
+                key: 'fight_number',
+                label: 'Fight',
+                type: 'stats'
+            }},
+            {{
+                key: 'timestamp',
+                label: 'Timestamp',
+                type: 'stats'
+            }}
         ];
     }} else {{
         // Default columns for any other metrics
         columns = [
-            {{ key: 'rank', label: 'Rank', type: 'rank' }},
-            {{ key: 'account_name', label: 'Account', type: 'account' }},
-            {{ key: 'profession', label: 'Profession', type: 'profession' }},
-            {{ key: 'score_value', label: 'Score', type: 'number' }},
-            {{ key: 'timestamp', label: 'Timestamp', type: 'stats' }}
+            {{
+                key: 'rank',
+                label: 'Rank',
+                type: 'rank'
+            }},
+            {{
+                key: 'account_name',
+                label: 'Account',
+                type: 'account'
+            }},
+            {{
+                key: 'profession',
+                label: 'Profession',
+                type: 'profession'
+            }},
+            {{
+                key: 'score_value',
+                label: 'Score',
+                type: 'number'
+            }},
+            {{
+                key: 'timestamp',
+                label: 'Timestamp',
+                type: 'stats'
+            }}
         ];
     }}
     
     // Add guild member column if guild filtering is enabled and we're showing all players
     if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
-        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+        columns.splice(3, 0, {{
+            key: 'is_guild_member',
+            label: 'Guild Member',
+            type: 'guild_member'
+        }});
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'high-scores');
@@ -2757,25 +3107,65 @@ function loadPlayerStats(metric) {{
     let columns;
     if (metric === 'Most Played Professions') {{
         columns = [
-            {{ key: 'rank', label: 'Rank', type: 'rank' }},
-            {{ key: 'account_name', label: 'Account', type: 'account' }},
-            {{ key: 'primary_profession', label: 'Primary', type: 'profession' }},
-            {{ key: 'professions_played', label: 'Professions Played', type: 'stats' }},
-            {{ key: 'total_sessions', label: 'Total Sessions', type: 'number' }},
-            {{ key: 'profession_count', label: 'Prof Count', type: 'number' }}
+            {{
+                key: 'rank',
+                label: 'Rank',
+                type: 'rank'
+            }},
+            {{
+                key: 'account_name',
+                label: 'Account',
+                type: 'account'
+            }},
+            {{
+                key: 'primary_profession',
+                label: 'Primary',
+                type: 'profession'
+            }},
+            {{
+                key: 'professions_played',
+                label: 'Professions Played',
+                type: 'stats'
+            }},
+            {{
+                key: 'total_sessions',
+                label: 'Total Sessions',
+                type: 'number'
+            }},
+            {{
+                key: 'profession_count',
+                label: 'Prof Count',
+                type: 'number'
+            }}
         ];
     }} else {{
         // Default columns for any other metrics
         columns = [
-            {{ key: 'rank', label: 'Rank', type: 'rank' }},
-            {{ key: 'account_name', label: 'Account', type: 'account' }},
-            {{ key: 'score_value', label: 'Score', type: 'number' }}
+            {{
+                key: 'rank',
+                label: 'Rank',
+                type: 'rank'
+            }},
+            {{
+                key: 'account_name',
+                label: 'Account',
+                type: 'account'
+            }},
+            {{
+                key: 'score_value',
+                label: 'Score',
+                type: 'number'
+            }}
         ];
     }}
     
     // Add guild member column if guild filtering is enabled and we're showing all players
     if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
-        columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+        columns.splice(3, 0, {{
+            key: 'is_guild_member',
+            label: 'Guild Member',
+            type: 'guild_member'
+        }});
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'player-stats');
@@ -2811,7 +3201,10 @@ function createLeaderboardTable(data, columns, tableId = 'leaderboard') {{
     // Store original data for filtering and sorting
     window[`${{tableId}}_originalData`] = data;
     window[`${{tableId}}_columns`] = columns;
-    window[`${{tableId}}_currentSort`] = {{ column: null, direction: 'asc' }};
+    window[`${{tableId}}_currentSort`] = {{
+        column: null,
+        direction: 'asc'
+    }};
     
     // Apply raids gradient coloring after table creation
     setTimeout(() => {{
@@ -2979,7 +3372,10 @@ function sortTable(tableId, column, type) {{
     updateSortIndicators(tableId, column, direction);
     
     // Store current sort state
-    window[`${{tableId}}_currentSort`] = {{ column, direction }};
+    window[`${{tableId}}_currentSort`] = {{
+        column,
+        direction
+    }};
     
     // Reapply search if active
     const searchInput = document.getElementById(`${{tableId}}-search`);
@@ -3034,7 +3430,10 @@ function filterTable(tableId, searchTerm) {{
     
     // Apply current sort if any
     if (currentSort && currentSort.column) {{
-        const {{ column, direction }} = currentSort;
+        const {{
+            column,
+            direction
+        }} = currentSort;
         const sortType = columns.find(col => col.key === column)?.type || 'string';
         
         workingData = [...workingData].sort((a, b) => {{
@@ -3743,15 +4142,15 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
             playerData.profession_summaries.forEach((profSummary, index) => {
                 // Create tab button
                 const tabButton = document.createElement('button');
-                tabButton.className = `profession-tab-button ${index === 0 ? 'active' : ''}`;
+                tabButton.className = `profession-tab-button ${{index === 0 ? 'active' : ''}}`;
                 tabButton.textContent = `${profSummary.profession} (${profSummary.sessions_played} sessions)`;
                 tabButton.onclick = () => switchProfessionTab(profSummary.profession);
                 professionTabs.appendChild(tabButton);
                 
                 // Create table container
                 const tableContainer = document.createElement('div');
-                tableContainer.className = `profession-metric-table ${index === 0 ? 'active' : ''}`;
-                tableContainer.id = `table-${profSummary.profession.replace(/\\s+/g, '-')}`;
+                tableContainer.className = `profession-metric-table ${{index === 0 ? 'active' : ''}}`;
+                tableContainer.id = `table-${{profSummary.profession.replace(/\\s+/g, '-')}}`;
                 
                 tableContainer.innerHTML = `
                     <h4>📊 ${profSummary.profession} Performance</h4>
@@ -3806,7 +4205,7 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
             document.querySelectorAll('.profession-metric-table').forEach(table => {
                 table.classList.remove('active');
             });
-            document.getElementById(`table-${profession.replace(/\\s+/g, '-')}`).classList.add('active');
+            document.getElementById(`table-${{profession.replace(/\\s+/g, '-')}}`).classList.add('active');
         }
         
         function loadPlayerData() {
@@ -4012,9 +4411,9 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
 def main():
     parser = argparse.ArgumentParser(description='Generate static web UI for GW2 WvW Leaderboards')
     parser.add_argument('database', help='SQLite database file')
-    parser.add_argument('-o', '--output', default='web_ui', help='Output directory (default: web_ui)')
-    parser.add_argument('--skip-recalc', action='store_true', help='Skip recalculating ratings (use existing data)')
-    parser.add_argument('--workers', type=int, default=4, help='Number of parallel workers for data generation (default: 4)')
+    parser.add_argument('-o', '--output', help='Output directory for web UI', default='web_ui_output')
+    parser.add_argument('--max-workers', type=int, default=4, help='Max workers for parallel processing')
+    parser.add_argument('--skip-recalc', action='store_true', help='Skip recalculating Glicko ratings')
 
     args = parser.parse_args()
 
@@ -4039,8 +4438,8 @@ def main():
         recalculate_all_glicko_ratings(args.database, guild_filter=False)
         print("Rating recalculation complete!")
 
-    print(f"\nGenerating leaderboard data with up to {args.workers} workers...")
-    data = generate_all_leaderboard_data(args.database, max_workers=args.workers)
+    print(f"\nGenerating leaderboard data with up to {args.max_workers} workers...")
+    data = generate_all_leaderboard_data(args.database, max_workers=args.max_workers)
 
     print("\nGenerating HTML UI...")
     generate_html_ui(data, output_dir)
