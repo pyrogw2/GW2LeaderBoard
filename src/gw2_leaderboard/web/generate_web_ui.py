@@ -199,7 +199,7 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
                 FROM glicko_ratings g
                 LEFT JOIN guild_members gm ON g.account_name = gm.account_name
                 {where_clause}
-                ORDER BY g.composite_score DESC
+                ORDER BY g.rating DESC
                 LIMIT ?
             ''', (metric_category, limit))
         else:
@@ -213,7 +213,7 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
                        average_rank, average_stat_value, 0 as is_guild_member
                 FROM glicko_ratings 
                 {where_clause}
-                ORDER BY composite_score DESC
+                ORDER BY rating DESC
                 LIMIT ?
             ''', (metric_category, limit))
     else:
@@ -230,7 +230,7 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
                 FROM glicko_ratings g
                 LEFT JOIN guild_members gm ON g.account_name = gm.account_name
                 GROUP BY g.account_name, g.profession
-                ORDER BY avg_composite DESC
+                ORDER BY avg_rating DESC
                 LIMIT ?
             ''', (limit,))
         else:
@@ -244,7 +244,7 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
                        0 as is_guild_member
                 FROM glicko_ratings
                 GROUP BY account_name, profession
-                ORDER BY avg_composite DESC
+                ORDER BY avg_rating DESC
                 LIMIT ?
             ''', (limit,))
     
@@ -348,7 +348,7 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
                 FROM glicko_ratings g
                 LEFT JOIN guild_members gm ON g.account_name = gm.account_name
                 {where_clause}
-                ORDER BY g.composite_score DESC
+                ORDER BY g.rating DESC
                 LIMIT ?
             ''', (metric_category, limit))
         else:
@@ -362,7 +362,7 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
                        average_rank, average_stat_value, 0 as is_guild_member
                 FROM glicko_ratings 
                 {where_clause}
-                ORDER BY composite_score DESC
+                ORDER BY rating DESC
                 LIMIT ?
             ''', (metric_category, limit))
     else:
@@ -379,7 +379,7 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
                 FROM glicko_ratings g
                 LEFT JOIN guild_members gm ON g.account_name = gm.account_name
                 GROUP BY g.account_name, g.profession
-                ORDER BY avg_composite DESC
+                ORDER BY avg_rating DESC
                 LIMIT ?
             ''', (limit,))
         else:
@@ -393,7 +393,7 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int
                        0 as is_guild_member
                 FROM glicko_ratings
                 GROUP BY account_name, profession
-                ORDER BY avg_composite DESC
+                ORDER BY avg_rating DESC
                 LIMIT ?
             ''', (limit,))
     
@@ -941,7 +941,8 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
             player_data = {
                 "rank": i + 1,
                 "account_name": account,
-                "composite_score": float(composite),
+                "composite_score": float(rating),  # Now using Glicko rating as the score
+                "glicko_rating": float(rating),
                 "games_played": int(games),
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                 "key_stats": stats_breakdown,
@@ -1100,8 +1101,9 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                     "rank": i + 1,
                     "account_name": account,
                     "profession": profession,
-                    "composite_score": float(composite),
-                        "games_played": int(games),
+                    "composite_score": float(rating),  # Now using Glicko rating as the score
+                    "glicko_rating": float(rating),
+                    "games_played": int(games),
                     "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                     "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
                     "is_guild_member": bool(is_guild_member),
@@ -1116,7 +1118,8 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
                 "rank": i + 1,
                 "account_name": account,
                 "profession": profession,
-                "composite_score": float(composite),
+                "composite_score": float(rating),  # Now using average Glicko rating as the score
+                "glicko_rating": float(rating),
                 "games_played": int(games),
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
                 "average_stat_value": float(avg_stat) if avg_stat > 0 else None,
@@ -1369,7 +1372,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                         <li><strong>Session-Based Evaluation:</strong> Each combat session is analyzed independently to calculate player rankings within that specific battle</li>
                         <li><strong>Z-Score Calculation:</strong> Player performance is normalized using z-scores: <code>(player_value - session_mean) / session_std</code></li>
                         <li><strong>Glicko-2 Rating:</strong> Dynamic rating system starting at 1500 that increases/decreases based on performance outcomes converted from z-scores</li>
-                        <li><strong>Composite Rating:</strong> Final displayed rating combining Glicko (50%) + rank performance (50%) + participation bonus (0-10%) + experience scaling</li>
+                        <li><strong>Glicko Rating:</strong> Pure skill-based rating system that adapts based on wins/losses against other players (1200-1800+ typical range)</li>
                         <li><strong>Rating Deviation (RD):</strong> Measures uncertainty in a player's rating (starts at 350, decreases with more games)</li>
                     </ul>
                     
@@ -1384,7 +1387,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     
                     <h3>📈 Key Metrics Explained</h3>
                     <ul>
-                        <li><strong>Rating:</strong> Composite score around 1500-2200 (higher = better overall performance, used for ranking)</li>
+                        <li><strong>Rating:</strong> Glicko rating typically 1200-1800+ (higher = better skill level, used for ranking)</li>
                         <li><strong>Raids:</strong> Number of combat sessions analyzed (more sessions = lower uncertainty and participation bonus)</li>
                         <li><strong>Avg Rank:</strong> Average percentile rank in sessions (lower percentage = consistently better performance)</li>
                         <li><strong>Avg Stat:</strong> Average raw statistical value for the specific metric being ranked</li>

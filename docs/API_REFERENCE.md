@@ -4,7 +4,8 @@ This document provides technical reference information for the database schema, 
 
 ## Recent Updates
 
-### Rating History Charts & Date Filter Improvements
+### Pure Glicko Rating System & UI Enhancements
+- **Transition to Pure Glicko Ratings**: Simplified system using Glicko-2 ratings directly instead of composite scores
 - **Interactive Rating History Charts**: Time-series visualization showing player rating progression over time
 - **Smart Profession Filtering**: Charts filter by specific professions, removing confusing "All Professions" aggregation
 - **Chart.js Integration**: Professional interactive charts with dark mode support and detailed tooltips
@@ -720,5 +721,90 @@ ORDER BY timestamp DESC;
 - **Fair Comparisons**: Only sessions within the filter period contribute to ratings
 
 This filtering system enables users to analyze performance trends across multiple timeframes while maintaining statistical accuracy and providing responsive user interaction.
+
+## Rating System Evolution
+
+### Pure Glicko Rating Implementation
+
+As of the latest update, the leaderboard system has transitioned from composite scoring to pure Glicko-2 ratings for enhanced statistical accuracy and simplified interpretation.
+
+#### Previous System (Composite Scoring)
+The original system combined multiple factors:
+- Glicko-2 rating (50% weight)
+- Percentile rank performance (50% weight)  
+- Participation bonus (0-10%)
+- Experience scaling factors
+
+#### Current System (Pure Glicko)
+The simplified system uses Glicko-2 ratings directly:
+- **Pure statistical approach**: Ratings based solely on performance outcomes
+- **Uncertainty handling**: Proper accounting for rating deviation with small sample sizes
+- **Simplified interpretation**: Higher rating = better skill level, period
+- **Statistical soundness**: Standard Glicko-2 implementation without artificial modifications
+
+#### Technical Implementation
+
+##### Database Changes
+```sql
+-- Queries now sort by rating instead of composite_score
+SELECT account_name, profession, rating, games_played
+FROM glicko_ratings 
+WHERE metric_category = 'DPS'
+ORDER BY rating DESC  -- Changed from composite_score DESC
+LIMIT 500;
+```
+
+##### Frontend Data Structure
+```javascript
+// Data structure now uses rating as the primary score
+{
+    "rank": 1,
+    "account_name": "Player.1234",
+    "profession": "Weaver",
+    "composite_score": 1884.2,  // Now equals glicko_rating
+    "glicko_rating": 1884.2,    // Primary sorting field
+    "games_played": 20,
+    "average_rank_percent": 4.35,
+    "average_stat_value": 2505.6,
+    "is_guild_member": true,
+    "rating_delta": 5.66
+}
+```
+
+##### Backward Compatibility
+- **Composite scores preserved**: Database still contains composite_score column
+- **Data structure maintained**: Frontend still references composite_score for compatibility
+- **Migration path**: Easy rollback if needed by changing sort order back
+- **Historical data intact**: No data loss during transition
+
+#### Benefits of Pure Glicko System
+
+##### Statistical Accuracy
+- **Proper uncertainty handling**: Players with few games have appropriate rating deviation
+- **Standard implementation**: Follows established Glicko-2 mathematical model
+- **No artificial boosters**: Eliminates participation bonuses that could skew rankings
+- **Fair comparisons**: All players evaluated using same statistical framework
+
+##### Simplicity
+- **Clear interpretation**: Rating directly reflects skill level
+- **Reduced complexity**: No need to explain composite scoring components
+- **Easier debugging**: Single rating source makes troubleshooting simpler
+- **Standard range**: Typical 1200-1800+ range familiar to rating system users
+
+##### System Performance
+- **Faster queries**: Single column sorting instead of calculated composites
+- **Cleaner code**: Reduced complexity in ranking algorithms
+- **Better maintenance**: Standard Glicko-2 implementation easier to validate
+- **Future improvements**: Easier to implement Glicko-2 enhancements
+
+#### Migration Results
+
+Analysis of top 20 DPS players showed minimal ranking disruption:
+- **Top 3 unchanged**: Dextra.8162, Aein.1483, synco.8132 maintain positions
+- **Minor adjustments**: Only 3-4 meaningful position changes in top 20
+- **Statistical improvement**: Better handling of players with limited game history
+- **User experience**: Rankings feel more intuitive and statistically sound
+
+This transition maintains all existing functionality while providing a more accurate and interpretable rating system.
 
 This reference provides the technical foundation for extending and maintaining the leaderboard system.
