@@ -1559,9 +1559,10 @@ header h1 {
 }
 
 .segmented-control input[type="radio"]:checked + label {
-    background: var(--primary-color);
+    background: #4CAF50;
     color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    font-weight: 600;
 }
 
 /* Modern Filter Chips */
