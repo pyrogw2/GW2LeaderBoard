@@ -4,7 +4,11 @@ This document provides technical reference information for the database schema, 
 
 ## Recent Updates
 
-### Latest Change Feature & UI Improvements
+### Rating History Charts & UI Improvements
+- **Interactive Rating History Charts**: Time-series visualization showing player rating progression over time
+- **Smart Profession Filtering**: Charts filter by specific professions, removing confusing "All Professions" aggregation
+- **Chart.js Integration**: Professional interactive charts with dark mode support and detailed tooltips
+- **Top 300 Player Coverage**: Rating history data generated for top 300 players across all metrics
 - **Latest Change Toggle**: Shows rating changes since most recent combat session across all time filters
 - **Enhanced UI Contrast**: Improved visibility for toggle switches and date filters in dark mode
 - **Comprehensive Workflow**: New `workflow.py` script handles complete pipeline from log download to web UI generation
@@ -501,5 +505,126 @@ LIMIT 500;
 - **Small Scale** (< 1000 sessions): Current implementation works well
 - **Medium Scale** (1000-10000 sessions): Add more indexes, consider batch processing
 - **Large Scale** (> 10000 sessions): Consider database partitioning, incremental updates
+
+## Rating History Charts
+
+### Overview
+
+The rating history chart system provides interactive time-series visualizations showing how player ratings evolve over time. Charts are integrated into player detail modals and support profession-specific filtering.
+
+### Technical Implementation
+
+#### Backend Data Generation
+
+```python
+# Core function for retrieving player rating history
+def get_player_rating_history(db_path: str, account_name: str, profession: str = None, limit_months: int = 6):
+    """
+    Returns structured history data:
+    {
+        'metrics': {
+            'DPS': [{'timestamp': 'YYYYMMDDHHMM', 'rating': float, 'profession': str, ...}, ...],
+            'Healing': [...],
+            ...
+        },
+        'professions': ['Weaver', 'Catalyst', ...],
+        'date_range': {'start': 'YYYYMMDDHHMM', 'end': 'YYYYMMDDHHMM'}
+    }
+    """
+```
+
+#### Player Selection Strategy
+
+Rating history is generated for the top 300 players using a ranking-based priority system:
+
+```python
+# Prioritize top-ranked players across all metrics
+player_rankings = {}
+for metric_data in data["date_filters"]["overall"]["individual_metrics"].values():
+    for player in metric_data[:300]:  # Top 300 per metric
+        player_name = player["account_name"]
+        current_rank = player.get("rank", 999)
+        if player_name not in player_rankings or current_rank < player_rankings[player_name]:
+            player_rankings[player_name] = current_rank
+
+# Sort by best ranking and take top 300
+top_players = sorted(player_rankings.items(), key=lambda x: x[1])[:300]
+```
+
+#### Frontend Chart Integration
+
+```javascript
+// Chart initialization with Chart.js
+function initializeRatingHistoryChart(accountName) {
+    // Populate profession filter (no "All Professions" option)
+    const professionSelect = document.getElementById('history-profession-select');
+    playerHistory.professions.forEach(profession => {
+        professionSelect.innerHTML += `<option value="${profession}">${profession}</option>`;
+    });
+    
+    // Smart metric change handling
+    document.getElementById('history-metric-select').addEventListener('change', () => {
+        const selectedMetric = document.getElementById('history-metric-select').value;
+        const availableProfessions = [...new Set(playerHistory.metrics[selectedMetric].map(point => point.profession))];
+        if (availableProfessions.length > 0) {
+            professionSelect.value = availableProfessions[0]; // Auto-select relevant profession
+        }
+        updateRatingChart(accountName);
+    });
+}
+```
+
+### Chart Features
+
+#### Interactive Elements
+- **Metric Selection**: DPS, Healing, Barrier, Cleanses, Strips, Stability, Resistance, Might, Protection, Downs, Distance to Tag
+- **Profession Filtering**: Only shows professions the player has actually used for the selected metric
+- **Dark Mode Support**: Automatic theme detection with appropriate colors and styling
+- **Interactive Tooltips**: Show detailed rating information including rating deviation and volatility
+
+#### Visual Design
+- **Line Charts**: Clean time-series progression with smooth curves
+- **Color Scheme**: Professional blue (#667eea) with transparency fills
+- **Responsive Layout**: Adapts to modal container constraints
+- **Grid Lines**: Subtle grid with theme-appropriate colors
+
+#### Data Presentation
+- **Time Range**: Last 6 months of rating history (configurable)
+- **Data Points**: Individual session ratings with timestamps
+- **Profession Context**: Each data point includes profession information
+- **Status Messages**: Clear feedback when no data is available
+
+### Database Integration
+
+Rating history charts leverage the existing `player_rating_history` table structure:
+
+```sql
+-- Query example for chart data
+SELECT profession, metric_category, timestamp, rating, rating_deviation, volatility
+FROM player_rating_history
+WHERE account_name = ? AND timestamp >= ?
+ORDER BY timestamp ASC;
+```
+
+### Performance Considerations
+
+- **Data Limiting**: Only top 300 players to balance coverage with performance
+- **Time Filtering**: 6-month limit reduces data transfer and processing overhead
+- **Profession Filtering**: Client-side filtering provides responsive interaction
+- **Chart Destruction**: Proper Chart.js lifecycle management prevents memory leaks
+
+### User Experience Design
+
+#### Smart Defaults
+- **Initial Profession**: First profession with data for selected metric
+- **Metric Switching**: Automatically selects most relevant profession when changing metrics
+- **No Aggregation**: Removed confusing "All Professions" option that mixed different roles
+
+#### Error Handling
+- **No Data Messages**: Clear feedback when player lacks rating history
+- **Metric Availability**: Graceful handling when selected metric has no data for profession
+- **Loading States**: Appropriate status messages during chart initialization
+
+This chart system provides players with valuable insights into their performance progression while maintaining clean, focused visualizations appropriate for each profession's role.
 
 This reference provides the technical foundation for extending and maintaining the leaderboard system.

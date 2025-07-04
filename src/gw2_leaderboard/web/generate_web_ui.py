@@ -24,7 +24,7 @@ from ..core.glicko_rating_system import (
     recalculate_profession_ratings,
     calculate_date_filtered_ratings
 )
-from ..core.rating_history import calculate_rating_deltas_from_history
+from ..core.rating_history import calculate_rating_deltas_from_history, get_player_rating_history
 
 # Optional guild manager import
 try:
@@ -826,6 +826,54 @@ def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[st
         progress_manager.stop()
         print("Progress manager stopped")
     
+    # Add player rating history data for charts
+    print("📈 Generating player rating history data for charts...")
+    try:
+        # Get all unique players from the overall leaderboard
+        all_players = set()
+        if "overall" in data["date_filters"]:
+            # Collect players from individual metrics
+            for metric_data in data["date_filters"]["overall"]["individual_metrics"].values():
+                for player in metric_data:
+                    all_players.add(player["account_name"])
+            
+            # Collect players from profession leaderboards  
+            for profession_data in data["date_filters"]["overall"]["profession_leaderboards"].values():
+                for player in profession_data["players"]:
+                    all_players.add(player["account_name"])
+        
+        # Generate rating history for top players (prioritize by ranking)
+        player_rating_histories = {}
+        
+        # Get top 300 players prioritized by their highest ranking across all metrics
+        player_rankings = {}
+        if "overall" in data["date_filters"]:
+            for metric_data in data["date_filters"]["overall"]["individual_metrics"].values():
+                for player in metric_data[:300]:  # Top 300 per metric
+                    player_name = player["account_name"]
+                    current_rank = player.get("rank", 999)
+                    if player_name not in player_rankings or current_rank < player_rankings[player_name]:
+                        player_rankings[player_name] = current_rank
+        
+        # Sort players by their best ranking and take top 300
+        top_players = sorted(player_rankings.items(), key=lambda x: x[1])[:300]
+        top_player_names = [player[0] for player in top_players]
+        
+        for player_name in top_player_names:
+            try:
+                player_history = get_player_rating_history(db_path, player_name, limit_months=6)
+                if player_history["metrics"]:  # Only include players with history data
+                    player_rating_histories[player_name] = player_history
+            except Exception as e:
+                print(f"  Warning: Failed to get rating history for {player_name}: {e}")
+                continue
+        
+        data["player_rating_history"] = player_rating_histories
+        print(f"✅ Generated rating history for {len(player_rating_histories)} players")
+        
+    except Exception as e:
+        print(f"⚠️  Warning: Failed to generate player rating history data: {e}")
+        data["player_rating_history"] = {}
 
     return data
 
@@ -1170,6 +1218,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GW2 WvW Leaderboards</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -1381,6 +1430,38 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                             <div class="profession-filter" id="profession-filter" style="margin-bottom: 15px;">
                             </div>
                             <div id="player-metrics-content"></div>
+                        </div>
+                        
+                        <div class="player-rating-history">
+                            <h3>📈 Rating History</h3>
+                            <div class="history-controls">
+                                <div class="control-group">
+                                    <label for="history-metric-select">Metric:</label>
+                                    <select id="history-metric-select">
+                                        <option value="DPS">DPS</option>
+                                        <option value="Healing">Healing</option>
+                                        <option value="Barrier">Barrier</option>
+                                        <option value="Cleanses">Cleanses</option>
+                                        <option value="Strips">Strips</option>
+                                        <option value="Stability">Stability</option>
+                                        <option value="Resistance">Resistance</option>
+                                        <option value="Might">Might</option>
+                                        <option value="Protection">Protection</option>
+                                        <option value="Downs">Downs</option>
+                                        <option value="Distance to Tag">Distance to Tag</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label for="history-profession-select">Profession:</label>
+                                    <select id="history-profession-select">
+                                        <option value="all">All Professions</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="rating-history-chart" width="400" height="250"></canvas>
+                            </div>
+                            <div id="chart-status" class="chart-status">Loading chart data...</div>
                         </div>
                         
                     </div>
@@ -2176,7 +2257,7 @@ h2 {
 }
 
 .player-info-card h3, .player-activity-card h3, 
-.player-metrics h3, .player-professions h3, .player-sessions h3 {
+.player-metrics h3, .player-professions h3, .player-sessions h3, .player-rating-history h3 {
     margin: 0 0 15px 0;
     color: #667eea;
     font-size: 1.2rem;
@@ -2184,11 +2265,12 @@ h2 {
     padding-bottom: 5px;
 }
 
-.player-metrics, .player-professions, .player-sessions {
+.player-metrics, .player-professions, .player-sessions, .player-rating-history {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 20px;
+    margin-top: 20px;
 }
 
 .metric-grid {
@@ -2240,6 +2322,56 @@ h2 {
     background: #667eea;
     color: white;
     border-color: #667eea;
+}
+
+/* Rating History Chart Styles */
+.history-controls {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.control-group label {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.control-group select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    min-width: 150px;
+}
+
+.control-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    margin-bottom: 10px;
+}
+
+.chart-status {
+    text-align: center;
+    color: var(--text-color-secondary);
+    font-style: italic;
+    font-size: 0.9rem;
 }
 
 .sessions-table {
@@ -3631,6 +3763,9 @@ function loadPlayerData(accountName) {{
     if (professionsArray.length > 0) {{
         filterMetricsByProfession(professionsArray[0]);
     }}
+    
+    // Initialize rating history chart
+    initializeRatingHistoryChart(accountName);
 }}
 
 function filterMetricsByProfession(profession) {{
@@ -3680,6 +3815,181 @@ function filterMetricsByProfession(profession) {{
     }});
     metricsHtml += '</div>';
     metricsContent.innerHTML = metricsHtml;
+}}
+
+// Rating History Chart Functions
+let ratingHistoryChart = null;
+
+function initializeRatingHistoryChart(accountName) {{
+    const canvas = document.getElementById('rating-history-chart');
+    const ctx = canvas.getContext('2d');
+    const statusDiv = document.getElementById('chart-status');
+    
+    // Check if player has rating history data
+    const playerHistory = leaderboardData.player_rating_history?.[accountName];
+    
+    if (!playerHistory || !playerHistory.metrics || Object.keys(playerHistory.metrics).length === 0) {{
+        statusDiv.textContent = 'No rating history available for this player.';
+        canvas.style.display = 'none';
+        return;
+    }}
+    
+    canvas.style.display = 'block';
+    statusDiv.textContent = '';
+    
+    // Populate profession filter (no "All Professions" option)
+    const professionSelect = document.getElementById('history-profession-select');
+    professionSelect.innerHTML = '';
+    playerHistory.professions.forEach(profession => {{
+        professionSelect.innerHTML += `<option value="${{profession}}">${{profession}}</option>`;
+    }});
+    
+    // Set up event listeners for chart controls
+    document.getElementById('history-metric-select').addEventListener('change', () => {{
+        // When metric changes, select first profession that has data for this metric
+        const selectedMetric = document.getElementById('history-metric-select').value;
+        const professionSelect = document.getElementById('history-profession-select');
+        
+        if (playerHistory.metrics[selectedMetric]) {{
+            const availableProfessions = [...new Set(playerHistory.metrics[selectedMetric].map(point => point.profession))];
+            if (availableProfessions.length > 0) {{
+                professionSelect.value = availableProfessions[0];
+            }}
+        }}
+        
+        updateRatingChart(accountName);
+    }});
+    
+    document.getElementById('history-profession-select').addEventListener('change', () => {{
+        updateRatingChart(accountName);
+    }});
+    
+    // Create initial chart with first available profession for DPS
+    updateRatingChart(accountName);
+}}
+
+function updateRatingChart(accountName) {{
+    const canvas = document.getElementById('rating-history-chart');
+    const ctx = canvas.getContext('2d');
+    const statusDiv = document.getElementById('chart-status');
+    
+    const selectedMetric = document.getElementById('history-metric-select').value;
+    const selectedProfession = document.getElementById('history-profession-select').value;
+    
+    const playerHistory = leaderboardData.player_rating_history?.[accountName];
+    
+    if (!playerHistory || !playerHistory.metrics[selectedMetric]) {{
+        statusDiv.textContent = `No ${{selectedMetric}} rating history available.`;
+        return;
+    }}
+    
+    // Filter data by selected profession
+    let chartData = playerHistory.metrics[selectedMetric];
+    chartData = chartData.filter(point => point.profession === selectedProfession);
+    
+    if (chartData.length === 0) {{
+        statusDiv.textContent = `No ${{selectedMetric}} data for ${{selectedProfession}}.`;
+        return;
+    }}
+    
+    // Sort by timestamp
+    chartData.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    
+    // Prepare chart data
+    const labels = chartData.map(point => point.formatted_date);
+    const ratings = chartData.map(point => point.rating);
+    
+    // Determine if dark mode is active
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDarkMode ? '#ecf0f1' : '#333333';
+    const gridColor = isDarkMode ? '#4a6741' : '#e0e0e0';
+    
+    // Destroy existing chart if it exists
+    if (ratingHistoryChart) {{
+        ratingHistoryChart.destroy();
+    }}
+    
+    // Create new chart
+    ratingHistoryChart = new Chart(ctx, {{
+        type: 'line',
+        data: {{
+            labels: labels,
+            datasets: [{{
+                label: `${{selectedMetric}} Rating`,
+                data: ratings,
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.1,
+                pointBackgroundColor: '#667eea',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }}]
+        }},
+        options: {{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {{
+                legend: {{
+                    labels: {{
+                        color: textColor
+                    }}
+                }},
+                tooltip: {{
+                    backgroundColor: isDarkMode ? '#34495e' : '#ffffff',
+                    titleColor: textColor,
+                    bodyColor: textColor,
+                    borderColor: '#667eea',
+                    borderWidth: 1,
+                    callbacks: {{
+                        afterBody: function(context) {{
+                            const dataIndex = context[0].dataIndex;
+                            const dataPoint = chartData[dataIndex];
+                            return [
+                                `Profession: ${{dataPoint.profession}}`,
+                                `Rating Deviation: ${{dataPoint.rating_deviation.toFixed(1)}}`,
+                                `Volatility: ${{dataPoint.volatility.toFixed(3)}}`
+                            ];
+                        }}
+                    }}
+                }}
+            }},
+            scales: {{
+                x: {{
+                    ticks: {{
+                        color: textColor,
+                        maxTicksLimit: 8
+                    }},
+                    grid: {{
+                        color: gridColor
+                    }},
+                    title: {{
+                        display: true,
+                        text: 'Session Date',
+                        color: textColor
+                    }}
+                }},
+                y: {{
+                    ticks: {{
+                        color: textColor
+                    }},
+                    grid: {{
+                        color: gridColor
+                    }},
+                    title: {{
+                        display: true,
+                        text: 'Glicko Rating',
+                        color: textColor
+                    }}
+                }}
+            }}
+        }}
+    }});
+    
+    statusDiv.textContent = `Showing ${{chartData.length}} data points for ${{selectedMetric}}`;
 }}
 
 function makePlayerNamesClickable() {{
