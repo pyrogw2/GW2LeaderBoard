@@ -2,6 +2,13 @@
 
 This document provides technical reference information for the database schema, data structures, and internal APIs used by the GW2 WvW Leaderboard system.
 
+## Recent Updates
+
+### Latest Change Feature & UI Improvements
+- **Latest Change Toggle**: Shows rating changes since most recent combat session across all time filters
+- **Enhanced UI Contrast**: Improved visibility for toggle switches and date filters in dark mode
+- **Comprehensive Workflow**: New `workflow.py` script handles complete pipeline from log download to web UI generation
+
 ## Database Schema
 
 The system uses SQLite with two main tables for storing performance and rating data.

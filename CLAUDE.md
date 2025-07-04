@@ -6,18 +6,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Processing Pipeline
 ```bash
-# Full automated processing of new logs
+# RECOMMENDED: Complete automated workflow
+python workflow.py --latest-only --auto-confirm
+
+# Alternative: Manual steps
 python sync_logs.py --auto-confirm
-
-# Manual log processing
 python parse_logs_enhanced.py extracted_logs/ -d gw2_comprehensive.db
-python glicko_rating_system.py gw2_comprehensive.db --recalculate
-
-# Generate web interface
+python glicko_rating_system.py gw2_comprehensive.db --incremental
 python generate_web_ui.py gw2_comprehensive.db -o web_ui_output
 
-# Guild-specific processing
-python sync_logs.py --guild-only
+# Workflow script options
+python workflow.py --ui-only           # Just regenerate UI
+python workflow.py --parse-only        # Just parse logs
+python workflow.py --force-rebuild     # Rebuild rating history
 ```
 
 ### Development and Testing
@@ -53,21 +54,23 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 ## Project Architecture
 
 ### Core Components
+- **`workflow.py`**: Complete automation script handling full pipeline from logs to web UI
 - **`sync_logs.py`**: Automated log discovery and processing pipeline
 - **`parse_logs_enhanced.py`**: TiddlyWiki HTML parser with comprehensive metric extraction
 - **`glicko_rating_system.py`**: Advanced Glicko-2 rating system with session-based z-score normalization
-- **`generate_web_ui.py`**: Static web interface generator with parallel processing
+- **`generate_web_ui.py`**: Static web interface generator with parallel processing and Latest Change feature
 - **`guild_manager.py`**: GW2 API integration for guild member filtering
 
 ### Data Flow
-1. **Log Collection**: `sync_logs.py` fetches TiddlyWiki logs from aggregate sites
-2. **Parsing**: `parse_logs_enhanced.py` extracts 9 performance metrics per player/session
-3. **Rating Calculation**: `glicko_rating_system.py` applies advanced statistical analysis
-4. **UI Generation**: `generate_web_ui.py` creates interactive leaderboards
-5. **Guild Filtering**: `guild_manager.py` applies guild-specific member filtering
+1. **Workflow Orchestration**: `workflow.py` manages complete automation pipeline
+2. **Log Collection**: `sync_logs.py` fetches TiddlyWiki logs from aggregate sites
+3. **Parsing**: `parse_logs_enhanced.py` extracts 10+ performance metrics per player/session
+4. **Rating Calculation**: `glicko_rating_system.py` applies advanced statistical analysis with rating history
+5. **UI Generation**: `generate_web_ui.py` creates interactive leaderboards with Latest Change feature
+6. **Guild Filtering**: `guild_manager.py` applies guild-specific member filtering
 
 ### Database Schema
-- **`player_performances`**: Raw session data with 9 metrics per player
+- **`player_performances`**: Raw session data with 12 metrics per player
 - **`glicko_ratings`**: Calculated skill ratings by metric and profession
 - **`player_rating_history`**: Chronological rating history for Latest Change feature
 - **`guild_members`**: Cached GW2 API guild member data
@@ -82,7 +85,10 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 6. **Stability** - Stability generation per second
 7. **Resistance** - Resistance generation per second
 8. **Might** - Might generation per second
-9. **Down Contribution** - Damage to downed players per second
+9. **Protection** - Protection generation per second
+10. **Down Contribution** - Damage to downed players per second
+11. **Burst Consistency** - Performance consistency metric
+12. **Distance to Tag** - Average distance from commander
 
 ## Key Technologies
 
