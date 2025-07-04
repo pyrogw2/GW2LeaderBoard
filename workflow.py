@@ -222,16 +222,13 @@ def download_and_extract_logs(config: Dict, latest_only: bool = False) -> bool:
     """Download and extract logs using sync_logs.py."""
     print_step("1", "Downloading and extracting logs")
     
-    cmd = ['python', 'sync_logs.py', '--download-only']
+    cmd = ['python', 'sync_logs.py', '--download-only', '--auto-confirm']
     if latest_only:
         # Modify config temporarily for latest only
         original_max = config['max_logs_per_run']
         config['max_logs_per_run'] = 1
         with open(CONFIG_FILE, 'w') as f:
             json.dump(config, f, indent=2)
-    
-    if config.get('auto_confirm', False):
-        cmd.append('--auto-confirm')
     
     success = run_command(cmd, "Log download and extraction")
     
