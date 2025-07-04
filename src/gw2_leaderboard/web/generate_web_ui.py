@@ -682,7 +682,7 @@ def generate_player_summaries(db_path: str, output_dir: Path) -> List[str]:
     players_dir.mkdir(exist_ok=True)
     
     # Date filters to generate
-    date_filters = ['overall', '30d', '90d', '180d']
+    date_filters = ['overall', '30d', '60d', '90d']
     
     # Generate summaries for each date filter using multithreading
     all_generated_files = {}
@@ -764,8 +764,8 @@ def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[st
     date_filters = {
         "overall": None,
         "30d": "30d",
-        "90d": "90d",
-        "180d": "180d"
+        "60d": "60d",
+        "90d": "90d"
     }
 
     progress_manager = ProgressManager()
@@ -1250,10 +1250,10 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                 <label for="time-all">All</label>
                 <input type="radio" name="time-filter" id="time-30" value="30d">
                 <label for="time-30">30d</label>
+                <input type="radio" name="time-filter" id="time-60" value="60d">
+                <label for="time-60">60d</label>
                 <input type="radio" name="time-filter" id="time-90" value="90d">
                 <label for="time-90">90d</label>
-                <input type="radio" name="time-filter" id="time-180" value="180d">
-                <label for="time-180">180d</label>
             </div>
 
             <!-- Guild Filter Chips -->
@@ -4357,8 +4357,8 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
             <span class="filter-label" style="color: var(--text-color-light); font-weight: bold; margin-right: 15px; font-size: 1rem;">Time Period:</span>
             <button class="date-filter-button active" data-filter="overall" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">All Time</button>
             <button class="date-filter-button" data-filter="30d" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">Last 30 Days</button>
+            <button class="date-filter-button" data-filter="60d" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">Last 60 Days</button>
             <button class="date-filter-button" data-filter="90d" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">Last 90 Days</button>
-            <button class="date-filter-button" data-filter="180d" style="background: var(--button-bg); border: 2px solid var(--button-border); padding: 8px 16px; border-radius: 6px; color: var(--text-color-light); font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;">Last 180 Days</button>
         </div>
         
         <div class="player-header">
@@ -4681,7 +4681,7 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
             all_player_data = {}
             
             # Load data for each date filter
-            date_filters = ['overall', '30d', '90d', '180d']
+            date_filters = ['overall', '30d', '60d', '90d']
             for date_filter in date_filters:
                 try:
                     if date_filter == 'overall':

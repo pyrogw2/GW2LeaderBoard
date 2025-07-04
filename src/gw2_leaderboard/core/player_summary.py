@@ -607,7 +607,7 @@ def main():
     parser.add_argument('account_name', help='Player account name to analyze')
     parser.add_argument('--format', choices=['console', 'json', 'html'], default='console',
                        help='Output format')
-    parser.add_argument('--time-period', choices=['30d', '90d', '180d', 'all'], default='all',
+    parser.add_argument('--time-period', choices=['30d', '60d', '90d', 'all'], default='all',
                        help='Time period to analyze')
     parser.add_argument('--output', help='Output file (optional)')
     
