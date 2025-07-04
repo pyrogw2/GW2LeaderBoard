@@ -142,11 +142,11 @@ class ProgressManager:
 
 
 
-def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None):
+def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None, show_deltas: bool = False):
     """Extract leaderboard data from database with guild membership info."""
     if date_filter:
         # For date filtering, we need to recalculate ratings on filtered data
-        return get_filtered_leaderboard_data(db_path, metric_category, limit, date_filter)
+        return get_filtered_leaderboard_data(db_path, metric_category, limit, date_filter, show_deltas)
     
     # No date filter - use existing glicko_ratings table
     conn = sqlite3.connect(db_path)
@@ -228,10 +228,51 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
     
     results = cursor.fetchall()
     conn.close()
+    
+    # Add delta information if requested
+    if show_deltas:
+        from ..core.glicko_rating_system import calculate_rating_deltas_dual_glicko
+        
+        try:
+            deltas = calculate_rating_deltas_dual_glicko(db_path, metric_category)
+            
+            # Add delta to each result
+            results_with_deltas = []
+            for result in results:
+                result_list = list(result)
+                account_name = result[0]
+                profession = result[1]
+                
+                # Find delta for this player/profession/metric
+                if metric_category and metric_category != "Overall":
+                    delta_key = (account_name, profession, metric_category)
+                else:
+                    # For Overall, we need to average deltas across all metrics
+                    delta_sum = 0
+                    delta_count = 0
+                    for key, delta_value in deltas.items():
+                        if key[0] == account_name and key[1] == profession:
+                            delta_sum += delta_value
+                            delta_count += 1
+                    delta_key = None
+                    delta = delta_sum / delta_count if delta_count > 0 else 0.0
+                
+                if delta_key:
+                    delta = deltas.get(delta_key, 0.0)
+                
+                result_list.append(delta)
+                results_with_deltas.append(tuple(result_list))
+            
+            return results_with_deltas
+        except Exception as e:
+            print(f"Error calculating deltas: {e}")
+            # Fall back to original results with 0 deltas
+            return [list(result) + [0.0] for result in results]
+    
     return results
 
 
-def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int, date_filter: str):
+def get_filtered_leaderboard_data(db_path: str, metric_category: str, limit: int, date_filter: str, show_deltas: bool = False):
     """Get leaderboard data filtered by date - uses same method as CLI."""
     from ..core.glicko_rating_system import calculate_date_filtered_ratings
     
@@ -1126,6 +1167,13 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
             <button class="guild-filter-button" data-guild-filter="guild_members" id="guild-members-button">Guild Members Only</button>
         </div>
 
+        <div class="delta-filters">
+            <label class="delta-checkbox-label">
+                <input type="checkbox" id="show-rating-deltas" class="delta-checkbox">
+                <span class="checkbox-text">Show rating change since last log</span>
+            </label>
+        </div>
+
         <main>
             <!-- Individual Metrics -->
             <div id="individual" class="tab-content active">
@@ -1437,6 +1485,33 @@ header h1 {
 
 .guild-filters {
     margin-bottom: 30px;
+}
+
+.delta-filters {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    background: var(--button-bg);
+    border-radius: 10px;
+    padding: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.delta-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-color-light);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.delta-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
 }
 
 .filter-label {
@@ -1765,6 +1840,21 @@ h2 {
 }
 
 .guild-no {
+    color: #6c757d;
+    font-weight: normal;
+}
+
+.delta-positive {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.delta-negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.delta-neutral {
     color: #6c757d;
     font-weight: normal;
 }
@@ -2278,6 +2368,17 @@ function setupEventListeners() {{
         }});
     }});
     
+    // Rating delta checkbox
+    document.getElementById('show-rating-deltas').addEventListener('change', function() {{
+        // Reload the current metric/tab to show/hide deltas
+        const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+        if (activeTab === 'individual') {{
+            const activeMetric = document.querySelector('#individual .metric-button.active').dataset.metric;
+            loadIndividualMetric(activeMetric);
+        }}
+        // TODO: Add delta support for other tabs if needed
+    }});
+    
     // Guild filter selection
     document.querySelectorAll('.guild-filter-button').forEach(button => {{
         button.addEventListener('click', function() {{
@@ -2503,6 +2604,12 @@ function loadIndividualMetric(metric) {{
     // Add guild member column if guild filtering is enabled and we're showing all players
     if (leaderboardData.guild_enabled && currentGuildFilter === 'all_players') {{
         columns.splice(3, 0, {{ key: 'is_guild_member', label: 'Guild Member', type: 'guild_member' }});
+    }}
+    
+    // Add delta column if checkbox is checked
+    const showDeltas = document.getElementById('show-rating-deltas').checked;
+    if (showDeltas) {{
+        columns.splice(-1, 0, {{ key: 'rating_delta', label: 'Change', type: 'rating_delta' }});
     }}
     
     container.innerHTML = createLeaderboardTable(dataWithNewRanks, columns, 'individual');
@@ -2747,6 +2854,14 @@ function formatCellValue(value, type) {{
             return `<span class="stat-value">${{value}}</span>`;
         case 'guild_member':
             return value ? '<span class="guild-yes">✓ Yes</span>' : '<span class="guild-no">✗ No</span>';
+        case 'rating_delta':
+            if (Math.abs(value) < 0.1) {{
+                return `<span class="delta-neutral">0.0</span>`;
+            }} else if (value > 0) {{
+                return `<span class="delta-positive">+${{value.toFixed(1)}}</span>`;
+            }} else {{
+                return `<span class="delta-negative">${{value.toFixed(1)}}</span>`;
+            }}
         default:
             return value;
     }}

@@ -845,6 +845,102 @@ def calculate_glicko_ratings_for_session(db_path: str, timestamp: str, guild_fil
                                new_total_rank_sum, new_average_rank, new_total_stat_value, new_average_stat_value)
 
 
+def get_most_recent_session_timestamp(db_path: str) -> str:
+    """Get the timestamp of the most recent log session."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT MAX(timestamp) FROM player_performances")
+    result = cursor.fetchone()
+    conn.close()
+    
+    return result[0] if result and result[0] else None
+
+
+def calculate_rating_deltas_dual_glicko(db_path: str, metric_category: str = None, guild_filter: bool = False):
+    """Calculate rating deltas by running Glicko twice - before and after most recent session."""
+    most_recent_timestamp = get_most_recent_session_timestamp(db_path)
+    if not most_recent_timestamp:
+        return {}
+    
+    import tempfile
+    import os
+    
+    # Create temporary databases for before/after calculations
+    temp_before_db = tempfile.NamedTemporaryFile(suffix='.db', delete=False)
+    temp_after_db = tempfile.NamedTemporaryFile(suffix='.db', delete=False)
+    temp_before_path = temp_before_db.name
+    temp_after_path = temp_after_db.name
+    temp_before_db.close()
+    temp_after_db.close()
+    
+    try:
+        # Copy original database to temp databases
+        import shutil
+        shutil.copy2(db_path, temp_before_path)
+        shutil.copy2(db_path, temp_after_path)
+        
+        # Remove most recent session from "before" database
+        conn_before = sqlite3.connect(temp_before_path)
+        cursor_before = conn_before.cursor()
+        cursor_before.execute("DELETE FROM player_performances WHERE timestamp = ?", (most_recent_timestamp,))
+        conn_before.commit()
+        conn_before.close()
+        
+        # Recalculate ratings for both databases
+        recalculate_all_glicko_ratings(temp_before_path, guild_filter)
+        recalculate_all_glicko_ratings(temp_after_path, guild_filter)
+        
+        # Get ratings from both databases
+        def get_ratings(db_path, metric_filter):
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            where_conditions = ["1=1"]
+            params = []
+            
+            if metric_filter and metric_filter != "Overall":
+                where_conditions.append("metric_category = ?")
+                params.append(metric_filter)
+                
+                # Add Distance to Tag filter
+                if metric_filter == "Distance to Tag":
+                    where_conditions.append("NOT (average_stat_value = 0 AND games_played = 1)")
+            
+            where_clause = " AND ".join(where_conditions)
+            
+            cursor.execute(f'''
+                SELECT account_name, profession, metric_category, composite_score
+                FROM glicko_ratings 
+                WHERE {where_clause}
+            ''', params)
+            
+            results = cursor.fetchall()
+            conn.close()
+            
+            # Return as dict for easy lookup
+            return {(row[0], row[1], row[2]): row[3] for row in results}
+        
+        before_ratings = get_ratings(temp_before_path, metric_category)
+        after_ratings = get_ratings(temp_after_path, metric_category)
+        
+        # Calculate deltas
+        deltas = {}
+        for key, after_score in after_ratings.items():
+            before_score = before_ratings.get(key, 1500.0)  # Default to 1500 if no previous rating
+            deltas[key] = after_score - before_score
+        
+        return deltas
+        
+    finally:
+        # Clean up temporary files
+        try:
+            os.unlink(temp_before_path)
+            os.unlink(temp_after_path)
+        except:
+            pass
+
+
 def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False, progress_callback=None):
     """Recalculate all Glicko ratings chronologically."""
     # Create Glicko table
