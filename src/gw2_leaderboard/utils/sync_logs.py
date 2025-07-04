@@ -623,6 +623,7 @@ def main():
     parser = argparse.ArgumentParser(description="Sync logs and update leaderboards")
     parser.add_argument("--config", help="Path to config file", default=CONFIG_FILE)
     parser.add_argument("--check-only", action="store_true", help="Only check for new logs, don't download")
+    parser.add_argument("--download-only", action="store_true", help="Only download logs, skip processing and UI generation")
     parser.add_argument("--auto-confirm", action="store_true", help="Skip confirmation prompts")
     parser.add_argument("--max-logs", type=int, help="Maximum number of new logs to process")
     
@@ -709,6 +710,11 @@ def main():
         return 1
     
     print(f"\n✅ Successfully downloaded {success_count}/{len(new_logs)} logs")
+    
+    # Skip processing if download-only flag is set
+    if args.download_only:
+        print("📦 Download-only mode: Skipping log processing and UI generation")
+        return 0
     
     # Process logs through pipeline
     if process_new_logs(config["extracted_logs_dir"], config["database_path"]):

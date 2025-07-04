@@ -173,24 +173,39 @@ def check_database_history(db_path: str) -> bool:
         return False
 
 
-def run_command(cmd: list, description: str, cwd: str = None) -> bool:
+def run_command(cmd: list, description: str, cwd: str = None, show_output: bool = True) -> bool:
     """Run a command and return success status."""
     print(f"🔄 Running: {description}")
     print(f"   Command: {' '.join(cmd)}")
     
     try:
-        result = subprocess.run(cmd, cwd=cwd, check=True, capture_output=True, text=True)
+        if show_output:
+            # Stream output in real-time
+            process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                                     text=True, bufsize=1, universal_newlines=True)
+            
+            for line in process.stdout:
+                print(f"   {line.rstrip()}")
+            
+            process.wait()
+            if process.returncode != 0:
+                print(f"❌ {description} failed with return code {process.returncode}")
+                return False
+        else:
+            # Capture output (for quiet operations)
+            result = subprocess.run(cmd, cwd=cwd, check=True, capture_output=True, text=True)
+            if result.stdout.strip():
+                # Print only last few lines to avoid overwhelming output
+                lines = result.stdout.strip().split('\n')
+                if len(lines) > 5:
+                    print("   [... output truncated ...]")
+                    for line in lines[-3:]:
+                        print(f"   {line}")
+                else:
+                    for line in lines:
+                        print(f"   {line}")
+        
         print(f"✅ {description} completed successfully")
-        if result.stdout.strip():
-            # Print only last few lines to avoid overwhelming output
-            lines = result.stdout.strip().split('\n')
-            if len(lines) > 5:
-                print("   [... output truncated ...]")
-                for line in lines[-3:]:
-                    print(f"   {line}")
-            else:
-                for line in lines:
-                    print(f"   {line}")
         return True
     except subprocess.CalledProcessError as e:
         print(f"❌ {description} failed!")
@@ -207,7 +222,7 @@ def download_and_extract_logs(config: Dict, latest_only: bool = False) -> bool:
     """Download and extract logs using sync_logs.py."""
     print_step("1", "Downloading and extracting logs")
     
-    cmd = ['python', 'sync_logs.py']
+    cmd = ['python', 'sync_logs.py', '--download-only']
     if latest_only:
         # Modify config temporarily for latest only
         original_max = config['max_logs_per_run']
