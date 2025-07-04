@@ -1029,17 +1029,16 @@ def generate_data_for_filter(db_path: str, filter_value: str, progress_manager: 
         # instead of calling get_filtered_leaderboard_data which recalculates everything
         print(f"[{worker_id}] Processing {len(individual_categories)} individual metrics directly from temp database...")
         
-        # Calculate deltas once for all metrics (only for overall filter to save time)
+        # Calculate deltas once for all metrics (same for all time filters since based on rating history)
         deltas_by_metric = {}
-        if filter_value is None:  # Overall filter
-            print(f"[{worker_id}] Pre-calculating deltas for all metrics...")
-            try:
-                for category in individual_categories:
-                    deltas_by_metric[category] = calculate_rating_deltas_from_history(db_path, category)
-                print(f"[{worker_id}] Delta calculation complete")
-            except Exception as e:
-                print(f"[{worker_id}] Delta calculation failed: {e}")
-                deltas_by_metric = {}
+        print(f"[{worker_id}] Pre-calculating deltas for all metrics...")
+        try:
+            for category in individual_categories:
+                deltas_by_metric[category] = calculate_rating_deltas_from_history(db_path, category)
+            print(f"[{worker_id}] Delta calculation complete")
+        except Exception as e:
+            print(f"[{worker_id}] Delta calculation failed: {e}")
+            deltas_by_metric = {}
         
         for category in individual_categories:
             print(f"[{worker_id}] Processing metric: {category}")
