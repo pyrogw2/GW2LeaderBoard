@@ -4,11 +4,12 @@ This document provides technical reference information for the database schema, 
 
 ## Recent Updates
 
-### Rating History Charts & UI Improvements
+### Rating History Charts & Date Filter Improvements
 - **Interactive Rating History Charts**: Time-series visualization showing player rating progression over time
 - **Smart Profession Filtering**: Charts filter by specific professions, removing confusing "All Professions" aggregation
 - **Chart.js Integration**: Professional interactive charts with dark mode support and detailed tooltips
 - **Top 300 Player Coverage**: Rating history data generated for top 300 players across all metrics
+- **Improved Date Filters**: Updated from All/30d/90d/180d to All/30d/60d/90d for better granularity
 - **Latest Change Toggle**: Shows rating changes since most recent combat session across all time filters
 - **Enhanced UI Contrast**: Improved visibility for toggle switches and date filters in dark mode
 - **Comprehensive Workflow**: New `workflow.py` script handles complete pipeline from log download to web UI generation
@@ -327,7 +328,7 @@ Retrieves leaderboard data from database.
 - `db_path`: Path to SQLite database file
 - `metric_category`: Specific metric to filter by (optional)
 - `limit`: Maximum number of results to return
-- `date_filter`: Time period filter ('30d', '90d', '180d', or None)
+- `date_filter`: Time period filter ('30d', '60d', '90d', or None)
 
 **Returns:**
 - List of tuples containing ranking data
@@ -626,5 +627,98 @@ ORDER BY timestamp ASC;
 - **Loading States**: Appropriate status messages during chart initialization
 
 This chart system provides players with valuable insights into their performance progression while maintaining clean, focused visualizations appropriate for each profession's role.
+
+## Date Filtering System
+
+### Overview
+
+The leaderboard supports multiple time period filters to allow analysis of performance across different timeframes. The system processes data for each filter independently to provide accurate comparisons.
+
+### Available Time Filters
+
+#### Filter Options
+- **All Time**: Complete historical data from all sessions
+- **30 Days**: Recent performance (last month)
+- **60 Days**: Short-term trends (last 2 months) 
+- **90 Days**: Medium-term analysis (last 3 months)
+
+#### Filter Design Rationale
+The current filter set provides optimal granularity for performance analysis:
+
+- **30d**: Captures very recent performance and immediate improvements
+- **60d**: Sweet spot for analyzing recent trends without excessive historical noise
+- **90d**: Provides medium-term perspective for understanding longer performance patterns
+- **All**: Complete historical context for overall player development
+
+### Technical Implementation
+
+#### Backend Processing
+Each date filter creates a temporary database with recalculated ratings:
+
+```python
+date_filters = ['overall', '30d', '60d', '90d']
+
+# Process each filter independently
+for filter_name in date_filters:
+    if filter_name == 'overall':
+        # Use main database with pre-calculated ratings
+        working_db_path = db_path
+    else:
+        # Create temporary database with date-filtered data
+        working_db_path = calculate_date_filtered_ratings(db_path, filter_name)
+        # Recalculate all ratings on filtered dataset
+```
+
+#### Frontend Implementation
+Date filters are implemented as segmented controls for intuitive switching:
+
+```html
+<div class="segmented-control">
+    <input type="radio" name="time-filter" id="time-all" value="overall" checked>
+    <label for="time-all">All</label>
+    <input type="radio" name="time-filter" id="time-30" value="30d">
+    <label for="time-30">30d</label>
+    <input type="radio" name="time-filter" id="time-60" value="60d">
+    <label for="time-60">60d</label>
+    <input type="radio" name="time-filter" id="time-90" value="90d">
+    <label for="time-90">90d</label>
+</div>
+```
+
+#### Database Date Filtering
+The system uses the `parsed_date` column for efficient date-based queries:
+
+```sql
+-- Example: 60-day filter query
+SELECT * FROM player_performances 
+WHERE parsed_date >= date('now', '-60 days')
+ORDER BY timestamp DESC;
+```
+
+### Performance Considerations
+
+#### Processing Optimization
+- **Parallel Processing**: Multiple date filters processed concurrently using process pools
+- **Temporary Databases**: Isolated calculations prevent interference between filters
+- **Guild Data Copying**: Member information propagated to temporary databases for consistent filtering
+
+#### Memory Management
+- **Automatic Cleanup**: Temporary databases removed after processing
+- **Process Isolation**: Each filter runs in separate process to avoid memory accumulation
+- **Batch Processing**: Large datasets processed in chunks to prevent memory exhaustion
+
+### User Experience
+
+#### Filter Switching
+- **Instant Response**: Pre-calculated data enables immediate filter switching
+- **Consistent Layout**: All filters maintain identical table structure and formatting
+- **State Preservation**: Current metric and sorting preferences maintained across filter changes
+
+#### Data Consistency
+- **Independent Calculations**: Each filter recalculates ratings on its specific dataset
+- **Relative Rankings**: Rankings reflect performance within the selected time period
+- **Fair Comparisons**: Only sessions within the filter period contribute to ratings
+
+This filtering system enables users to analyze performance trends across multiple timeframes while maintaining statistical accuracy and providing responsive user interaction.
 
 This reference provides the technical foundation for extending and maintaining the leaderboard system.
