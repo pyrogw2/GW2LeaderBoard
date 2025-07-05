@@ -4040,9 +4040,6 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     with open(output_dir / "script.js", "w", encoding='utf-8') as f:
         f.write(js_content)
-
-    with open(output_dir / "data.json", "w", encoding='utf-8') as f:
-        json.dump(data, f)
     
     print(f"HTML UI generated in: {output_dir}")
     print("Files created:")
