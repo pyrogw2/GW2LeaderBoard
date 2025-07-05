@@ -1249,14 +1249,14 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
         <div class="modern-filters">
             <!-- Segmented Control for Time Period -->
             <div class="segmented-control">
-                <input type="radio" name="time-filter" id="time-all" value="overall" checked>
-                <label for="time-all">All</label>
-                <input type="radio" name="time-filter" id="time-30" value="30d">
+                <input type="radio" name="time-filter" id="time-30" value="30d" checked>
                 <label for="time-30">30d</label>
                 <input type="radio" name="time-filter" id="time-60" value="60d">
                 <label for="time-60">60d</label>
                 <input type="radio" name="time-filter" id="time-90" value="90d">
                 <label for="time-90">90d</label>
+                <input type="radio" name="time-filter" id="time-all" value="overall">
+                <label for="time-all">All</label>
             </div>
 
             <!-- Guild Filter Chips -->
@@ -2505,13 +2505,11 @@ h2 {
 const leaderboardData = {json.dumps(data, indent=2)};
 
 // Current state
-let currentDateFilter = 'overall';
-let currentTab = 'individual';
-let currentMetric = 'DPS';
-let currentProfession = 'Firebrand';
-let currentHighScore = 'Highest 1 Sec Burst';
-let currentPlayerStat = 'Most Played Professions';
+let currentFilter = '30d';
 let currentGuildFilter = 'all_players';
+let showRatingDeltas = false;
+let currentSort = { column: 'rank', order: 'asc' };
+let chart;
 
 // GW2 Wiki profession icons
 const professionIcons = {{
