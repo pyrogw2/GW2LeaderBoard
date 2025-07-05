@@ -21,7 +21,6 @@ import json
 import argparse
 import sys
 import os
-import subprocess
 import sqlite3
 from pathlib import Path
 from typing import Dict, Optional
@@ -29,6 +28,13 @@ from datetime import datetime
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+
+# Import main functions from the respective modules
+from gw2_leaderboard.utils.sync_logs import main as sync_logs_main
+from gw2_leaderboard.parsers.parse_logs_enhanced import main as parse_logs_enhanced_main
+from gw2_leaderboard.core.glicko_rating_system import main as glicko_rating_system_main
+from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
+from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
 
@@ -173,70 +179,26 @@ def check_database_history(db_path: str) -> bool:
         return False
 
 
-def run_command(cmd: list, description: str, cwd: str = None, show_output: bool = True) -> bool:
-    """Run a command and return success status."""
-    print(f"🔄 Running: {description}")
-    print(f"   Command: {' '.join(cmd)}")
-    
-    try:
-        if show_output:
-            # Stream output in real-time
-            process = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
-                                     text=True, bufsize=1, universal_newlines=True)
-            
-            for line in process.stdout:
-                print(f"   {line.rstrip()}")
-            
-            process.wait()
-            if process.returncode != 0:
-                print(f"❌ {description} failed with return code {process.returncode}")
-                return False
-        else:
-            # Capture output (for quiet operations)
-            result = subprocess.run(cmd, cwd=cwd, check=True, capture_output=True, text=True)
-            if result.stdout.strip():
-                # Print only last few lines to avoid overwhelming output
-                lines = result.stdout.strip().split('\n')
-                if len(lines) > 5:
-                    print("   [... output truncated ...]")
-                    for line in lines[-3:]:
-                        print(f"   {line}")
-                else:
-                    for line in lines:
-                        print(f"   {line}")
-        
-        print(f"✅ {description} completed successfully")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ {description} failed!")
-        print(f"   Error: {e}")
-        if e.stderr:
-            print(f"   Stderr: {e.stderr}")
-        return False
-    except Exception as e:
-        print(f"❌ {description} failed with exception: {e}")
-        return False
-
-
 def download_and_extract_logs(config: Dict, latest_only: bool = False) -> bool:
     """Download and extract logs using sync_logs.py."""
     print_step("1", "Downloading and extracting logs")
     
-    cmd = ['python', 'sync_logs.py', '--download-only', '--auto-confirm']
+    # Prepare arguments for sync_logs_main
+    sys_argv_backup = sys.argv[:]
+    sys.argv = ['sync_logs.py']
     if latest_only:
-        # Modify config temporarily for latest only
-        original_max = config['max_logs_per_run']
-        config['max_logs_per_run'] = 1
-        with open(CONFIG_FILE, 'w') as f:
-            json.dump(config, f, indent=2)
+        sys.argv.append('--max-logs')
+        sys.argv.append('1')
+    sys.argv.append('--download-only')
+    sys.argv.append('--auto-confirm')
     
-    success = run_command(cmd, "Log download and extraction")
-    
-    if latest_only:
-        # Restore original config
-        config['max_logs_per_run'] = original_max
-        with open(CONFIG_FILE, 'w') as f:
-            json.dump(config, f, indent=2)
+    try:
+        sync_logs_main()
+        success = True
+    except SystemExit as e:
+        success = (e.code == 0)
+    finally:
+        sys.argv = sys_argv_backup
     
     return success
 
@@ -252,8 +214,19 @@ def parse_logs(config: Dict) -> bool:
         print(f"❌ Extracted logs directory '{extracted_dir}' not found")
         return False
     
-    cmd = ['python', 'parse_logs_enhanced.py', extracted_dir, '-d', db_path]
-    return run_command(cmd, "Log parsing")
+    # Prepare arguments for parse_logs_enhanced_main
+    sys_argv_backup = sys.argv[:]
+    sys.argv = ['parse_logs_enhanced.py', extracted_dir, '-d', db_path]
+    
+    try:
+        parse_logs_enhanced_main()
+        success = True
+    except SystemExit as e:
+        success = (e.code == 0)
+    finally:
+        sys.argv = sys_argv_backup
+    
+    return success
 
 
 def update_glicko_ratings(config: Dict, force_rebuild: bool = False) -> bool:
@@ -263,6 +236,8 @@ def update_glicko_ratings(config: Dict, force_rebuild: bool = False) -> bool:
     db_path = config['database_path']
     has_history = check_database_history(db_path)
     
+    method = ""
+    description = ""
     if force_rebuild or not has_history:
         method = "rebuild-history"
         description = "Rebuilding complete rating history"
@@ -272,8 +247,19 @@ def update_glicko_ratings(config: Dict, force_rebuild: bool = False) -> bool:
         description = "Incremental rating update"
         print(f"📊 {description}")
     
-    cmd = ['python', 'glicko_rating_system.py', db_path, f'--{method}']
-    return run_command(cmd, description)
+    # Prepare arguments for glicko_rating_system_main
+    sys_argv_backup = sys.argv[:]
+    sys.argv = ['glicko_rating_system.py', db_path, f'--{method}']
+    
+    try:
+        glicko_rating_system_main()
+        success = True
+    except SystemExit as e:
+        success = (e.code == 0)
+    finally:
+        sys.argv = sys_argv_backup
+    
+    return success
 
 
 def generate_web_ui(config: Dict) -> bool:
@@ -283,8 +269,19 @@ def generate_web_ui(config: Dict) -> bool:
     db_path = config['database_path']
     output_dir = config['web_ui_output']
     
-    cmd = ['python', 'generate_web_ui.py', db_path, '-o', output_dir, '--skip-recalc']
-    return run_command(cmd, "Web UI generation")
+    # Prepare arguments for generate_web_ui_main
+    sys_argv_backup = sys.argv[:]
+    sys.argv = ['generate_web_ui.py', db_path, '-o', output_dir, '--skip-recalc']
+    
+    try:
+        generate_web_ui_main()
+        success = True
+    except SystemExit as e:
+        success = (e.code == 0)
+    finally:
+        sys.argv = sys_argv_backup
+    
+    return success
 
 
 def main():
@@ -341,6 +338,21 @@ def main():
     print(f"   Guild Filtering: {'Enabled' if config['guild']['filter_enabled'] else 'Disabled'}")
     if config['guild']['filter_enabled']:
         print(f"   Guild: {config['guild']['guild_name']} [{config['guild']['guild_tag']}]")
+        
+        # Optional: Refresh guild members
+        if not config.get('auto_confirm', False):
+            refresh = input("🔄 Refresh guild members now? (y/N): ").strip().lower()
+            if refresh in ['y', 'yes']:
+                print_step("🛡️ ", "Refreshing guild members")
+                sys_argv_backup = sys.argv[:]
+                sys.argv = ['guild_manager.py', '--refresh']
+                try:
+                    guild_manager_main()
+                except SystemExit as e:
+                    if e.code != 0:
+                        print("❌ Guild member refresh failed.")
+                finally:
+                    sys.argv = sys_argv_backup
     
     # Determine what operations to run
     operations = []

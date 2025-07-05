@@ -23,7 +23,7 @@ sync_config.json
 # Logs
 *.log
 logs/
-extracted_logs/
+extracted_logs/*
 
 # IDE files
 .vscode/
