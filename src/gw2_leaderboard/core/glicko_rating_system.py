@@ -1247,6 +1247,33 @@ def get_unprocessed_sessions(db_path: str, last_processed_timestamp: Optional[st
         results = cursor.fetchall()
         return [row[0] for row in results]
 
+def initialize_database_schema(db_path: str):
+    """Ensure all necessary Glicko-related tables exist."""
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        # Main ratings table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS glicko_ratings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_name TEXT NOT NULL,
+                profession TEXT NOT NULL,
+                metric_category TEXT NOT NULL,
+                rating REAL DEFAULT 1500.0,
+                rd REAL DEFAULT 350.0,
+                volatility REAL DEFAULT 0.06,
+                games_played INTEGER DEFAULT 0,
+                total_rank_sum REAL DEFAULT 0.0,
+                average_rank REAL DEFAULT 0.0,
+                total_stat_value REAL DEFAULT 0.0,
+                average_stat_value REAL DEFAULT 0.0,
+                composite_score REAL DEFAULT 1500.0,
+                UNIQUE(account_name, profession, metric_category)
+            )
+        ''')
+        # History table (managed by rating_history.py but good to ensure it's here)
+        create_rating_history_table(db_path)
+    conn.close()
+
 def main():
     parser = argparse.ArgumentParser(description='Glicko-based GW2 Rating System')
     parser.add_argument('database', help='SQLite database file')
@@ -1266,6 +1293,9 @@ def main():
     if not Path(args.database).exists():
         print(f"Database {args.database} not found")
         return 1
+
+    # Always ensure the schema is initialized
+    initialize_database_schema(args.database)
     
     if args.rebuild_history:
         rebuild_rating_history(args.database)

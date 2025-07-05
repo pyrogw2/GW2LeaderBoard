@@ -38,12 +38,13 @@ class GuildManager:
         self._ensure_guild_table()
     
     def _load_config(self, config_path: str) -> Dict:
-        """Load configuration from JSON file."""
+        """Load guild configuration from sync_config.json."""
         try:
-            with open(config_path, 'r') as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            logger.error(f"Failed to load config from {config_path}: {e}")
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            return config.get("guild", {})
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+            print(f"Could not load guild config from {config_path}: {e}")
             return {}
     
     def _ensure_guild_table(self):

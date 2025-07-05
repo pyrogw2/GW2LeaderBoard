@@ -152,6 +152,9 @@ Combat Logs (TiddlyWiki) → Parser → Database (SQLite) → Rating Engine → 
 **Rating Engine**: Pure Glicko-2 algorithm with WvW-specific adaptations  
 **Guild Integration**: GW2 API v2 for member validation and filtering
 
+## GUI
+A graphical user interface is available for Windows users. It provides an easy way to run the workflow without using the command line. The executable is located in the `dist` folder.
+
 ## 🤝 Contributing
 
 This system is designed for the Guild Wars 2 WvW community. Contributions welcome for:

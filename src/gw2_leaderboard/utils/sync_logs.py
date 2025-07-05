@@ -41,29 +41,29 @@ _tiddlywiki_cache = {
 }
 
 
-def load_config() -> Dict:
-    """Load configuration from file or create default."""
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as f:
-            config = json.load(f)
-        # Merge with defaults for any missing keys
-        for key, value in DEFAULT_CONFIG.items():
-            if key not in config:
-                config[key] = value
-        return config
-    else:
-        # Create default config file
-        with open(CONFIG_FILE, 'w') as f:
-            json.dump(DEFAULT_CONFIG, f, indent=2)
-        print(f"📄 Created default configuration file: {CONFIG_FILE}")
-        print("📝 Edit this file to customize settings.")
-        return DEFAULT_CONFIG.copy()
+def load_config():
+    """Load configuration from file."""
+    if not os.path.exists(CONFIG_FILE):
+        return None
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error loading config: {e}")
+        return None
 
 
-def save_config(config: Dict):
+def save_config(config):
     """Save configuration to file."""
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f, indent=2)
+    # Save the new configuration
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2)
+        print(f"Configuration saved to {CONFIG_FILE}")
+        return config
+    except IOError as e:
+        print(f"Error saving config: {e}")
+        return None
 
 
 def get_existing_logs(extracted_logs_dir: str) -> Set[str]:

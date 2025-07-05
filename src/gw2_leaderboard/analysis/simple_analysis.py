@@ -190,7 +190,7 @@ def main():
             'average_session_size': round(total_performances / unique_sessions, 1) if unique_sessions > 0 else 0
         }
         
-        with open('summary.json', 'w') as f:
+        with open('summary.json', 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         print("Exported summary.json")
         

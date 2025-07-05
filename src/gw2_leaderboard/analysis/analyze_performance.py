@@ -210,17 +210,11 @@ def export_reports(db_path: str, output_dir: str = 'reports'):
         'average_session_size': round(total_performances / unique_sessions, 1)
     }
     
-    with open(output_path / 'summary.json', 'w') as f:
+    # Save summary to JSON file
+    with open(output_path / 'summary.json', 'w', encoding='utf-8') as f:
         json.dump(summary, f, indent=2)
     
-    conn.close()
-    
-    print(f"Reports exported to {output_path}/")
-    print(f"  - profession_stats.csv")
-    print(f"  - top_dps_performers.csv") 
-    print(f"  - top_damage_performers.csv")
-    print(f"  - role_performance.csv")
-    print(f"  - summary.json")
+    print(f"Analysis complete. Reports saved to '{output_path}'")
 
 
 def main():

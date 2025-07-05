@@ -736,7 +736,7 @@ def generate_all_leaderboard_data(db_path: str, max_workers: int = 4) -> Dict[st
     
     # Try to load guild config from sync_config.json directly first
     try:
-        with open("sync_config.json", 'r') as f:
+        with open("sync_config.json", 'r', encoding='utf-8') as f:
             config = json.load(f)
             guild_config = config.get("guild", {})
             guild_name = guild_config.get("guild_name", "Guild")
@@ -4029,9 +4029,17 @@ document.addEventListener('DOMContentLoaded', function() {{
 }});"""
 
     # Write all files
-    (output_dir / "index.html").write_text(html_content)
-    (output_dir / "styles.css").write_text(css_content)
-    (output_dir / "script.js").write_text(js_content)
+    with open(output_dir / "index.html", "w", encoding='utf-8') as f:
+        f.write(html_content)
+
+    with open(output_dir / "styles.css", "w", encoding='utf-8') as f:
+        f.write(css_content)
+
+    with open(output_dir / "script.js", "w", encoding='utf-8') as f:
+        f.write(js_content)
+
+    with open(output_dir / "data.json", "w", encoding='utf-8') as f:
+        json.dump(data, f)
     
     print(f"HTML UI generated in: {output_dir}")
     print("Files created:")

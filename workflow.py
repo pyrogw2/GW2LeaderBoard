@@ -78,7 +78,7 @@ def load_config() -> Dict:
         return None
     
     try:
-        with open(CONFIG_FILE, 'r') as f:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             config = json.load(f)
         
         # Merge with defaults for any missing keys
@@ -140,7 +140,7 @@ def create_config_interactive() -> Dict:
     
     # Save configuration
     try:
-        with open(CONFIG_FILE, 'w') as f:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
         print(f"\n✅ Configuration saved to {CONFIG_FILE}")
     except Exception as e:
