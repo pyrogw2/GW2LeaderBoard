@@ -2506,9 +2506,14 @@ const leaderboardData = {json.dumps(data, indent=2)};
 
 // Current state
 let currentFilter = '30d';
+let currentTab = 'individual';
+let currentMetric = 'DPS';
+let currentProfession = 'Firebrand';
+let currentHighScore = 'Highest 1 Sec Burst';
+let currentPlayerStat = 'Most Played Professions';
 let currentGuildFilter = 'all_players';
 let showRatingDeltas = false;
-let currentSort = { column: 'rank', order: 'asc' };
+let currentSort = {{ column: 'rank', direction: 'asc' }};
 let chart;
 
 // GW2 Wiki profession icons
@@ -2741,7 +2746,7 @@ function setupEventListeners() {{
 }}
 
 function selectDateFilter(filter) {{
-    currentDateFilter = filter;
+    currentFilter = filter;
     // Radio buttons handle their own selection state
     loadCurrentData();
 }}
@@ -2753,11 +2758,11 @@ function selectGuildFilter(guildFilter) {{
 }}
 
 function getCurrentData() {{
-    return leaderboardData.date_filters[currentDateFilter];
+    return leaderboardData.date_filters[currentFilter];
 }}
 
 function getCurrentDateFilter() {{
-    return currentDateFilter;
+    return currentFilter;
 }}
 
 function filterDataByGuildMembership(data) {{
