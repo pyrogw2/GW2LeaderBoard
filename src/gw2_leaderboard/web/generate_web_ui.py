@@ -1333,8 +1333,8 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
                     <button class="metric-button" data-metric="Might">Might</button>
                     <button class="metric-button" data-metric="Protection">Protection</button>
                     <button class="metric-button" data-metric="Downs">DownCont</button>
-                    <button class="metric-button" data-metric="Burst Consistency">Burst Consistency</button>
-                    <button class="metric-button" data-metric="Distance to Tag">Distance to Tag</button>
+                    <button class="metric-button" data-metric="Burst Consistency">Burst</button>
+                    <button class="metric-button" data-metric="Distance to Tag">Distance</button>
                 </div>
                 
                 <div class="search-container">
@@ -1872,7 +1872,17 @@ h2 {
     font-size: 1.1rem;
 }
 
-.metric-selector, .profession-selector {
+.metric-selector {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 8px;
+    margin-bottom: 25px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.profession-selector {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -1880,7 +1890,22 @@ h2 {
     justify-content: center;
 }
 
-.metric-button, .profession-button {
+.metric-button {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-color);
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.profession-button {
     background: var(--card-bg);
     border: 2px solid var(--border-color);
     padding: 10px 20px;
@@ -1891,15 +1916,41 @@ h2 {
     color: var(--text-color);
 }
 
-.metric-button:hover, .profession-button:hover {
+.metric-button:hover {
+    background: var(--hover-bg);
+    border-color: var(--text-color-secondary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.profession-button:hover {
     background: var(--hover-bg);
     border-color: var(--text-color-secondary);
 }
 
-.metric-button.active, .profession-button.active {
+.metric-button.active {
     background: #667eea;
     color: white;
     border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.profession-button.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+[data-theme="dark"] .metric-button {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .metric-button:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .metric-button.active {
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
 }
 
 .profession-info {
@@ -2296,11 +2347,21 @@ h2 {
         padding: 20px;
     }
     
-    .metric-selector, .profession-selector {
+    .metric-selector {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+    }
+    
+    .profession-selector {
         justify-content: flex-start;
     }
     
-    .metric-button, .profession-button {
+    .metric-button {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .profession-button {
         padding: 8px 16px;
         font-size: 0.8rem;
     }
