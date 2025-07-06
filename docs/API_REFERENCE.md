@@ -4,7 +4,9 @@ This document provides technical reference information for the database schema, 
 
 ## Recent Updates
 
-### Pure Glicko Rating System & UI Enhancements
+### Simplified Profession Rating System & UI Enhancements
+- **Simplified Profession Ratings**: Profession-specific ratings now use transparent weighted averages of individual metric Glicko ratings instead of complex session-based calculations
+- **Transparent Calculations**: Firebrand = (Stability × 0.6) + (Resistance × 0.4), Chronomancer = (Stability × 0.35) + (Cleanses × 0.35) + (Resistance × 0.15) + (Healing × 0.1) + (Barrier × 0.05), etc.
 - **Transition to Pure Glicko Ratings**: Simplified system using Glicko-2 ratings directly instead of composite scores
 - **Interactive Rating History Charts**: Time-series visualization showing player rating progression over time
 - **Smart Profession Filtering**: Charts filter by specific professions, removing confusing "All Professions" aggregation

@@ -105,7 +105,7 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 
 ### Algorithms
 - **Rating System**: Glicko-2 with session-based z-score normalization
-- **Composite Scoring**: Weighted combination of Glicko rating and percentile rank
+- **Profession Ratings**: Simple weighted averages of individual metric Glicko ratings (e.g., Firebrand = Stability×0.6 + Resistance×0.4)
 - **Performance Analysis**: Statistical analysis within combat sessions
 - **Guild Integration**: GW2 API v2 for member validation
 - **Latest Change**: Chronological rating history with delta calculations

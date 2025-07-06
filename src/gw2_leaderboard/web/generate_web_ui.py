@@ -22,7 +22,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from ..core.glicko_rating_system import (
     PROFESSION_METRICS,
     recalculate_profession_ratings,
-    calculate_date_filtered_ratings
+    calculate_date_filtered_ratings,
+    calculate_simple_profession_ratings
 )
 from ..core.rating_history import calculate_rating_deltas_from_history, get_player_rating_history
 
@@ -910,7 +911,7 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
     timestamp = datetime.now().strftime('%H:%M:%S')
     try:
         print(f"[{worker_id}:{thread_name}] 🚀 {timestamp} STARTING profession: {profession}")
-        results = recalculate_profession_ratings(db_path, profession, date_filter=filter_value, guild_filter=False, progress_callback=progress_callback)
+        results = calculate_simple_profession_ratings(db_path, profession, date_filter=filter_value, guild_filter=False)
         
         if not results:
             end_timestamp = datetime.now().strftime('%H:%M:%S')
@@ -919,6 +920,35 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
             
         prof_config = PROFESSION_METRICS[profession]
 
+        # Calculate deltas for profession ratings
+        # We'll calculate deltas by comparing the current profession rating with the previous one
+        # This requires calculating profession ratings for each player based on historical data
+        profession_deltas = {}
+        try:
+            # For profession ratings, we calculate delta by getting the rating difference
+            # from the weighted average of individual metric deltas
+            from ..core.rating_history import calculate_rating_deltas_from_history
+            
+            # Get deltas for each metric used in this profession
+            for account, rating, games, avg_rank, composite, stats_breakdown in results:
+                total_delta = 0.0
+                total_weight = 0.0
+                
+                for metric, weight in zip(prof_config["metrics"], prof_config["weights"]):
+                    metric_deltas = calculate_rating_deltas_from_history(db_path, metric_category=metric)
+                    if account in metric_deltas:
+                        total_delta += metric_deltas[account] * weight
+                        total_weight += weight
+                
+                if total_weight > 0:
+                    profession_deltas[account] = total_delta / total_weight
+                else:
+                    profession_deltas[account] = 0.0
+                    
+        except Exception as e:
+            print(f"[{worker_id}:{thread_name}] ⚠️ Could not calculate profession deltas: {e}")
+            profession_deltas = {}
+
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
@@ -926,12 +956,8 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
 
         players_with_guild_info = []
         for i, result_tuple in enumerate(results[:500]):
-            # Handle both with and without delta data
-            if len(result_tuple) == 7:  # With delta
-                account, rating, games, avg_rank, composite, stats_breakdown, delta = result_tuple
-            else:  # Without delta
-                account, rating, games, avg_rank, composite, stats_breakdown = result_tuple
-                delta = None
+            account, rating, games, avg_rank, composite, stats_breakdown = result_tuple
+            delta = profession_deltas.get(account, 0.0)
                 
             is_guild_member = False
             if guild_table_exists:
@@ -941,7 +967,7 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
             player_data = {
                 "rank": i + 1,
                 "account_name": account,
-                "composite_score": float(rating),  # Now using Glicko rating as the score
+                "composite_score": float(composite),  # Use the actual composite score
                 "glicko_rating": float(rating),
                 "games_played": int(games),
                 "average_rank_percent": float(avg_rank) if avg_rank > 0 else None,
@@ -949,9 +975,8 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
                 "is_guild_member": is_guild_member
             }
             
-            # Add delta data if available
-            if delta is not None:
-                player_data["rating_delta"] = float(delta)
+            # Add delta data
+            player_data["rating_delta"] = float(delta)
                 
             players_with_guild_info.append(player_data)
         

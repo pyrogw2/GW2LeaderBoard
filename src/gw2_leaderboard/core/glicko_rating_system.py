@@ -637,6 +637,115 @@ def recalculate_profession_ratings(db_path: str, profession: str, date_filter: s
     return results
 
 
+def calculate_simple_profession_ratings(db_path: str, profession: str, date_filter: str = None, guild_filter: bool = False):
+    """
+    Calculate profession-specific ratings using simple weighted averages of individual metric Glicko ratings.
+    This replaces the complex session-based system with a transparent weighted average approach.
+    Works with any database (main or temporary) and supports date filtering for metric selection.
+    """
+    if profession not in PROFESSION_METRICS:
+        return []
+    
+    prof_config = PROFESSION_METRICS[profession]
+    metrics = prof_config['metrics']
+    weights = prof_config['weights']
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Get all players who have ratings for this profession's metrics
+    # For temporary databases (date filtered), we don't need additional date filtering 
+    # since the temp db already contains only the relevant time period
+    players_with_ratings = {}
+    
+    for metric in metrics:
+        if guild_filter:
+            # Check if guild_members table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+            guild_table_exists = cursor.fetchone() is not None
+            
+            if guild_table_exists:
+                query = '''
+                    SELECT g.account_name, g.rating, g.games_played, g.average_rank, g.average_stat_value
+                    FROM glicko_ratings g
+                    INNER JOIN guild_members gm ON g.account_name = gm.account_name
+                    WHERE g.metric_category = ? AND g.profession = ?
+                '''
+            else:
+                query = '''
+                    SELECT account_name, rating, games_played, average_rank, average_stat_value
+                    FROM glicko_ratings 
+                    WHERE metric_category = ? AND profession = ?
+                '''
+        else:
+            query = '''
+                SELECT account_name, rating, games_played, average_rank, average_stat_value
+                FROM glicko_ratings 
+                WHERE metric_category = ? AND profession = ?
+            '''
+        
+        cursor.execute(query, (metric, profession))
+        metric_ratings = cursor.fetchall()
+        
+        for account_name, rating, games_played, avg_rank, avg_stat in metric_ratings:
+            if account_name not in players_with_ratings:
+                players_with_ratings[account_name] = {
+                    'metrics': {},
+                    'total_games': 0,
+                    'stats_for_display': []
+                }
+            
+            players_with_ratings[account_name]['metrics'][metric] = {
+                'rating': rating,
+                'games_played': games_played,
+                'average_rank': avg_rank,
+                'average_stat_value': avg_stat
+            }
+            players_with_ratings[account_name]['total_games'] += games_played
+    
+    # Calculate weighted ratings for each player
+    results = []
+    for account_name, player_data in players_with_ratings.items():
+        # Only include players who have ratings for all required metrics
+        if len(player_data['metrics']) != len(metrics):
+            continue
+            
+        weighted_rating = 0.0
+        total_games = 0
+        total_rank_sum = 0.0
+        stats_breakdown = []
+        
+        # Calculate weighted average of individual metric ratings
+        for metric, weight in zip(metrics, weights):
+            if metric in player_data['metrics']:
+                metric_data = player_data['metrics'][metric]
+                weighted_rating += metric_data['rating'] * weight
+                total_games += metric_data['games_played']
+                total_rank_sum += (metric_data['average_rank'] or 0) * metric_data['games_played']
+                
+                # Store stat for display (first 3 metrics)
+                if len(stats_breakdown) < 3:
+                    stats_breakdown.append(f"{metric[:4]}:{metric_data['average_stat_value']:.1f}")
+        
+        # Calculate average rank across all metrics
+        average_rank = (total_rank_sum / total_games) if total_games > 0 else 0
+        
+        results.append((
+            account_name,
+            weighted_rating,  # This is now the simple weighted average
+            total_games,
+            average_rank,
+            weighted_rating,  # Use the same value for composite score (no complex scoring)
+            " ".join(stats_breakdown)
+        ))
+    
+    # Sort by weighted rating (descending)
+    results.sort(key=lambda x: x[1], reverse=True)
+    
+    conn.close()
+    return results
+
+
 def calculate_composite_score(glicko_rating: float, average_rank_percentile: float, rd: float = 350.0, games_played: int = 0) -> float:
     """
     Calculate composite score combining Glicko rating (50%) and rank performance (50%) with participation bonus.
