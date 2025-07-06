@@ -590,12 +590,12 @@ def get_most_played_professions_data(db_path: str, limit: int = 500, date_filter
         # Sort professions by session count (most played first)
         data['professions'].sort(key=lambda x: x['session_count'], reverse=True)
         
-        # Format profession string similar to player modal: "Profession (count)"
-        profession_strings = [f"{prof['profession']} ({prof['session_count']})" for prof in data['professions']]
+        # Keep profession data as objects for bar graph display
+        profession_data = data['professions']
         
         result_list.append({
             'account_name': account_name,
-            'professions_played': ', '.join(profession_strings),
+            'professions_played': profession_data,  # Raw profession data for bar graph
             'total_sessions': data['total_sessions'],
             'profession_count': len(data['professions']),
             'primary_profession': data['professions'][0]['profession'] if data['professions'] else 'Unknown',
@@ -1521,7 +1521,7 @@ def generate_html_ui(data: Dict[str, Any], output_dir: Path):
     # Generate CSS file
     css_content = """:root {
     --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --main-bg: #ffffff;
+    --main-bg: #f8f9fa;
     --text-color: #333333;
     --text-color-secondary: #666666;
     --text-color-light: #ffffff;
@@ -2118,6 +2118,108 @@ h2 {
     font-weight: bold;
 }
 
+/* Profession bar styles */
+.profession-horizontal-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 220px;
+    font-size: 11px;
+}
+
+.profession-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 16px;
+}
+
+.profession-bar-label {
+    min-width: 80px;
+    font-size: 10px;
+    color: #666;
+    text-align: right;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+[data-theme="dark"] .profession-bar-label {
+    color: #aaa;
+}
+
+.profession-bar-track {
+    flex: 1;
+    height: 12px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+[data-theme="dark"] .profession-bar-track {
+    background-color: #444;
+    border-color: #666;
+}
+
+.profession-bar-fill {
+    height: 100%;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    min-width: 2px;
+}
+
+.profession-bar-fill:hover {
+    opacity: 0.8;
+}
+
+.profession-bar-count {
+    min-width: 20px;
+    text-align: right;
+    font-size: 10px;
+    color: #666;
+    font-weight: bold;
+}
+
+[data-theme="dark"] .profession-bar-count {
+    color: #aaa;
+}
+
+.profession-more-text {
+    font-size: 10px;
+    color: #666;
+    font-style: italic;
+    margin-top: 2px;
+    text-align: center;
+}
+
+[data-theme="dark"] .profession-more-text {
+    color: #aaa;
+}
+
+.profession-text-summary {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-top: 2px;
+    line-height: 1.2;
+}
+
+[data-theme="dark"] .profession-text-summary {
+    color: #adb5bd;
+}
+
+.profession-text {
+    font-weight: 500;
+}
+
+.profession-more {
+    color: #6c757d;
+    font-style: italic;
+}
+
+[data-theme="dark"] .profession-more {
+    color: #adb5bd;
+}
+
 .guild-no {
     color: #6c757d;
     font-weight: normal;
@@ -2629,7 +2731,7 @@ function initializePage() {{
 
 function initializeDarkMode() {{
     // Check for saved theme preference or default to light mode
-    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateToggleIcon(savedTheme);
 }}
@@ -3309,7 +3411,7 @@ function loadPlayerStats(metric) {{
             {{
                 key: 'professions_played',
                 label: 'Professions Played',
-                type: 'stats'
+                type: 'profession_bar'
             }},
             {{
                 key: 'total_sessions',
@@ -3441,31 +3543,121 @@ function formatCellValue(value, type) {{
             }}
         case 'apm':
             return (value !== null && value !== undefined) ? `<span class="stat-value">${{value}}</span>` : '<span class="stat-value">-</span>';
+        case 'profession_bar':
+            return formatProfessionBar(value);
         default:
             return value;
     }}
 }}
 
 function getProfessionColor(profession) {{
-    const colors = {{
-        'Firebrand': '#e74c3c',
-        'Chronomancer': '#9b59b6',
-        'Scourge': '#2c3e50',
-        'Druid': '#27ae60',
-        'Condi Firebrand': '#d35400',
-        'Support Spb': '#f39c12',
-        'Catalyst': '#3498db',
-        'Weaver': '#e67e22',
-        'Tempest': '#1abc9c',
-        'Holosmith': '#34495e',
-        'Dragonhunter': '#f1c40f',
-        'Reaper': '#8e44ad',
-        'Soulbeast': '#16a085',
-        'Untamed': '#c0392b',
-        'Spellbreaker': '#7f8c8d',
-        'Berserker': '#e74c3c'
+    // GW2 profession colors with more distinct variants for elite specs
+    const professionColors = {{
+        // Guardian (blue variations)
+        'Guardian': '#72C1D9',      // Medium (base)
+        'Dragonhunter': '#95D4E6',  // Lighter
+        'Firebrand': '#4CABC7',     // Darker
+        'Willbender': '#87CDDF',    // Light variant
+        
+        // Revenant (red variations)
+        'Revenant': '#D16E5A',      // Medium (base)
+        'Herald': '#E08A7A',        // Lighter
+        'Renegade': '#BD4E37',      // Darker
+        'Vindicator': '#D8796A',    // Light variant
+        
+        // Warrior (yellow variations)
+        'Warrior': '#FFD166',       // Medium (base)
+        'Berserker': '#FFDD99',     // Lighter
+        'Spellbreaker': '#FFC233',  // Darker
+        'Bladesworn': '#FFD680',    // Light variant
+        
+        // Engineer (orange variations)
+        'Engineer': '#D09C59',      // Medium (base)
+        'Scrapper': '#E3B585',      // Lighter
+        'Holosmith': '#B7822D',     // Darker
+        'Mechanist': '#D6A66F',     // Light variant
+        
+        // Ranger (green variations)
+        'Ranger': '#8CDC82',        // Medium (base)
+        'Druid': '#B5EAB0',         // Lighter
+        'Soulbeast': '#64CC54',     // Darker
+        'Untamed': '#9DE395',       // Light variant
+        
+        // Thief (pink variations)
+        'Thief': '#C08F95',         // Medium (base)
+        'Daredevil': '#D6AFBA',     // Lighter
+        'Deadeye': '#A9696F',       // Darker
+        'Specter': '#C79CA5',       // Light variant
+        
+        // Elementalist (red variations)
+        'Elementalist': '#F68A87',  // Medium (base)
+        'Tempest': '#FAB0AE',       // Lighter
+        'Weaver': '#F25E5B',        // Darker
+        'Catalyst': '#F79A97',      // Light variant
+        
+        // Mesmer (purple variations)
+        'Mesmer': '#B679D5',        // Medium (base)
+        'Chronomancer': '#D0A0E6',  // Lighter
+        'Mirage': '#9952C4',        // Darker
+        'Virtuoso': '#C288DB',      // Light variant
+        
+        // Necromancer (green variations)
+        'Necromancer': '#52A76F',   // Medium (base)
+        'Reaper': '#7BC498',        // Lighter
+        'Scourge': '#2E8A46',       // Darker
+        'Harbinger': '#62B17F',     // Light variant
+        
+        // Special cases (distinct variations)
+        'Condi Firebrand': '#5CB0C9',  // Darker than Firebrand
+        'Support Spb': '#FFB820',      // Darker than Spellbreaker
+        'China DH': '#9BD8E8',         // Between Guardian and Dragonhunter
+        'Boon Vindi': '#E18B7C'        // Between Revenant and Vindicator
     }};
-    return colors[profession] || '#95a5a6';
+    
+    return professionColors[profession] || '#95a5a6';
+}}
+
+function formatProfessionBar(professions) {{
+    if (!professions || professions.length === 0) {{
+        return '<span class="stat-value">-</span>';
+    }}
+    
+    const maxVisible = 4;
+    const visibleProfessions = professions.slice(0, maxVisible);
+    const remainingCount = professions.length - maxVisible;
+    
+    // Find max sessions for width scaling
+    const maxSessions = Math.max(...visibleProfessions.map(prof => prof.session_count));
+    
+    let html = '<div class="profession-horizontal-container">';
+    
+    // Add horizontal bars for each profession
+    visibleProfessions.forEach(prof => {{
+        const widthPercentage = (prof.session_count / maxSessions) * 100;
+        const color = getProfessionColor(prof.profession);
+        const title = `${{prof.profession}}: ${{prof.session_count}} sessions`;
+        
+        html += `<div class="profession-bar-row">
+                    <div class="profession-bar-label">${{prof.profession}}</div>
+                    <div class="profession-bar-track">
+                        <div class="profession-bar-fill" 
+                             style="width: ${{widthPercentage}}%; background-color: ${{color}};" 
+                             title="${{title}}"
+                             data-profession="${{prof.profession}}"
+                             data-count="${{prof.session_count}}">
+                        </div>
+                    </div>
+                    <div class="profession-bar-count">${{prof.session_count}}</div>
+                 </div>`;
+    }});
+    
+    if (remainingCount > 0) {{
+        html += `<div class="profession-more-text">and ${{remainingCount}} more</div>`;
+    }}
+    
+    html += '</div>';
+    
+    return html;
 }}
 
 function applyRaidsGradient() {{
@@ -4118,7 +4310,7 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
         /* Additional CSS custom properties for player pages */
         :root {
             --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --main-bg: #ffffff;
+            --main-bg: #f8f9fa;
             --text-color: #333333;
             --text-color-secondary: #666666;
             --text-color-light: #ffffff;
@@ -4463,7 +4655,7 @@ def generate_player_detail_pages(output_dir: Path, player_summaries: List[str]):
         
         // Initialize dark mode from localStorage - use same storage as main site
         function initializeDarkMode() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
             updateToggleIcon(savedTheme);
         }
