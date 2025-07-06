@@ -257,39 +257,79 @@ def _process_single_profession(args):
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             
-            for player in profession_data['players']:
+            for player in profession_data:
                 cursor.execute(
                     "SELECT account_name FROM guild_members WHERE account_name = ?",
-                    (player['account_name'],)
+                    (player[0],)
                 )
-                player['is_guild_member'] = cursor.fetchone() is not None
+                player_list = list(player)
+                player_list.append(cursor.fetchone() is not None)
+                profession_data[profession_data.index(player)] = tuple(player_list)
             
             conn.close()
         else:
             # Set all players as non-guild members
-            for player in profession_data['players']:
-                player['is_guild_member'] = False
+            for player in profession_data:
+                player_list = list(player)
+                player_list.append(False)
+                profession_data[profession_data.index(player)] = tuple(player_list)
         
         # Add rating deltas
         try:
             # Get all rating deltas for this profession
             all_deltas = calculate_rating_deltas_from_history(db_path, "Overall")
-            for player in profession_data['players']:
+            for player in profession_data:
                 try:
-                    delta_key = (player['account_name'], profession, "Overall")
-                    player['rating_delta'] = all_deltas.get(delta_key, 0.0)
+                    delta_key = (player[0], profession, "Overall")
+                    player_list = list(player)
+                    player_list.append(all_deltas.get(delta_key, 0.0))
+                    profession_data[profession_data.index(player)] = tuple(player_list)
                 except Exception as e:
-                    print(f"      Warning: Could not get rating delta for {player['account_name']}: {e}")
-                    player['rating_delta'] = 0.0
+                    print(f"      Warning: Could not get rating delta for {player[0]}: {e}")
+                    player_list = list(player)
+                    player_list.append(0.0)
+                    profession_data[profession_data.index(player)] = tuple(player_list)
         except Exception as e:
             print(f"      Warning: Could not get rating deltas for {profession}: {e}")
-            for player in profession_data['players']:
-                player['rating_delta'] = 0.0
+            for player in profession_data:
+                player_list = list(player)
+                player_list.append(0.0)
+                profession_data[profession_data.index(player)] = tuple(player_list)
         
-        return profession, profession_data
+        # Convert raw array data to structured object expected by JavaScript
+        structured_data = {
+            'metrics': prof_config['metrics'],
+            'weights': prof_config['weights'],
+            'key_stats_format': prof_config.get('key_stats_format', 'Stats: {}'),
+            'players': []
+        }
+        
+        # Convert tuple data to objects for JavaScript
+        for player_tuple in profession_data:
+            apm_total = player_tuple[6] if len(player_tuple) > 6 else 0.0
+            apm_no_auto = player_tuple[7] if len(player_tuple) > 7 else 0.0
+            
+            player_obj = {
+                'account_name': player_tuple[0],
+                'composite_score': player_tuple[1],
+                'games_played': player_tuple[2],
+                'average_rank_percent': player_tuple[3],
+                'glicko_rating': player_tuple[4],
+                'key_stats': player_tuple[5],
+                'apm_total': apm_total,
+                'apm_no_auto': apm_no_auto,
+                'apm': f"{apm_total:.1f}/{apm_no_auto:.1f}" if apm_total > 0 or apm_no_auto > 0 else "0.0/0.0",
+                'is_guild_member': player_tuple[8] if len(player_tuple) > 8 else False,
+                'rating_delta': player_tuple[9] if len(player_tuple) > 9 else 0.0
+            }
+            structured_data['players'].append(player_obj)
+        
+        return profession, structured_data
         
     except Exception as e:
+        import traceback
         print(f"    Error processing profession {profession}: {e}")
+        traceback.print_exc()
         return profession, None
 
 
@@ -342,7 +382,9 @@ def generate_data_for_filter(db_path: str, date_filter: str, guild_enabled: bool
             high_scores_data = get_high_scores_data(db_path, limit=100)
         filter_data["high_scores"] = high_scores_data
     except Exception as e:
+        import traceback
         print(f"    Error getting high scores: {e}")
+        traceback.print_exc()
         filter_data["high_scores"] = {}
     
     # Player stats
