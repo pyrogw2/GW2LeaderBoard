@@ -42,7 +42,7 @@ class GuildManager:
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
-            return config.get("guild", {})
+            return config
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
             print(f"Could not load guild config from {config_path}: {e}")
             return {}

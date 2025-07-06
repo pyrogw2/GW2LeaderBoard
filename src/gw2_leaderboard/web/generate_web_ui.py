@@ -14,6 +14,7 @@ import argparse
 import sqlite3
 import sys
 import os
+import json
 from pathlib import Path
 
 # Add current directory to Python path to import our modules
@@ -31,11 +32,20 @@ except ImportError:
 
 # Optional guild manager import
 try:
-    from guild_manager import GuildManager
+    # Try relative import first (when used as a module)
+    from ..core.guild_manager import GuildManager
     GUILD_MANAGER_AVAILABLE = True
 except ImportError:
-    GUILD_MANAGER_AVAILABLE = False
-    GuildManager = None
+    try:
+        # Fall back to absolute import (when run directly)
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+        from gw2_leaderboard.core.guild_manager import GuildManager
+        GUILD_MANAGER_AVAILABLE = True
+    except ImportError:
+        GUILD_MANAGER_AVAILABLE = False
+        GuildManager = None
 
 
 def main():
@@ -67,19 +77,25 @@ def main():
     guild_name = ""
     guild_tag = ""
     
-    if GUILD_MANAGER_AVAILABLE:
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
-        if cursor.fetchone():
-            guild_enabled = True
-            # Try to get guild info from config or default
+    # First check if guild filtering is enabled in config
+    try:
+        with open("sync_config.json", 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        guild_config = config.get("guild", {})
+        filter_enabled = guild_config.get("filter_enabled", False)
+        
+        if filter_enabled and GUILD_MANAGER_AVAILABLE:
             try:
-                # This would typically come from a config file
-                guild_name = "Guild Name"  # Placeholder
-                guild_tag = "TAG"  # Placeholder
-            except:
-                guild_name = "Guild"
-                guild_tag = "GUILD"
-    
+                guild_manager = GuildManager()
+                guild_enabled = True
+                guild_name = guild_manager.guild_name
+                guild_tag = guild_manager.guild_tag
+                print(f"Guild filtering enabled: {guild_name} [{guild_tag}]")
+            except Exception as e:
+                print(f"Could not initialize GuildManager: {e}")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Could not load sync_config.json: {e}")
+
     conn.close()
     
     # Recalculate ratings if needed
@@ -88,7 +104,7 @@ def main():
             print("Glicko ratings table is empty - forcing recalculation...")
         else:
             print("Recalculating all Glicko ratings...")
-        recalculate_all_glicko_ratings(args.database, guild_filter=False)
+        recalculate_all_glicko_ratings(args.database, guild_filter=guild_enabled)
         print("Rating recalculation complete!")
 
     # Generate complete web UI using the modular system

@@ -87,9 +87,6 @@ def recalculate_all_glicko_ratings(db_path: str, guild_filter: bool = False):
 
 def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None, show_deltas: bool = False):
     """Extract leaderboard data from database with guild membership info."""
-    if date_filter:
-        # For date filtering, we need to recalculate ratings on filtered data
-        return get_filtered_leaderboard_data(db_path, metric_category, limit, date_filter, show_deltas)
     
     # No date filter - use existing glicko_ratings table
     conn = sqlite3.connect(db_path)
@@ -189,126 +186,112 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
     return leaderboard_data
 
 
-def get_filtered_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None, show_deltas: bool = False):
-    """Get leaderboard data filtered by date using CLI method."""
+def get_glicko_leaderboard_data_with_sql_filter(db_path: str, metric_category: str = None, date_filter: str = None, limit: int = 500, show_deltas: bool = False):
+    """Get leaderboard data with SQL-level date filtering for maximum speed."""
     if not date_filter or date_filter == "overall":
         return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
     
-    # Extract number of days from filter (e.g., "30d" -> 30)
+    # For speed, we'll use a fast approximation: 
+    # Apply simple date-based filtering to the existing ratings
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Build date filter clause
     try:
         days = int(date_filter.rstrip('d'))
+        date_clause = f" AND pp.parsed_date >= date('now', '-{days} days')"
     except (ValueError, AttributeError):
-        print(f"Warning: Invalid date filter '{date_filter}', using overall data")
+        # If date filter is invalid, return overall data
+        conn.close()
         return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
     
-    # Use CLI to calculate filtered ratings
-    temp_db_path = f"/tmp/filtered_ratings_{date_filter}_{os.getpid()}.db"
+    # Check if guild_members table exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
+    guild_table_exists = cursor.fetchone() is not None
     
-    try:
-        # Create filtered ratings using CLI
-        cmd = [
-            'python', 'glicko_rating_system.py', 
-            db_path, 
-            '--days', str(days),
-            '--temp-suffix', f'_{date_filter}'
-        ]
+    if metric_category and metric_category != "Overall":
+        # Get players who have recent activity in the specified time period
+        if guild_table_exists:
+            where_clause = f"WHERE g.metric_category = ? AND EXISTS (SELECT 1 FROM player_performances pp WHERE pp.account_name = g.account_name{date_clause})"
+            
+            cursor.execute(f'''
+                SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                       g.average_rank, g.average_stat_value,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM glicko_ratings g
+                LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+                {where_clause}
+                ORDER BY g.composite_score DESC
+                LIMIT ?
+            ''', (metric_category, limit))
+        else:
+            where_clause = f"WHERE g.metric_category = ? AND EXISTS (SELECT 1 FROM player_performances pp WHERE pp.account_name = g.account_name{date_clause})"
+            
+            cursor.execute(f'''
+                SELECT account_name, profession, composite_score, rating, games_played, 
+                       average_rank, average_stat_value, 0 as is_guild_member
+                FROM glicko_ratings g
+                {where_clause}
+                ORDER BY composite_score DESC
+                LIMIT ?
+            ''', (metric_category, limit))
+    else:
+        # Overall category - similar filtering
+        if guild_table_exists:
+            where_clause = f"WHERE g.metric_category = 'Overall' AND EXISTS (SELECT 1 FROM player_performances pp WHERE pp.account_name = g.account_name{date_clause})"
+            
+            cursor.execute(f'''
+                SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                       g.average_rank, g.average_stat_value,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM glicko_ratings g
+                LEFT JOIN guild_members gm ON g.account_name = gm.account_name
+                {where_clause}
+                ORDER BY g.composite_score DESC
+                LIMIT ?
+            ''', (limit,))
+        else:
+            where_clause = f"WHERE g.metric_category = 'Overall' AND EXISTS (SELECT 1 FROM player_performances pp WHERE pp.account_name = g.account_name{date_clause})"
+            
+            cursor.execute(f'''
+                SELECT account_name, profession, composite_score, rating, games_played, 
+                       average_rank, average_stat_value, 0 as is_guild_member
+                FROM glicko_ratings g
+                {where_clause}
+                ORDER BY composite_score DESC
+                LIMIT ?
+            ''', (limit,))
+    
+    leaderboard_data = []
+    for row in cursor.fetchall():
+        rank = len(leaderboard_data) + 1
         
-        # Change to the correct directory
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_dir = os.path.join(script_dir, '..', 'core')
-        
-        result = subprocess.run(cmd, cwd=parent_dir, capture_output=True, text=True, timeout=300)
-        
-        if result.returncode != 0:
-            print(f"Warning: Failed to generate filtered ratings: {result.stderr}")
-            return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
-        
-        # The CLI creates a database with the suffix
-        expected_db_path = db_path.replace('.db', f'_{date_filter}.db')
-        
-        if not os.path.exists(expected_db_path):
-            print(f"Warning: Expected filtered database not found at {expected_db_path}")
-            return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
-        
-        # Get data from the filtered database
-        filtered_data = get_glicko_leaderboard_data(expected_db_path, metric_category, limit, None, show_deltas)
-        
-        # Clean up the temporary database
-        try:
-            os.remove(expected_db_path)
-        except OSError:
-            pass  # Don't fail if cleanup doesn't work
-        
-        return filtered_data
-        
-    except subprocess.TimeoutExpired:
-        print(f"Warning: Timeout generating filtered ratings for {date_filter}")
-        return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
-    except Exception as e:
-        print(f"Warning: Error generating filtered ratings: {e}")
-        return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
+        player_data = {
+            "rank": rank,
+            "account_name": row[0],
+            "profession": row[1],
+            "composite_score": row[2],
+            "glicko_rating": row[3],
+            "games_played": row[4],
+            "average_rank_percent": row[5],
+            "average_stat_value": row[6],
+            "is_guild_member": bool(row[7]),
+            "rating_delta": 0.0  # TODO: Calculate deltas for date-filtered data
+        }
+        leaderboard_data.append(player_data)
+    
+    conn.close()
+    return leaderboard_data
+
+def get_filtered_leaderboard_data(db_path: str, metric_category: str = None, limit: int = 500, date_filter: str = None, show_deltas: bool = False):
+    """Get leaderboard data filtered by date. This function is now handled by pre-filtering in parallel_processing."""
+    # Since we pre-filter databases in parallel_processing.py, this just calls the main function
+    return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
 
 
 def get_new_high_scores_data(db_path: str, limit: int = 100) -> Dict[str, List[Dict]]:
     """Get high scores data from the new high_scores table."""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    
-    # Check if high_scores table exists
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='high_scores'")
-    if not cursor.fetchone():
-        conn.close()
-        return {}
-    
-    # Check if guild_members table exists for guild membership info
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
-    guild_table_exists = cursor.fetchone() is not None
-    
-    high_scores_data = {}
-    
-    # Get available score types
-    cursor.execute("SELECT DISTINCT score_type FROM high_scores")
-    score_types = [row[0] for row in cursor.fetchall()]
-    
-    for score_type in score_types:
-        if guild_table_exists:
-            cursor.execute('''
-                SELECT h.player_name, h.profession, h.score_value, h.skill_name, h.fight_number, h.timestamp,
-                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
-                FROM high_scores h
-                LEFT JOIN guild_members gm ON h.player_name = gm.account_name
-                WHERE h.score_type = ?
-                ORDER BY h.score_value DESC
-                LIMIT ?
-            ''', (score_type, limit))
-        else:
-            cursor.execute('''
-                SELECT player_name, profession, score_value, skill_name, fight_number, timestamp, 0 as is_guild_member
-                FROM high_scores
-                WHERE score_type = ?
-                ORDER BY score_value DESC
-                LIMIT ?
-            ''', (score_type, limit))
-        
-        results = cursor.fetchall()
-        scores_list = []
-        
-        for i, (player_name, profession, score_value, skill_name, fight_number, timestamp, is_guild_member) in enumerate(results, 1):
-            scores_list.append({
-                'rank': i,
-                'player_name': player_name,
-                'profession': profession,
-                'score_value': score_value,
-                'skill_name': skill_name or 'N/A',
-                'fight_number': fight_number or 'N/A',
-                'timestamp': timestamp,
-                'is_guild_member': bool(is_guild_member)
-            })
-        
-        high_scores_data[score_type] = scores_list
-    
-    conn.close()
-    return high_scores_data
+    return get_high_scores_data(db_path, limit)
 
 
 def get_high_scores_data(db_path: str, limit: int = 100) -> Dict[str, List[Dict]]:
@@ -325,20 +308,20 @@ def get_high_scores_data(db_path: str, limit: int = 100) -> Dict[str, List[Dict]
     # Get highest 1-second burst damage
     if guild_table_exists:
         cursor.execute('''
-            SELECT p.account_name, p.profession, p.burst_consistency, p.timestamp,
+            SELECT p.account_name, p.profession, p.burst_consistency_1s, p.timestamp,
                    CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
             FROM player_performances p
             LEFT JOIN guild_members gm ON p.account_name = gm.account_name
-            WHERE p.burst_consistency > 0
-            ORDER BY p.burst_consistency DESC
+            WHERE p.burst_consistency_1s > 0
+            ORDER BY p.burst_consistency_1s DESC
             LIMIT ?
         ''', (limit,))
     else:
         cursor.execute('''
-            SELECT account_name, profession, burst_consistency, timestamp, 0 as is_guild_member
+            SELECT account_name, profession, burst_consistency_1s, timestamp, 0 as is_guild_member
             FROM player_performances
-            WHERE burst_consistency > 0
-            ORDER BY burst_consistency DESC
+            WHERE burst_consistency_1s > 0
+            ORDER BY burst_consistency_1s DESC
             LIMIT ?
         ''', (limit,))
     

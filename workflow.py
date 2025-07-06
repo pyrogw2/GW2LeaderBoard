@@ -345,7 +345,7 @@ def main():
             if refresh in ['y', 'yes']:
                 print_step("🛡️ ", "Refreshing guild members")
                 sys_argv_backup = sys.argv[:]
-                sys.argv = ['guild_manager.py', '--refresh']
+                sys.argv = ['guild_manager.py', '--sync', '--force']
                 try:
                     guild_manager_main()
                 except SystemExit as e:
