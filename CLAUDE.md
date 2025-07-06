@@ -110,6 +110,7 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **Performance Analysis**: Statistical analysis within combat sessions
 - **Guild Integration**: GW2 API v2 for member validation
 - **Latest Change**: Chronological rating history with delta calculations
+- **Date Filtering**: All metrics including APM support consistent date-based filtering across time periods
 
 ### Modern UI Features
 - **iOS-style Segmented Control**: Time period selection (All, 30d, 90d, 180d)
@@ -329,7 +330,8 @@ The APM (Actions Per Minute) metric implementation serves as a complete referenc
 - **Data Source**: Skill usage files in format "total/no_auto" (e.g., "68/55")
 - **Storage**: Two fields (`apm_total`, `apm_no_auto`) 
 - **Display**: Combined format "68.0/55.0" in profession leaderboards
-- **Files Modified**: `parse_logs_enhanced.py`, `generate_web_ui.py`, `script.js`
+- **Files Modified**: `parse_logs_enhanced.py`, `generate_web_ui.py`, `script.js`, `glicko_rating_system.py`
 - **Key Challenge**: Ensuring detect_build_variants() preserves the data
+- **Date Filtering**: APM calculations now respect date filtering parameters for consistent time-based analysis
 
 This reference implementation demonstrates the complete workflow for adding complex metrics with custom formatting.

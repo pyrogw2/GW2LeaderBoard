@@ -736,12 +736,14 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
         apm_count = 0
         
         try:
-            # Get average APM for this account and profession
-            cursor.execute('''
+            # Get average APM for this account and profession with date filtering
+            date_clause, date_params = build_date_filter_clause(date_filter)
+            apm_query = f'''
                 SELECT AVG(apm_total), AVG(apm_no_auto), COUNT(*)
                 FROM player_performances 
-                WHERE account_name = ? AND profession = ? AND apm_total > 0
-            ''', (account_name, profession))
+                WHERE account_name = ? AND profession = ? AND apm_total > 0 {date_clause}
+            '''
+            cursor.execute(apm_query, [account_name, profession] + date_params)
             apm_result = cursor.fetchone()
             if apm_result and apm_result[0] is not None:
                 apm_total = apm_result[0]
