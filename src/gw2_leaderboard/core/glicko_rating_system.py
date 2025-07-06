@@ -730,13 +730,35 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
         # Calculate average rank across all metrics
         average_rank = (total_rank_sum / total_games) if total_games > 0 else 0
         
+        # Get APM data for this player and profession
+        apm_total = 0.0
+        apm_no_auto = 0.0
+        apm_count = 0
+        
+        try:
+            # Get average APM for this account and profession
+            cursor.execute('''
+                SELECT AVG(apm_total), AVG(apm_no_auto), COUNT(*)
+                FROM player_performances 
+                WHERE account_name = ? AND profession = ? AND apm_total > 0
+            ''', (account_name, profession))
+            apm_result = cursor.fetchone()
+            if apm_result and apm_result[0] is not None:
+                apm_total = apm_result[0]
+                apm_no_auto = apm_result[1]
+                apm_count = apm_result[2]
+        except Exception:
+            pass  # APM data might not be available in older databases
+        
         results.append((
             account_name,
             weighted_rating,  # This is now the simple weighted average
             total_games,
             average_rank,
             weighted_rating,  # Use the same value for composite score (no complex scoring)
-            " ".join(stats_breakdown)
+            " ".join(stats_breakdown),
+            apm_total,
+            apm_no_auto
         ))
     
     # Sort by weighted rating (descending)

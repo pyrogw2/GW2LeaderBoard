@@ -89,6 +89,7 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 10. **Down Contribution** - Damage to downed players per second
 11. **Burst Consistency** - Performance consistency metric
 12. **Distance to Tag** - Average distance from commander
+13. **APM** - Actions Per Minute (total/no_auto format, e.g., "68.0/55.0")
 
 ## Key Technologies
 
@@ -162,3 +163,173 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - Keep CLAUDE.md synchronized with new commands and capabilities
 - Document database schema changes in API_REFERENCE.md
 - Update metric lists in documentation when adding new performance metrics
+
+## Adding New Performance Metrics
+
+This guide walks through the complete process of adding a new performance metric to the leaderboard system.
+
+### 1. Database Schema (parse_logs_enhanced.py)
+
+**Add field to PlayerPerformance dataclass:**
+```python
+@dataclass
+class PlayerPerformance:
+    # ... existing fields ...
+    new_metric_value: float = 0.0  # Add your new metric field
+```
+
+**Update database schema in create_database():**
+```python
+def create_database(db_path: str):
+    # ... existing schema ...
+    new_metric_value REAL DEFAULT 0.0,  # Add to CREATE TABLE statement
+```
+
+### 2. Log Parsing (parse_logs_enhanced.py)
+
+**Create parsing function for your metric:**
+```python
+def parse_new_metric_table(table_text: str) -> Dict[str, Dict]:
+    """Parse your new metric from TiddlyWiki markup."""
+    metric_stats = {}
+    lines = table_text.split('\n')
+    
+    for line in lines:
+        if line.startswith('|') and not line.startswith('|!'):
+            cells = [cell.strip() for cell in line.split('|') if cell.strip()]
+            try:
+                account_name = extract_tooltip(cells[1])  # Account from tooltip
+                profession = extract_profession(cells[2])  # Profession from {{Class}}
+                metric_value = extract_span_value(cells[X])  # Your metric from column X
+                
+                key = f"{account_name}_{profession}"
+                metric_stats[key] = {
+                    'account_name': account_name,
+                    'profession': profession,
+                    'new_metric_value': metric_value
+                }
+            except (ValueError, IndexError) as e:
+                continue
+    
+    return metric_stats
+```
+
+**Integrate into parse_log_directory():**
+```python
+def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
+    # ... existing parsing ...
+    
+    # Read your new metric data
+    new_metric_stats = {}
+    new_metric_file = log_dir / f"{timestamp}-YourMetricFile.json"
+    if new_metric_file.exists():
+        with open(new_metric_file, 'r', encoding='utf-8') as f:
+            new_metric_data = json.load(f)
+        new_metric_stats = parse_new_metric_table(new_metric_data.get('text', ''))
+    
+    # Add to PlayerPerformance creation
+    for player_data in players_data:
+        # ... existing lookups ...
+        new_metric_data = new_metric_stats.get(key, {})
+        
+        performance = PlayerPerformance(
+            # ... existing fields ...
+            new_metric_value=new_metric_data.get('new_metric_value', 0.0)
+        )
+```
+
+**Update detect_build_variants() function:**
+```python
+def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerPerformance]:
+    # ... existing detection logic ...
+    
+    updated_performance = PlayerPerformance(
+        # ... existing fields ...
+        new_metric_value=performance.new_metric_value,  # Don't forget this!
+    )
+```
+
+### 3. Database Storage (parse_logs_enhanced.py)
+
+**Update store_performances() function:**
+```python
+def store_performances(cursor, performances: List[PlayerPerformance]):
+    # Update INSERT statement to include new field
+    cursor.execute('''
+        INSERT OR REPLACE INTO player_performances VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ''', (
+        # ... existing fields ...
+        perf.new_metric_value,  # Add to tuple
+    ))
+```
+
+### 4. Rating System (glicko_rating_system.py)
+
+**Add metric to METRICS list:**
+```python
+METRICS = [
+    # ... existing metrics ...
+    'new_metric_value',  # Add your metric
+]
+```
+
+### 5. Web UI Integration (generate_web_ui.py)
+
+**Add to profession metrics (if applicable):**
+```python
+PROFESSION_METRICS = {
+    'YourProfession': {
+        'metrics': ['existing_metric', 'new_metric_value'],  # Add to relevant professions
+        'weights': [0.6, 0.4],  # Add corresponding weight
+        'key_stats_format': 'ExistingMetric:{} NewMetric:{}'
+    }
+}
+```
+
+**Add to leaderboard columns:**
+```python
+# In generate_web_ui.py, add to table columns configuration
+{
+    'key': 'new_metric_value',
+    'label': 'New Metric',
+    'type': 'number'  # or 'custom' with special formatting
+}
+```
+
+**Add formatting (if custom display needed):**
+```javascript
+// In script.js formatCellValue function
+case 'new_metric':
+    return value !== null ? `<span class="stat-value">${value.toFixed(1)}</span>` : '<span class="stat-value">-</span>';
+```
+
+### 6. Documentation Updates
+
+1. **Update CLAUDE.md** - Add metric to "Performance Metrics Tracked" section
+2. **Update API_REFERENCE.md** - Document database schema changes
+3. **Update metric descriptions** in web UI About section
+
+### 7. Testing Checklist
+
+- [ ] Parsing function extracts correct values from log files
+- [ ] Database schema includes new field
+- [ ] PlayerPerformance objects store the metric correctly
+- [ ] detect_build_variants() preserves the metric data
+- [ ] Glicko ratings calculate for the new metric
+- [ ] Web UI displays the metric in appropriate leaderboards
+- [ ] Date filtering works with the new metric
+- [ ] Database migration handles existing data gracefully
+
+### Example: APM Implementation
+
+The APM (Actions Per Minute) metric implementation serves as a complete reference:
+
+- **Data Source**: Skill usage files in format "total/no_auto" (e.g., "68/55")
+- **Storage**: Two fields (`apm_total`, `apm_no_auto`) 
+- **Display**: Combined format "68.0/55.0" in profession leaderboards
+- **Files Modified**: `parse_logs_enhanced.py`, `generate_web_ui.py`, `script.js`
+- **Key Challenge**: Ensuring detect_build_variants() preserves the data
+
+This reference implementation demonstrates the complete workflow for adding complex metrics with custom formatting.

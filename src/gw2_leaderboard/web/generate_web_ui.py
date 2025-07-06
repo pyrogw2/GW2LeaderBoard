@@ -930,7 +930,12 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
             from ..core.rating_history import calculate_rating_deltas_from_history
             
             # Get deltas for each metric used in this profession
-            for account, rating, games, avg_rank, composite, stats_breakdown in results:
+            for result_tuple in results:
+                # Handle both old format (6 items) and new format (8 items with APM)
+                if len(result_tuple) == 8:
+                    account, rating, games, avg_rank, composite, stats_breakdown, apm_total, apm_no_auto = result_tuple
+                else:
+                    account, rating, games, avg_rank, composite, stats_breakdown = result_tuple
                 total_delta = 0.0
                 total_weight = 0.0
                 
@@ -956,7 +961,12 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
 
         players_with_guild_info = []
         for i, result_tuple in enumerate(results[:500]):
-            account, rating, games, avg_rank, composite, stats_breakdown = result_tuple
+            # Handle both old format (6 items) and new format (8 items with APM)
+            if len(result_tuple) == 8:
+                account, rating, games, avg_rank, composite, stats_breakdown, apm_total, apm_no_auto = result_tuple
+            else:
+                account, rating, games, avg_rank, composite, stats_breakdown = result_tuple
+                apm_total, apm_no_auto = 0.0, 0.0
             delta = profession_deltas.get(account, 0.0)
                 
             is_guild_member = False
@@ -977,6 +987,12 @@ def _process_single_profession(db_path: str, profession: str, filter_value: str,
             
             # Add delta data
             player_data["rating_delta"] = float(delta)
+            
+            # Add APM data if available
+            if apm_total > 0 and apm_no_auto > 0:
+                player_data["apm"] = f"{apm_total:.1f}/{apm_no_auto:.1f}"
+            else:
+                player_data["apm"] = None
                 
             players_with_guild_info.append(player_data)
         
@@ -3070,6 +3086,11 @@ function loadProfessionLeaderboard(profession) {{
             key: 'key_stats',
             label: 'Key Stats',
             type: 'stats'
+        }},
+        {{
+            key: 'apm',
+            label: 'APM',
+            type: 'apm'
         }}
     ];
     
@@ -3379,7 +3400,7 @@ function createLeaderboardTable(data, columns, tableId = 'leaderboard') {{
 }}
 
 function formatCellValue(value, type) {{
-    if (value === null || value === undefined) {{
+    if ((value === null || value === undefined) && type !== 'apm') {{
         return 'N/A';
     }}
     
@@ -3418,6 +3439,8 @@ function formatCellValue(value, type) {{
             }} else {{
                 return `<span class="delta-negative">${{value.toFixed(1)}}</span>`;
             }}
+        case 'apm':
+            return (value !== null && value !== undefined) ? `<span class="stat-value">${{value}}</span>` : '<span class="stat-value">-</span>';
         default:
             return value;
     }}

@@ -47,6 +47,9 @@ class PlayerPerformance:
     burst_consistency_1s: int = 0  # Ch5Ca-Total (1)s - for Glicko rating
     # Positioning Metrics
     distance_from_tag_avg: float = 0.0  # Average distance from tag in game units
+    # APM Metrics (Actions Per Minute)
+    apm_total: float = 0.0  # Total actions per minute
+    apm_no_auto: float = 0.0  # Actions per minute excluding auto-attacks
     # Date fields
     parsed_date: date = None
 
@@ -520,6 +523,56 @@ def parse_on_tag_review_table(on_tag_text: str) -> Dict[str, Dict]:
     return on_tag_stats
 
 
+def parse_skill_usage_apm(skill_usage_text: str) -> Dict[str, Dict]:
+    """Parse skill usage table to extract APM data."""
+    apm_data = {}
+    
+    if not skill_usage_text:
+        return apm_data
+        
+    # Find table rows containing player data
+    # Look for pattern: |Player Name | Profession |Account | FightTime | APM |
+    lines = skill_usage_text.split('\n')
+    
+    for line in lines:
+        # Skip header lines and empty lines
+        if not line.strip() or line.startswith('|!') or line.startswith('|thead') or line.startswith('|c'):
+            continue
+            
+        # Look for data rows (should start with |)
+        if line.startswith('|') and '|' in line:
+            parts = [part.strip() for part in line.split('|')]
+            if len(parts) >= 6:  # Need at least player, prof, account, fight_time, apm
+                try:
+                    player_name = parts[1]
+                    account = parts[3]
+                    apm_raw = parts[5]  # Should be format like "51/29"
+                    
+                    # Skip empty or header rows
+                    if not player_name or not account or not apm_raw or 'APM' in apm_raw:
+                        continue
+                        
+                    # Parse APM format "total/no_auto"
+                    if '/' in apm_raw:
+                        apm_parts = apm_raw.split('/')
+                        if len(apm_parts) == 2:
+                            try:
+                                apm_total = float(apm_parts[0])
+                                apm_no_auto = float(apm_parts[1])
+                                
+                                apm_data[account] = {
+                                    'apm_total': apm_total,
+                                    'apm_no_auto': apm_no_auto
+                                }
+                            except ValueError:
+                                continue  # Skip invalid APM values
+                                
+                except (IndexError, ValueError):
+                    continue  # Skip malformed rows
+    
+    return apm_data
+
+
 def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     """Parse a single log directory and extract comprehensive player performance data."""
     timestamp = log_dir.name
@@ -592,6 +645,24 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
             on_tag_data = json.load(f)
         on_tag_stats = parse_on_tag_review_table(on_tag_data.get('text', ''))
     
+    # Read skill usage data for APM
+    apm_stats = {}
+    skill_usage_file = log_dir / f"{timestamp}-Skill-Usage.json"
+    if skill_usage_file.exists():
+        with open(skill_usage_file, 'r', encoding='utf-8') as f:
+            skill_usage_data = json.load(f)
+        # The main skill usage file is a macro, we need to check individual profession files
+        
+        # Try to get profession-specific skill usage files
+        for skill_usage_prof_file in log_dir.glob(f"{timestamp}-Skill-Usage-*.json"):
+            try:
+                with open(skill_usage_prof_file, 'r', encoding='utf-8') as f:
+                    prof_skill_data = json.load(f)
+                prof_apm_data = parse_skill_usage_apm(prof_skill_data.get('text', ''))
+                apm_stats.update(prof_apm_data)
+            except Exception as e:
+                print(f"Warning: Could not parse skill usage file {skill_usage_prof_file}: {e}")
+    
     # Combine all stats into PlayerPerformance objects
     performances = []
     for player_data in players_data:
@@ -610,6 +681,7 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
         burst_damage_data = burst_damage_stats.get(key, {})
         burst_consistency_data = burst_consistency_stats.get(key, {})
         on_tag_player_data = on_tag_stats.get(key, {})
+        apm_data = apm_stats.get(account, {})
         
         performance = PlayerPerformance(
             timestamp=timestamp,
@@ -635,7 +707,9 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
             down_contribution_per_sec=offensive_data.get('down_contribution', 0) / player_data['fight_time'] if player_data['fight_time'] > 0 else 0.0,
             burst_damage_1s=burst_damage_data.get('burst_damage_1s', 0),
             burst_consistency_1s=burst_consistency_data.get('burst_consistency_1s', 0),
-            distance_from_tag_avg=on_tag_player_data.get('distance_from_tag_avg', 0.0)
+            distance_from_tag_avg=on_tag_player_data.get('distance_from_tag_avg', 0.0),
+            apm_total=apm_data.get('apm_total', 0.0),
+            apm_no_auto=apm_data.get('apm_no_auto', 0.0)
         )
         performances.append(performance)
     
@@ -792,7 +866,9 @@ def detect_build_variants(performances: List[PlayerPerformance]) -> List[PlayerP
             down_contribution_per_sec=performance.down_contribution_per_sec,
             burst_damage_1s=performance.burst_damage_1s,
             burst_consistency_1s=performance.burst_consistency_1s,
-            distance_from_tag_avg=performance.distance_from_tag_avg
+            distance_from_tag_avg=performance.distance_from_tag_avg,
+            apm_total=performance.apm_total,
+            apm_no_auto=performance.apm_no_auto
         )
         updated_performances.append(updated_performance)
     
@@ -834,6 +910,8 @@ def create_database(db_path: str):
             burst_damage_1s INTEGER DEFAULT 0,
             burst_consistency_1s INTEGER DEFAULT 0,
             distance_from_tag_avg REAL DEFAULT 0.0,
+            apm_total REAL DEFAULT 0.0,
+            apm_no_auto REAL DEFAULT 0.0,
             UNIQUE(timestamp, account_name, profession)
         )
     ''')
@@ -924,8 +1002,8 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
              target_damage, target_dps, all_damage, target_condition_damage, target_condition_dps,
              healing_per_sec, barrier_per_sec, condition_cleanses_per_sec, boon_strips_per_sec, 
              stability_gen_per_sec, resistance_gen_per_sec, might_gen_per_sec, protection_gen_per_sec, down_contribution_per_sec,
-             burst_damage_1s, burst_consistency_1s, distance_from_tag_avg)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             burst_damage_1s, burst_consistency_1s, distance_from_tag_avg, apm_total, apm_no_auto)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             perf.timestamp, perf.parsed_date.isoformat() if perf.parsed_date else None,
             perf.player_name, perf.account_name, perf.profession,
@@ -934,7 +1012,8 @@ def store_performances(performances: List[PlayerPerformance], db_path: str):
             perf.healing_per_sec, perf.barrier_per_sec, perf.condition_cleanses_per_sec, 
             perf.boon_strips_per_sec, perf.stability_gen_per_sec, perf.resistance_gen_per_sec, 
             perf.might_gen_per_sec, perf.protection_gen_per_sec, perf.down_contribution_per_sec,
-            perf.burst_damage_1s, perf.burst_consistency_1s, perf.distance_from_tag_avg
+            perf.burst_damage_1s, perf.burst_consistency_1s, perf.distance_from_tag_avg,
+            perf.apm_total, perf.apm_no_auto
         ))
     
     conn.commit()
