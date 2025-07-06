@@ -58,15 +58,25 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **`sync_logs.py`**: Automated log discovery and processing pipeline
 - **`parse_logs_enhanced.py`**: TiddlyWiki HTML parser with comprehensive metric extraction
 - **`glicko_rating_system.py`**: Advanced Glicko-2 rating system with session-based z-score normalization
-- **`generate_web_ui.py`**: Static web interface generator with parallel processing and Latest Change feature
+- **`generate_web_ui.py`**: Modular web interface generator with orchestration and entry point
 - **`guild_manager.py`**: GW2 API integration for guild member filtering
+
+### Web UI Modular Structure (src/gw2_leaderboard/web/)
+- **`generate_web_ui.py`**: Clean entry point with argument parsing (126 lines)
+- **`data_processing.py`**: Database operations and data filtering (509 lines)
+- **`parallel_processing.py`**: Concurrent processing and progress tracking (359 lines)
+- **`file_generator.py`**: Orchestration and file generation (93 lines)
+- **`templates/`**: Separated UI template modules
+  - **`html_templates.py`**: Complete HTML structure (267 lines)
+  - **`css_styles.py`**: Modern CSS with dark mode support (1,189 lines)
+  - **`javascript_ui.py`**: Interactive UI functionality (1,256 lines)
 
 ### Data Flow
 1. **Workflow Orchestration**: `workflow.py` manages complete automation pipeline
 2. **Log Collection**: `sync_logs.py` fetches TiddlyWiki logs from aggregate sites
 3. **Parsing**: `parse_logs_enhanced.py` extracts 10+ performance metrics per player/session
 4. **Rating Calculation**: `glicko_rating_system.py` applies advanced statistical analysis with rating history
-5. **UI Generation**: `generate_web_ui.py` creates interactive leaderboards with Latest Change feature
+5. **UI Generation**: Modular web UI system creates interactive leaderboards with Latest Change feature
 6. **Guild Filtering**: `guild_manager.py` applies guild-specific member filtering
 
 ### Database Schema
@@ -158,6 +168,20 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - Context managers for resource handling
 - Progress reporting in long-running operations
 - Modular design with clear separation of concerns
+
+### Development Guidelines
+
+#### Code Organization and Maintainability
+- **IMPORTANT: Keep all Python files under 25,000 tokens** to ensure they fit within Claude's context window for effective development and debugging
+- **File Size Monitoring**: Use `wc -c filename.py` to check file sizes (aim for <100KB for most files)
+- **Modular Design**: Break large files into focused, single-responsibility modules as demonstrated in the web UI refactoring
+- **Current largest files**: `javascript_ui.py` (~1,256 lines), `css_styles.py` (~1,189 lines) - both well within limits
+
+#### Module Structure Best Practices
+- Use clear import patterns supporting both relative and absolute imports
+- Separate concerns: templates, data processing, orchestration, and business logic
+- Maintain backward compatibility when refactoring existing functionality
+- Document module responsibilities and dependencies clearly
 
 ### Documentation Standards
 - **Always update documentation before committing** - Update API_REFERENCE.md, GLICKO_SYSTEM.md, and other relevant docs when adding new features

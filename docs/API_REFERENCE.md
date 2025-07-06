@@ -4,7 +4,15 @@ This document provides technical reference information for the database schema, 
 
 ## Recent Updates
 
-### Simplified Profession Rating System & UI Enhancements
+### Modular Web UI Architecture & Enhanced Features
+- **Modular Refactoring**: Restructured `generate_web_ui.py` from monolithic 5,086-line file into focused modules:
+  - `data_processing.py` (509 lines): Database queries and filtering
+  - `parallel_processing.py` (359 lines): Concurrent processing and progress tracking
+  - `file_generator.py` (93 lines): Orchestration and file generation
+  - `templates/html_templates.py` (267 lines): HTML structure generation
+  - `templates/css_styles.py` (1,189 lines): Modern CSS with dark mode support
+  - `templates/javascript_ui.py` (1,256 lines): Interactive UI functionality
+- **Context Window Optimization**: All files now under 25,000 tokens for effective Claude development
 - **Simplified Profession Ratings**: Profession-specific ratings now use transparent weighted averages of individual metric Glicko ratings instead of complex session-based calculations
 - **Transparent Calculations**: Firebrand = (Stability × 0.6) + (Resistance × 0.4), Chronomancer = (Stability × 0.35) + (Cleanses × 0.35) + (Resistance × 0.15) + (Healing × 0.1) + (Barrier × 0.05), etc.
 - **Transition to Pure Glicko Ratings**: Simplified system using Glicko-2 ratings directly instead of composite scores

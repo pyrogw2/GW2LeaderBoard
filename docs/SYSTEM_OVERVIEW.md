@@ -40,9 +40,13 @@ The GW2 WvW Leaderboard System is a comprehensive solution for analyzing World v
 - **Process**: Apply pure Glicko-2 rating algorithm with session-based z-score normalization
 - **Output**: Skill ratings without composite scoring for each player/profession/metric combination
 
-### 3. UI Generation
+### 3. UI Generation (Modular Architecture)
 - **Input**: Processed ratings, performance data, and guild information
-- **Process**: Generate static HTML/CSS/JS with interactive player modals and profession filtering
+- **Process**: Modular web UI system with separated concerns:
+  - `data_processing.py`: Database queries and filtering
+  - `parallel_processing.py`: Concurrent data generation
+  - `templates/`: HTML, CSS, and JavaScript generation
+  - `file_generator.py`: Orchestration and file output
 - **Output**: Deployable web interface with dark mode, responsive design, and clickable player analysis
 
 ### 4. Guild Integration
