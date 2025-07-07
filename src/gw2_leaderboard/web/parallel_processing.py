@@ -255,7 +255,7 @@ def calculate_simple_profession_ratings_fast_filter(db_path: str, profession: st
                 continue
                 
             weighted_rating = 0.0
-            total_games = 0
+            games_played_list = []
             total_rank_sum = 0.0
             stats_breakdown = []
             
@@ -264,15 +264,18 @@ def calculate_simple_profession_ratings_fast_filter(db_path: str, profession: st
                 if metric in player_data['metrics']:
                     metric_data = player_data['metrics'][metric]
                     weighted_rating += metric_data['rating'] * weight
-                    total_games += metric_data['games_played']
+                    games_played_list.append(metric_data['games_played'])
                     total_rank_sum += (metric_data['average_rank'] or 0) * metric_data['games_played']
                     
                     # Store stat for display (first 3 metrics)
                     if len(stats_breakdown) < 3:
                         stats_breakdown.append(f"{metric[:4]}:{metric_data['average_stat_value']:.1f}")
             
+            # Use max games played across metrics (not sum) since same raids generate all metrics
+            actual_games_played = max(games_played_list) if games_played_list else 0
+            
             # Calculate average rank across all metrics
-            average_rank = (total_rank_sum / total_games) if total_games > 0 else 0
+            average_rank = (total_rank_sum / sum(games_played_list)) if games_played_list else 0
             
             # Format stats for display
             key_stats = ' '.join(stats_breakdown)
@@ -280,13 +283,13 @@ def calculate_simple_profession_ratings_fast_filter(db_path: str, profession: st
             # Return format: (account_name, composite_score, games_played, average_rank, glicko_rating, key_stats, apm_total, apm_no_auto)
             results.append((
                 account_name,
-                weighted_rating,  # composite_score
-                total_games,      # games_played  
-                average_rank,     # average_rank
-                weighted_rating,  # glicko_rating (same as composite for professions)
-                key_stats,        # key_stats
-                0.0,             # apm_total (will be filled later)
-                0.0              # apm_no_auto (will be filled later)
+                weighted_rating,      # composite_score
+                actual_games_played,  # games_played (corrected to not multiply by metric count)
+                average_rank,         # average_rank
+                weighted_rating,      # glicko_rating (same as composite for professions)
+                key_stats,            # key_stats
+                0.0,                 # apm_total (will be filled later)
+                0.0                  # apm_no_auto (will be filled later)
             ))
         
         # Sort by weighted rating (descending)

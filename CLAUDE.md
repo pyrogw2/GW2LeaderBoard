@@ -125,6 +125,7 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
   - **Fixed**: Average rank calculations now show actual rank positions (1st, 2nd, 3rd) instead of percentiles  
   - **Fixed**: High scores now use correct `burst_damage_1s` field instead of `burst_consistency_1s`
   - **Fixed**: Player Stats (Most Played Professions) now properly respects date filters using correct timestamp format
+  - **Fixed**: Profession leaderboard raid counts now show correct values (not multiplied by metric count)
 
 ### Modern UI Features
 - **iOS-style Segmented Control**: Time period selection (All, 30d, 90d, 180d)
@@ -208,6 +209,12 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **Solution**: Updated date filtering to use correct timestamp format comparison
 - **Files Modified**: `src/gw2_leaderboard/web/data_processing.py` (`get_most_played_professions_data()`)
 
+#### 6. Profession Leaderboard Raid Count Inflation
+- **Issue**: Raid counts in profession leaderboards were inflated (e.g., 25 raids instead of 5 for 5-metric professions)
+- **Root Cause**: Summed `games_played` across all weighted metrics instead of using maximum
+- **Solution**: Changed from sum to max of `games_played` across metrics since same raids generate all metrics
+- **Files Modified**: `src/gw2_leaderboard/web/parallel_processing.py` (`calculate_simple_profession_ratings_fast_filter()`)
+
 ### Testing and Validation
 All fixes have been verified to work correctly:
 - Profession leaderboards show different data for each time period
@@ -215,6 +222,8 @@ All fixes have been verified to work correctly:
 - High scores display correct maximum values from database
 - Web UI loads and displays profession data properly
 - Player Stats (Most Played Professions) now shows different session counts across time periods
+- Profession raid counts are accurate (e.g., 5 raids instead of inflated 25 for 5-metric professions)
+- All sections provide data across all time periods (30d, 60d, 90d, overall)
 
 ### Development Guidelines
 

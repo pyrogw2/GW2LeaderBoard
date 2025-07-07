@@ -589,7 +589,7 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
                 'average_rank': avg_rank,
                 'average_stat_value': avg_stat
             }
-            players_with_ratings[account_name]['total_games'] += games_played
+            # Don't sum games_played here - we'll calculate the max later to avoid inflation
     
     # Calculate weighted ratings for each player
     results = []
@@ -599,7 +599,7 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
             continue
             
         weighted_rating = 0.0
-        total_games = 0
+        games_played_list = []
         total_rank_sum = 0.0
         stats_breakdown = []
         
@@ -608,15 +608,18 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
             if metric in player_data['metrics']:
                 metric_data = player_data['metrics'][metric]
                 weighted_rating += metric_data['rating'] * weight
-                total_games += metric_data['games_played']
+                games_played_list.append(metric_data['games_played'])
                 total_rank_sum += (metric_data['average_rank'] or 0) * metric_data['games_played']
                 
                 # Store stat for display (first 3 metrics)
                 if len(stats_breakdown) < 3:
                     stats_breakdown.append(f"{metric[:4]}:{metric_data['average_stat_value']:.1f}")
         
-        # Calculate average rank across all metrics
-        average_rank = (total_rank_sum / total_games) if total_games > 0 else 0
+        # Use max games played across metrics (not sum) since same raids generate all metrics
+        actual_games_played = max(games_played_list) if games_played_list else 0
+        
+        # Calculate average rank across all metrics (still use sum for weighted average)
+        average_rank = (total_rank_sum / sum(games_played_list)) if games_played_list else 0
         
         # Get APM data for this player and profession
         apm_total = 0.0
@@ -643,7 +646,7 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
         results.append((
             account_name,
             weighted_rating,  # This is now the simple weighted average
-            total_games,
+            actual_games_played,  # Fixed: use max games played, not sum across metrics
             average_rank,
             weighted_rating,  # Use the same value for composite score (no complex scoring)
             " ".join(stats_breakdown),
