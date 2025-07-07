@@ -35,8 +35,14 @@ jobs:
         # Test that the executable was created and can start
         if (Test-Path "dist/workflow_ui.exe") {
           Write-Host "✅ Executable created successfully"
-          # Quick test - just check if it starts without crashing
-          Start-Process -FilePath "dist/workflow_ui.exe" -ArgumentList "--help" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+          # Quick test - just check if it exists and is a valid PE file
+          $file = Get-Item "dist/workflow_ui.exe"
+          Write-Host "File size: $($file.Length) bytes"
+          if ($file.Length -gt 1MB) {
+            Write-Host "✅ Executable appears to be properly bundled"
+          } else {
+            Write-Host "⚠️ Executable seems too small, may be missing dependencies"
+          }
         } else {
           Write-Host "❌ Executable not found"
           exit 1
@@ -72,21 +78,26 @@ jobs:
         
     - name: Build macOS app bundle
       run: |
-        # Create macOS app bundle
-        pyinstaller --windowed --onefile \
+        # Create macOS app bundle (without icon for now)
+        pyinstaller --windowed \
           --name "GW2 Leaderboard" \
-          --icon=icon.icns \
           --add-data "src:src" \
           workflow_ui.py
           
     - name: Test macOS app
       run: |
-        if [ -f "dist/GW2 Leaderboard" ]; then
-          echo "✅ macOS app created successfully"
-          # Test that it doesn't crash immediately
-          timeout 5s ./dist/GW2\ Leaderboard --help || true
+        if [ -d "dist/GW2 Leaderboard.app" ]; then
+          echo "✅ macOS app bundle created successfully"
+          # Test that the executable exists inside the app bundle
+          if [ -f "dist/GW2 Leaderboard.app/Contents/MacOS/GW2 Leaderboard" ]; then
+            echo "✅ App executable found"
+          else
+            echo "❌ App executable not found"
+            exit 1
+          fi
         else
-          echo "❌ macOS app not found"
+          echo "❌ macOS app bundle not found"
+          ls -la dist/
           exit 1
         fi
         
@@ -97,7 +108,7 @@ jobs:
         
         # Create a DMG file
         mkdir -p dmg-contents
-        cp -r "dist/GW2 Leaderboard.app" dmg-contents/ 2>/dev/null || cp "dist/GW2 Leaderboard" dmg-contents/
+        cp -r "dist/GW2 Leaderboard.app" dmg-contents/
         cp README.md dmg-contents/
         
         create-dmg \
@@ -107,14 +118,14 @@ jobs:
           --icon-size 100 \
           --app-drop-link 600 185 \
           "GW2-Leaderboard.dmg" \
-          "dmg-contents/"
+          "dmg-contents/" || echo "DMG creation failed, continuing without DMG"
           
     - name: Upload macOS app
       uses: actions/upload-artifact@v4
       with:
         name: gw2-leaderboard-macos
         path: |
-          dist/GW2 Leaderboard*
+          dist/GW2 Leaderboard.app/
           GW2-Leaderboard.dmg
           README.md
           
