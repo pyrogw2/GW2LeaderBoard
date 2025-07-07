@@ -57,14 +57,37 @@ jobs:
           exit 1
         }
         
+    - name: Prepare Windows release files
+      run: |
+        # Create required directories
+        mkdir -p dist/extracted_logs
+        mkdir -p dist/web_ui_output
+        
+        # Copy configuration files
+        copy sync_config.json.example dist/sync_config.json
+        copy README.md dist/
+        
+        # Create a simple start guide
+        echo "GW2 WvW Leaderboard - Windows" > dist/README.txt
+        echo "===============================" >> dist/README.txt
+        echo "" >> dist/README.txt
+        echo "1. Edit sync_config.json with your settings" >> dist/README.txt
+        echo "2. Run workflow_ui.exe" >> dist/README.txt
+        echo "3. Use the GUI to download logs and generate leaderboards" >> dist/README.txt
+        echo "" >> dist/README.txt
+        echo "Required directories (extracted_logs, web_ui_output) are included." >> dist/README.txt
+        
     - name: Upload Windows executable
       uses: actions/upload-artifact@v4
       with:
         name: gw2-leaderboard-windows
         path: |
           dist/workflow_ui.exe
-          README.md
-          sync_config.json.example
+          dist/README.md
+          dist/README.txt
+          dist/sync_config.json
+          dist/extracted_logs/
+          dist/web_ui_output/
           
   build-macos:
     name: Build macOS App
@@ -129,14 +152,40 @@ jobs:
           "GW2-Leaderboard.dmg" \
           "dmg-contents/" || echo "DMG creation failed, continuing without DMG"
           
+    - name: Prepare macOS release files
+      run: |
+        # Create required directories
+        mkdir -p macos-release/extracted_logs
+        mkdir -p macos-release/web_ui_output
+        
+        # Copy app and files
+        cp -r "dist/GW2 Leaderboard.app" macos-release/
+        cp sync_config.json.example macos-release/sync_config.json
+        cp README.md macos-release/
+        
+        # Copy DMG if it exists
+        if [ -f "GW2-Leaderboard.dmg" ]; then
+          cp GW2-Leaderboard.dmg macos-release/
+        fi
+        
+        # Create start guide
+        cat > macos-release/README.txt << 'EOF'
+        GW2 WvW Leaderboard - macOS
+        ============================
+        
+        1. Edit sync_config.json with your settings
+        2. Run "GW2 Leaderboard.app" 
+        3. Use the GUI to download logs and generate leaderboards
+        
+        Required directories (extracted_logs, web_ui_output) are included.
+        EOF
+        
     - name: Upload macOS app
       uses: actions/upload-artifact@v4
       with:
         name: gw2-leaderboard-macos
         path: |
-          dist/GW2 Leaderboard.app/
-          GW2-Leaderboard.dmg
-          README.md
+          macos-release/
           
   build-linux:
     name: Build Linux Binary
@@ -181,14 +230,38 @@ jobs:
           exit 1
         fi
         
+    - name: Prepare Linux release files
+      run: |
+        # Create required directories
+        mkdir -p linux-release/extracted_logs
+        mkdir -p linux-release/web_ui_output
+        
+        # Copy binary and files
+        cp dist/gw2-leaderboard linux-release/
+        cp sync_config.json.example linux-release/sync_config.json
+        cp README.md linux-release/
+        
+        # Make binary executable
+        chmod +x linux-release/gw2-leaderboard
+        
+        # Create start guide
+        cat > linux-release/README.txt << 'EOF'
+        GW2 WvW Leaderboard - Linux
+        ============================
+        
+        1. Edit sync_config.json with your settings
+        2. Run ./gw2-leaderboard
+        3. Use the GUI to download logs and generate leaderboards
+        
+        Required directories (extracted_logs, web_ui_output) are included.
+        EOF
+        
     - name: Upload Linux binary
       uses: actions/upload-artifact@v4
       with:
         name: gw2-leaderboard-linux
         path: |
-          dist/gw2-leaderboard
-          README.md
-          sync_config.json.example
+          linux-release/
           
   create-release:
     name: Create Release

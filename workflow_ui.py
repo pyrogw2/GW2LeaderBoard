@@ -271,8 +271,66 @@ class App(tk.Tk):
     def _get_config_from_ui(self):
         # This can be expanded to read from the UI fields directly if needed
         # For now, it just re-reads the saved config file
-        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print(f"⚠️ Configuration file {CONFIG_FILE} not found or invalid. Using defaults.")
+            config = DEFAULT_CONFIG.copy()
+            # Save the default config
+            try:
+                with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, indent=2)
+                print(f"✅ Created default configuration file: {CONFIG_FILE}")
+            except Exception as e:
+                print(f"❌ Could not create config file: {e}")
+        
+        # Ensure all required configuration keys exist with defaults
+        config_defaults = {
+            'extracted_logs_dir': 'extracted_logs',
+            'web_ui_output': 'web_ui_output',
+            'database_path': 'gw2_comprehensive.db',
+            'log_aggregate_url': 'https://pyrogw2.github.io',
+            'max_logs_per_run': 5,
+            'auto_confirm': False
+        }
+        
+        updated = False
+        for key, default_value in config_defaults.items():
+            if key not in config:
+                config[key] = default_value
+                updated = True
+                print(f"✅ Added missing config key '{key}' with default: {default_value}")
+        
+        # Ensure guild configuration exists
+        if 'guild' not in config:
+            config['guild'] = DEFAULT_CONFIG['guild'].copy()
+            updated = True
+            print("✅ Added missing guild configuration")
+        
+        # Save updated config if we made changes
+        if updated:
+            try:
+                with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, indent=2)
+                print(f"✅ Updated configuration file: {CONFIG_FILE}")
+            except Exception as e:
+                print(f"⚠️ Could not save updated config: {e}")
+        
+        # Ensure required directories exist
+        required_dirs = [
+            config.get('extracted_logs_dir', 'extracted_logs'),
+            config.get('web_ui_output', 'web_ui_output')
+        ]
+        
+        for dir_path in required_dirs:
+            try:
+                os.makedirs(dir_path, exist_ok=True)
+                print(f"✅ Ensured directory exists: {dir_path}")
+            except Exception as e:
+                print(f"⚠️ Could not create directory {dir_path}: {e}")
+        
+        return config
 
     def _run_sync_logs(self, config):
         print("\n--- Step 1: Downloading and extracting logs ---\n")
