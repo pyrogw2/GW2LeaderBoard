@@ -602,10 +602,10 @@ def generate_data_for_filter_fast(db_path: str, date_filter: str, guild_enabled:
         print(f"      Warning: Could not get high scores: {e}")
         filter_data["high_scores"] = {}
     
-    # Player stats - use overall data
+    # Player stats with date filtering
     print(f"  Processing player stats for {date_filter}...")
     try:
-        player_stats_data = get_most_played_professions_data(db_path, limit=100)
+        player_stats_data = get_most_played_professions_data(db_path, limit=100, date_filter=date_filter)
         filter_data["player_stats"] = {
             "Most Played Professions": player_stats_data
         }
@@ -674,10 +674,10 @@ def generate_data_for_filter(db_path: str, date_filter: str, guild_enabled: bool
         traceback.print_exc()
         filter_data["high_scores"] = {}
     
-    # Player stats
+    # Player stats with date filtering
     print(f"  Processing player stats for {date_filter}...")
     try:
-        most_played = get_most_played_professions_data(db_path, limit=500)
+        most_played = get_most_played_professions_data(db_path, limit=500, date_filter=date_filter)
         filter_data["player_stats"] = {
             "Most Played Professions": most_played
         }

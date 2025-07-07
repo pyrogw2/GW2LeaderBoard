@@ -669,8 +669,8 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
     return high_scores_data
 
 
-def get_most_played_professions_data(db_path: str, limit: int = 500) -> List[Dict]:
-    """Get most played professions data for Player Stats section."""
+def get_most_played_professions_data(db_path: str, limit: int = 500, date_filter: str = None) -> List[Dict]:
+    """Get most played professions data for Player Stats section with optional date filtering."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -678,20 +678,36 @@ def get_most_played_professions_data(db_path: str, limit: int = 500) -> List[Dic
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
     guild_table_exists = cursor.fetchone() is not None
     
+    # Build date filter clause (timestamp format is YYYYMMDDHHMM)
+    date_clause = ""
+    if date_filter and date_filter != "overall":
+        try:
+            days = int(date_filter.rstrip('d'))
+            # Calculate cutoff timestamp in YYYYMMDDHHMM format
+            from datetime import datetime, timedelta
+            cutoff_date = datetime.now() - timedelta(days=days)
+            cutoff_timestamp = cutoff_date.strftime('%Y%m%d%H%M')
+            date_clause = f"AND p.timestamp >= '{cutoff_timestamp}'"
+        except (ValueError, AttributeError):
+            # If date_filter is invalid, ignore it
+            date_clause = ""
+    
     # Get profession play statistics per player
     if guild_table_exists:
-        cursor.execute('''
+        cursor.execute(f'''
             SELECT p.account_name, p.profession, COUNT(*) as session_count,
                    CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
             FROM player_performances p
             LEFT JOIN guild_members gm ON p.account_name = gm.account_name
+            WHERE 1=1 {date_clause}
             GROUP BY p.account_name, p.profession, gm.account_name
             ORDER BY p.account_name, session_count DESC
         ''')
     else:
-        cursor.execute('''
+        cursor.execute(f'''
             SELECT account_name, profession, COUNT(*) as session_count, 0 as is_guild_member
             FROM player_performances
+            WHERE 1=1 {date_clause}
             GROUP BY account_name, profession
             ORDER BY account_name, session_count DESC
         ''')

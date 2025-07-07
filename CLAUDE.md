@@ -124,6 +124,7 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
   - **Fixed**: Profession leaderboards now properly respect date filters using SQL-level filtering approach
   - **Fixed**: Average rank calculations now show actual rank positions (1st, 2nd, 3rd) instead of percentiles  
   - **Fixed**: High scores now use correct `burst_damage_1s` field instead of `burst_consistency_1s`
+  - **Fixed**: Player Stats (Most Played Professions) now properly respects date filters using correct timestamp format
 
 ### Modern UI Features
 - **iOS-style Segmented Control**: Time period selection (All, 30d, 90d, 180d)
@@ -201,12 +202,19 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **Solution**: Updated JavaScript template to use `data.leaderboard` consistently
 - **Files Modified**: `src/gw2_leaderboard/web/templates/javascript_ui.py`
 
+#### 5. Player Stats Date Filtering
+- **Issue**: Most Played Professions in Player Stats showed identical data across all time periods
+- **Root Cause**: Date filtering used SQL date functions incompatible with custom `YYYYMMDDHHMM` timestamp format
+- **Solution**: Updated date filtering to use correct timestamp format comparison
+- **Files Modified**: `src/gw2_leaderboard/web/data_processing.py` (`get_most_played_professions_data()`)
+
 ### Testing and Validation
 All fixes have been verified to work correctly:
 - Profession leaderboards show different data for each time period
 - Average rank values are realistic (1-50 range for typical sessions)
 - High scores display correct maximum values from database
 - Web UI loads and displays profession data properly
+- Player Stats (Most Played Professions) now shows different session counts across time periods
 
 ### Development Guidelines
 
