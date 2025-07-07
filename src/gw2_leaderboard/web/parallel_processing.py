@@ -207,51 +207,98 @@ def generate_all_leaderboard_data(db_path: str, date_filters: List[str], guild_e
 
 
 def calculate_simple_profession_ratings_fast_filter(db_path: str, profession: str, date_filter: str, guild_filter: bool = False):
-    """Fast profession ratings with date filtering using existing data."""
+    """Fast profession ratings with proper date filtering using direct SQL approach."""
     try:
-        # Get the overall profession ratings first
-        overall_data = calculate_simple_profession_ratings(
-            db_path, profession, 
-            date_filter=None,
-            guild_filter=guild_filter
-        )
+        # Get profession configuration
+        prof_config = PROFESSION_METRICS.get(profession, {
+            'metrics': ['DPS'],
+            'weights': [1.0]
+        })
         
-        if not overall_data:
-            return []
+        metrics = prof_config['metrics']
+        weights = prof_config['weights']
         
-        # Now filter by players who have recent activity
-        days = int(date_filter.rstrip('d'))
+        # Get date-filtered ratings for each metric using the same approach as individual metrics
+        players_with_ratings = {}
         
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        for metric in metrics:
+            # Use the same SQL-level date filtering as individual metrics
+            metric_data = get_glicko_leaderboard_data_with_sql_filter(
+                db_path, metric, date_filter, limit=500, show_deltas=False
+            )
+            
+            # Convert to format needed for profession calculation
+            for player in metric_data:
+                account_name = player['account_name']
+                player_profession = player['profession']
+                
+                # Only include players of the target profession
+                if player_profession == profession:
+                    if account_name not in players_with_ratings:
+                        players_with_ratings[account_name] = {
+                            'metrics': {},
+                            'profession': player_profession
+                        }
+                    
+                    players_with_ratings[account_name]['metrics'][metric] = {
+                        'rating': player['glicko_rating'],
+                        'games_played': player['games_played'],
+                        'average_rank': player['average_rank_percent'],
+                        'average_stat_value': player['average_stat_value']
+                    }
         
-        # Get accounts with recent activity
-        cursor.execute('''
-            SELECT DISTINCT account_name 
-            FROM player_performances 
-            WHERE parsed_date >= date('now', '-{} days')
-        '''.format(days))
+        # Calculate weighted ratings for each player
+        results = []
+        for account_name, player_data in players_with_ratings.items():
+            # Only include players who have ratings for all required metrics
+            if len(player_data['metrics']) != len(metrics):
+                continue
+                
+            weighted_rating = 0.0
+            total_games = 0
+            total_rank_sum = 0.0
+            stats_breakdown = []
+            
+            # Calculate weighted average of individual metric ratings
+            for metric, weight in zip(metrics, weights):
+                if metric in player_data['metrics']:
+                    metric_data = player_data['metrics'][metric]
+                    weighted_rating += metric_data['rating'] * weight
+                    total_games += metric_data['games_played']
+                    total_rank_sum += (metric_data['average_rank'] or 0) * metric_data['games_played']
+                    
+                    # Store stat for display (first 3 metrics)
+                    if len(stats_breakdown) < 3:
+                        stats_breakdown.append(f"{metric[:4]}:{metric_data['average_stat_value']:.1f}")
+            
+            # Calculate average rank across all metrics
+            average_rank = (total_rank_sum / total_games) if total_games > 0 else 0
+            
+            # Format stats for display
+            key_stats = ' '.join(stats_breakdown)
+            
+            # Return format: (account_name, composite_score, games_played, average_rank, glicko_rating, key_stats, apm_total, apm_no_auto)
+            results.append((
+                account_name,
+                weighted_rating,  # composite_score
+                total_games,      # games_played  
+                average_rank,     # average_rank
+                weighted_rating,  # glicko_rating (same as composite for professions)
+                key_stats,        # key_stats
+                0.0,             # apm_total (will be filled later)
+                0.0              # apm_no_auto (will be filled later)
+            ))
         
-        recent_accounts = {row[0] for row in cursor.fetchall()}
-        conn.close()
+        # Sort by weighted rating (descending)
+        results.sort(key=lambda x: x[1], reverse=True)
         
-        # Filter the overall data to only include recently active players
-        filtered_data = []
-        for player_tuple in overall_data:
-            account_name = player_tuple[0]  # First element is account name
-            if account_name in recent_accounts:
-                filtered_data.append(player_tuple)
-        
-        return filtered_data
+        return results
         
     except Exception as e:
-        print(f"Error in fast profession filtering: {e}")
-        # Fall back to overall data if filtering fails
-        return calculate_simple_profession_ratings(
-            db_path, profession, 
-            date_filter=None,
-            guild_filter=guild_filter
-        )
+        print(f"Error in profession date filtering: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 def _generate_filtered_db(db_path: str, date_filter: str) -> str:
     """Generate a filtered database for a specific date filter."""
@@ -360,7 +407,7 @@ def _process_single_profession_fast(args):
             'metrics': prof_config['metrics'],
             'weights': prof_config['weights'],
             'key_stats_format': prof_config.get('key_stats_format', 'Stats: {}'),
-            'players': []
+            'leaderboard': []
         }
         
         # Convert tuple data to objects for JavaScript
@@ -381,7 +428,7 @@ def _process_single_profession_fast(args):
                 'is_guild_member': player_tuple[8] if len(player_tuple) > 8 else False,
                 'rating_delta': player_tuple[9] if len(player_tuple) > 9 else 0.0
             }
-            structured_data['players'].append(player_obj)
+            structured_data['leaderboard'].append(player_obj)
         
         return profession, structured_data
         
@@ -544,12 +591,12 @@ def generate_data_for_filter_fast(db_path: str, date_filter: str, guild_enabled:
         if data is not None:
             filter_data["profession_leaderboards"][profession_name] = data
     
-    # High scores - no date filtering needed, use overall data
+    # High scores with proper date filtering
     print(f"  Processing high scores for {date_filter}...")
     try:
-        high_scores_data = get_new_high_scores_data(db_path, limit=100)
+        high_scores_data = get_new_high_scores_data(db_path, limit=100, date_filter=date_filter)
         if not high_scores_data:
-            high_scores_data = get_high_scores_data(db_path, limit=100)
+            high_scores_data = get_high_scores_data(db_path, limit=100, date_filter=date_filter)
         filter_data["high_scores"] = high_scores_data
     except Exception as e:
         print(f"      Warning: Could not get high scores: {e}")
@@ -559,10 +606,12 @@ def generate_data_for_filter_fast(db_path: str, date_filter: str, guild_enabled:
     print(f"  Processing player stats for {date_filter}...")
     try:
         player_stats_data = get_most_played_professions_data(db_path, limit=100)
-        filter_data["player_stats"] = player_stats_data
+        filter_data["player_stats"] = {
+            "Most Played Professions": player_stats_data
+        }
     except Exception as e:
         print(f"      Warning: Could not get player stats: {e}")
-        filter_data["player_stats"] = {}
+        filter_data["player_stats"] = {"Most Played Professions": []}
     
     print(f"  ✅ Completed data generation for {date_filter}")
     return filter_data
@@ -614,10 +663,10 @@ def generate_data_for_filter(db_path: str, date_filter: str, guild_enabled: bool
     print(f"  Processing high scores for {date_filter}...")
     try:
         # Try new high_scores table first
-        high_scores_data = get_new_high_scores_data(db_path, limit=100)
+        high_scores_data = get_new_high_scores_data(db_path, limit=100, date_filter=date_filter)
         if not high_scores_data:
             # Fall back to legacy method
-            high_scores_data = get_high_scores_data(db_path, limit=100)
+            high_scores_data = get_high_scores_data(db_path, limit=100, date_filter=date_filter)
         filter_data["high_scores"] = high_scores_data
     except Exception as e:
         import traceback

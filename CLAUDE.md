@@ -121,6 +121,9 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **Guild Integration**: GW2 API v2 for member validation
 - **Latest Change**: Chronological rating history with delta calculations
 - **Date Filtering**: All metrics including APM support consistent date-based filtering across time periods
+  - **Fixed**: Profession leaderboards now properly respect date filters using SQL-level filtering approach
+  - **Fixed**: Average rank calculations now show actual rank positions (1st, 2nd, 3rd) instead of percentiles  
+  - **Fixed**: High scores now use correct `burst_damage_1s` field instead of `burst_consistency_1s`
 
 ### Modern UI Features
 - **iOS-style Segmented Control**: Time period selection (All, 30d, 90d, 180d)
@@ -168,6 +171,42 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - Context managers for resource handling
 - Progress reporting in long-running operations
 - Modular design with clear separation of concerns
+
+## Recent Bug Fixes (July 2025)
+
+### Critical Date Filtering Issues Resolved
+
+#### 1. Profession Leaderboard Date Filtering
+- **Issue**: Profession leaderboards showed identical data across all time periods (30d, 60d, 90d)
+- **Root Cause**: Used pre-calculated ratings from `glicko_ratings` table which don't respect date filters
+- **Solution**: Implemented `calculate_simple_profession_ratings_fast_filter()` function using SQL-level date filtering
+- **Files Modified**: `src/gw2_leaderboard/web/parallel_processing.py`, `src/gw2_leaderboard/web/templates/javascript_ui.py`
+- **Verification**: Each time period now shows different player counts, rankings, and rating values
+
+#### 2. Average Rank Calculation Fix
+- **Issue**: Average rank showed impossible values (21.3+ for max 50-player squads)
+- **Root Cause**: Calculated percentile ranks instead of actual position ranks
+- **Solution**: Changed SQL from `AVG(100.0 * player_rank / session_size)` to `AVG(player_rank)`
+- **Files Modified**: `src/gw2_leaderboard/web/data_processing.py` (`calculate_glicko_ratings_for_date_filter()`)
+
+#### 3. High Scores Database Field Fix
+- **Issue**: High scores missing known records (e.g., Synco's 148k burst damage)
+- **Root Cause**: Query used wrong database field `burst_consistency_1s` instead of `burst_damage_1s`
+- **Solution**: Updated SQL query to use correct field mapping
+- **Files Modified**: `src/gw2_leaderboard/web/data_processing.py`
+
+#### 4. JavaScript Data Structure Compatibility
+- **Issue**: Profession leaderboards showed empty after backend changes
+- **Root Cause**: Backend changed from `'players'` to `'leaderboard'` key but JavaScript still expected `'players'`
+- **Solution**: Updated JavaScript template to use `data.leaderboard` consistently
+- **Files Modified**: `src/gw2_leaderboard/web/templates/javascript_ui.py`
+
+### Testing and Validation
+All fixes have been verified to work correctly:
+- Profession leaderboards show different data for each time period
+- Average rank values are realistic (1-50 range for typical sessions)
+- High scores display correct maximum values from database
+- Web UI loads and displays profession data properly
 
 ### Development Guidelines
 

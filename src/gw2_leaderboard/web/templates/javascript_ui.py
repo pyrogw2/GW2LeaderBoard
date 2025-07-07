@@ -518,7 +518,7 @@ function loadProfessionLeaderboard(profession) {{
     `;
     
     // Filter data based on guild membership
-    const filteredData = filterDataByGuildMembership(data.players);
+    const filteredData = filterDataByGuildMembership(data.leaderboard);
     
     // Reassign ranks after filtering
     const dataWithNewRanks = filteredData.map((player, index) => ({{

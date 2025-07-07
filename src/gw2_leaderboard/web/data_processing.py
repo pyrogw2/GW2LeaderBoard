@@ -608,12 +608,12 @@ def get_filtered_leaderboard_data(db_path: str, metric_category: str = None, lim
     return get_glicko_leaderboard_data(db_path, metric_category, limit, None, show_deltas)
 
 
-def get_new_high_scores_data(db_path: str, limit: int = 100) -> Dict[str, List[Dict]]:
+def get_new_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None) -> Dict[str, List[Dict]]:
     """Get high scores data from the new high_scores table."""
-    return get_high_scores_data(db_path, limit)
+    return get_high_scores_data(db_path, limit, date_filter)
 
 
-def get_high_scores_data(db_path: str, limit: int = 100) -> Dict[str, List[Dict]]:
+def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None) -> Dict[str, List[Dict]]:
     """Get top burst damage records for High Scores section."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -622,25 +622,31 @@ def get_high_scores_data(db_path: str, limit: int = 100) -> Dict[str, List[Dict]
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
     guild_table_exists = cursor.fetchone() is not None
     
+    # Build date filter clause
+    date_clause = ""
+    if date_filter and date_filter != "overall":
+        days = int(date_filter.rstrip('d'))
+        date_clause = f"AND p.parsed_date >= date('now', '-{days} days')"
+    
     high_scores_data = {}
     
     # Get highest 1-second burst damage
     if guild_table_exists:
-        cursor.execute('''
-            SELECT p.account_name, p.profession, p.burst_consistency_1s, p.timestamp,
+        cursor.execute(f'''
+            SELECT p.account_name, p.profession, p.burst_damage_1s, p.timestamp,
                    CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
             FROM player_performances p
             LEFT JOIN guild_members gm ON p.account_name = gm.account_name
-            WHERE p.burst_consistency_1s > 0
-            ORDER BY p.burst_consistency_1s DESC
+            WHERE p.burst_damage_1s > 0 {date_clause}
+            ORDER BY p.burst_damage_1s DESC
             LIMIT ?
         ''', (limit,))
     else:
-        cursor.execute('''
-            SELECT account_name, profession, burst_consistency_1s, timestamp, 0 as is_guild_member
+        cursor.execute(f'''
+            SELECT account_name, profession, burst_damage_1s, timestamp, 0 as is_guild_member
             FROM player_performances
-            WHERE burst_consistency_1s > 0
-            ORDER BY burst_consistency_1s DESC
+            WHERE burst_damage_1s > 0 {date_clause}
+            ORDER BY burst_damage_1s DESC
             LIMIT ?
         ''', (limit,))
     

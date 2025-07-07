@@ -271,7 +271,9 @@ def generate_web_ui(config: Dict) -> bool:
     
     # Prepare arguments for generate_web_ui_main
     sys_argv_backup = sys.argv[:]
-    sys.argv = ['generate_web_ui.py', db_path, '-o', output_dir, '--skip-recalc']
+    # Use all 4 date filters with ultra-fast mode
+    sys.argv = ['generate_web_ui.py', db_path, '-o', output_dir, '--skip-recalc', 
+                '--date-filters', '30d', '60d', '90d', 'overall']
     
     try:
         generate_web_ui_main()
