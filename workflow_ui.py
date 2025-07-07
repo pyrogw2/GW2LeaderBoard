@@ -49,7 +49,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.9"  # Current version - should match release tags
+VERSION = "0.0.10"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -203,8 +203,10 @@ class App(tk.Tk):
         update_frame = ttk.LabelFrame(self.config_tab, text="Updates")
         update_frame.pack(padx=10, pady=10, fill="x")
         
-        # Version info
-        version_label = ttk.Label(update_frame, text=f"Current Version: v{VERSION}")
+        # Version info with build date
+        import datetime
+        build_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        version_label = ttk.Label(update_frame, text=f"Current Version: v{VERSION} (Built: {build_date})")
         version_label.pack(pady=5)
         
         # Update buttons
