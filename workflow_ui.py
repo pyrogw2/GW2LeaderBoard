@@ -54,7 +54,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.11"  # Current version - should match release tags
+VERSION = "0.0.12"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -221,7 +221,7 @@ class App(tk.Tk):
         check_update_button = ttk.Button(button_frame, text="Check for Updates", command=self.check_for_updates)
         check_update_button.pack(side="left", padx=5)
         
-        manual_update_button = ttk.Button(button_frame, text="Open Releases Page", command=self.open_releases_page)
+        manual_update_button = ttk.Button(button_frame, text="View All Releases", command=self.open_releases_page)
         manual_update_button.pack(side="left", padx=5)
         
         # --- Save Button ---
