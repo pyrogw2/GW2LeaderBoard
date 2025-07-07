@@ -54,7 +54,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.16"  # Current version - should match release tags
+VERSION = "0.0.17"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -644,6 +644,8 @@ Would you like to download and install the update?
     def _download_update_thread(self, latest_release):
         """Background thread for downloading update"""
         try:
+            # Store release info for later use
+            self._current_update_release = latest_release
             # Find the appropriate asset for current platform
             platform_asset = self._find_platform_asset(latest_release['assets'])
             
@@ -731,7 +733,7 @@ Would you like to download and install the update?
         return extract_dir
     
     def _create_update_script(self, extracted_path):
-        """Create platform-specific update script and restart"""
+        """Prepare update and guide user through manual restart"""
         current_exe = sys.executable
         
         # Find the new executable in extracted files
@@ -741,7 +743,7 @@ Would you like to download and install the update?
             raise Exception("Could not find executable in downloaded update")
         
         if sys.platform == 'win32':
-            self._create_windows_update_script(current_exe, new_exe)
+            self._handle_windows_manual_update(current_exe, new_exe)
         elif sys.platform == 'darwin':
             self._create_macos_update_script(current_exe, new_exe)
         else:  # Linux
@@ -765,6 +767,50 @@ Would you like to download and install the update?
                     if not file.endswith(('.sh', '.py', '.txt', '.md')):
                         return os.path.join(root, file)
         return None
+    
+    def _handle_windows_manual_update(self, current_exe, new_exe):
+        """Handle Windows update with manual restart (avoids DLL issues)"""
+        try:
+            # Copy the new executable to replace the current one
+            backup_exe = current_exe + ".backup"
+            
+            # Create backup
+            if os.path.exists(current_exe):
+                shutil.copy2(current_exe, backup_exe)
+            
+            # Copy new version
+            shutil.copy2(new_exe, current_exe)
+            
+            # Close progress window
+            self.after(0, lambda: self.update_progress_window.destroy())
+            
+            # Show success message with manual restart instruction
+            def show_success():
+                latest_release = getattr(self, '_current_update_release', {'tag_name': 'latest'})
+                result = messagebox.askyesno(
+                    "Update Ready!",
+                    f"✅ Update to {latest_release['tag_name']} has been installed!\n\n"
+                    f"📝 To complete the update:\n"
+                    f"1. Close this application\n"
+                    f"2. Restart the application normally\n\n"
+                    f"The updated version will start automatically.\n\n"
+                    f"Would you like to close the application now?"
+                )
+                
+                if result:
+                    self._safe_exit()
+            
+            self.after(0, show_success)
+            
+        except Exception as e:
+            # Restore backup if copy failed
+            if os.path.exists(backup_exe):
+                try:
+                    shutil.copy2(backup_exe, current_exe)
+                    os.remove(backup_exe)
+                except:
+                    pass
+            raise Exception(f"Failed to install update: {e}")
     
     def _create_windows_update_script(self, current_exe, new_exe):
         """Create Windows batch script for update"""
