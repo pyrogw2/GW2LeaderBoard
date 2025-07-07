@@ -12,6 +12,7 @@ import subprocess
 import zipfile
 import shutil
 import webbrowser
+import traceback
 try:
     from packaging import version
 except ImportError:
@@ -48,9 +49,9 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.8"  # Current version - should match release tags
+VERSION = "0.0.9"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
-GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
 def get_resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
@@ -455,7 +456,11 @@ class App(tk.Tk):
             response = requests.get(GITHUB_API_URL, timeout=5)
             response.raise_for_status()
             
-            latest_release = response.json()
+            releases = response.json()
+            if not releases:
+                return
+            
+            latest_release = releases[0]
             latest_version = latest_release['tag_name'].lstrip('v')
             current_version = VERSION.lstrip('v')
             
@@ -484,23 +489,45 @@ class App(tk.Tk):
         """Background thread for checking updates"""
         try:
             print("🔍 Checking for updates...")
+            print(f"GitHub API URL: {GITHUB_API_URL}")
             
             # Get latest release info
             response = requests.get(GITHUB_API_URL, timeout=10)
+            print(f"API Response status: {response.status_code}")
             response.raise_for_status()
             
-            latest_release = response.json()
+            releases = response.json()
+            if not releases:
+                raise Exception("No releases found")
+            
+            # Get the latest release (first in the list)
+            latest_release = releases[0]
+            print(f"Found {len(releases)} releases, latest: {latest_release['tag_name']}")
+            print(f"Latest release info: {json.dumps(latest_release, indent=2)[:500]}...")
+            
             latest_version = latest_release['tag_name'].lstrip('v')
             current_version = VERSION.lstrip('v')
             
             print(f"Current version: v{current_version}")
             print(f"Latest version: v{latest_version}")
             
-            if version.parse(latest_version) > version.parse(current_version):
+            # Debug version comparison
+            try:
+                is_newer = version.parse(latest_version) > version.parse(current_version)
+                print(f"Version comparison: v{latest_version} > v{current_version} = {is_newer}")
+            except Exception as ver_err:
+                print(f"Version comparison error: {ver_err}")
+                # Fallback to simple string comparison
+                is_newer = latest_version != current_version
+                print(f"Fallback comparison: {latest_version} != {current_version} = {is_newer}")
+            
+            if is_newer:
                 # Update available
+                print("✅ Update available! Showing dialog...")
                 self._handle_update_available(latest_release)
             else:
                 # No update needed
+                print("ℹ️ No update needed")
                 self.after(0, lambda: messagebox.showinfo(
                     "No Updates", 
                     f"You're already running the latest version (v{current_version})"
@@ -508,6 +535,8 @@ class App(tk.Tk):
                 
         except Exception as e:
             print(f"❌ Error checking for updates: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
             self.after(0, lambda: messagebox.showerror(
                 "Update Check Failed", 
                 f"Could not check for updates:\n{str(e)}"
