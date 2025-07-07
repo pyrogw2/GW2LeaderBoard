@@ -54,7 +54,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.12"  # Current version - should match release tags
+VERSION = "0.0.13"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -765,14 +765,49 @@ Would you like to download and install the update?
     
     def _create_windows_update_script(self, current_exe, new_exe):
         """Create Windows batch script for update"""
+        # Use a more robust update approach
+        backup_exe = current_exe + ".backup"
         script_content = f'''@echo off
 echo Updating GW2 Leaderboard...
-timeout /t 3 /nobreak >nul
+echo Waiting for application to close...
+timeout /t 2 /nobreak >nul
+
+rem Kill any remaining processes
 taskkill /F /IM "{os.path.basename(current_exe)}" 2>nul
-timeout /t 1 /nobreak >nul
-copy /Y "{new_exe}" "{current_exe}"
-start "" "{current_exe}"
-del "%~f0"
+timeout /t 2 /nobreak >nul
+
+rem Create backup of current version
+if exist "{current_exe}" (
+    copy "{current_exe}" "{backup_exe}" >nul
+)
+
+rem Copy new version with retries
+:copy_retry
+copy /Y "{new_exe}" "{current_exe}" >nul 2>&1
+if errorlevel 1 (
+    echo Retrying copy operation...
+    timeout /t 1 /nobreak >nul
+    goto copy_retry
+)
+
+rem Verify the copy worked
+if exist "{current_exe}" (
+    echo Update successful, starting application...
+    start "" "{current_exe}"
+    rem Clean up backup after successful start
+    timeout /t 3 /nobreak >nul
+    if exist "{backup_exe}" del "{backup_exe}" >nul 2>&1
+) else (
+    echo Update failed, restoring backup...
+    if exist "{backup_exe}" (
+        copy "{backup_exe}" "{current_exe}" >nul
+        start "" "{current_exe}"
+        del "{backup_exe}" >nul 2>&1
+    )
+)
+
+rem Clean up
+del "%~f0" >nul 2>&1
 '''
         
         script_path = os.path.join(tempfile.gettempdir(), 'gw2_update.bat')
@@ -786,9 +821,11 @@ del "%~f0"
             "The application will restart to complete the update."
         ))
         
-        # Start update script and exit
-        subprocess.Popen([script_path], shell=True)
-        self.after(1000, lambda: sys.exit(0))
+        # Start update script and exit more gracefully
+        subprocess.Popen([script_path], shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.DETACHED_PROCESS)
+        
+        # Schedule app exit after a brief delay
+        self.after(500, self._safe_exit)
     
     def _create_macos_update_script(self, current_exe, new_exe):
         """Create macOS shell script for update"""
@@ -859,6 +896,18 @@ rm "$0"
         
         if messagebox.askyesno("Open Releases Page", "Would you like to open the releases page to download manually?"):
             self.open_releases_page()
+    
+    def _safe_exit(self):
+        """Safely exit the application for updates"""
+        try:
+            # Close all windows
+            self.quit()
+            self.destroy()
+        except:
+            pass
+        finally:
+            # Force exit
+            os._exit(0)
 
 
 if __name__ == "__main__":

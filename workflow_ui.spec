@@ -5,7 +5,7 @@ a = Analysis(
     ['workflow_ui.py'],
     pathex=[],
     binaries=[
-        # Explicitly include sqlite3 DLL on Windows if it exists
+        # Explicitly include Python DLL and other Windows dependencies
     ],
     datas=[('src', 'src')],
     hiddenimports=[
@@ -114,7 +114,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # Disable UPX compression to avoid DLL issues
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
