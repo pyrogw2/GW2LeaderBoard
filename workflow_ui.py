@@ -48,7 +48,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.7"  # Current version - should match release tags
+VERSION = "0.0.8"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 
@@ -419,7 +419,7 @@ class App(tk.Tk):
     def _run_guild_manager(self):
         print("\n--- Refreshing guild members ---\n")
         sys_argv_backup = sys.argv[:]
-        sys.argv = ['guild_manager.py', '--refresh']
+        sys.argv = ['guild_manager.py', '--sync', '--force', '--stats']
         guild_manager_main()
         sys.argv = sys_argv_backup
 
