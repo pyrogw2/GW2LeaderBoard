@@ -54,7 +54,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.13"  # Current version - should match release tags
+VERSION = "0.0.14"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -147,7 +147,7 @@ class App(tk.Tk):
         self.ui_button = ttk.Button(steps_frame, text="Generate Web UI", command=lambda: self.run_task('ui'))
         self.ui_button.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
         
-        self.guild_button = ttk.Button(steps_frame, text="Refresh Guild Members", command=lambda: self.run_task('guild'))
+        self.guild_button = ttk.Button(steps_frame, text="Sync Guild Members", command=lambda: self.run_task('guild'))
         self.guild_button.grid(row=0, column=4, padx=5, pady=5, sticky="ew")
 
         # --- Options ---
