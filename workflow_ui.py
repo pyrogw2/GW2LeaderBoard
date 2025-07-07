@@ -19,6 +19,15 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
+
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 DEFAULT_CONFIG = {
     "log_aggregate_url": "https://pyrogw2.github.io",
     "database_path": "gw2_comprehensive.db",

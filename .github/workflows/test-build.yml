@@ -1,0 +1,77 @@
+name: Test Build Process
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'workflow_ui.py'
+      - 'workflow_ui.spec'
+      - '.github/workflows/build-executables.yml'
+
+jobs:
+  test-imports:
+    name: Test UI Imports
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Test workflow_ui imports
+      run: |
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, 'src')
+        
+        # Test all imports that workflow_ui.py uses
+        from gw2_leaderboard.utils.sync_logs import main as sync_logs_main
+        from gw2_leaderboard.parsers.parse_logs_enhanced import main as parse_logs_enhanced_main
+        from gw2_leaderboard.core.glicko_rating_system import main as glicko_rating_system_main
+        from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
+        from gw2_leaderboard.core.guild_manager import main as guild_manager_main
+        
+        print('✅ All workflow_ui.py imports successful!')
+        "
+        
+  test-pyinstaller:
+    name: Test PyInstaller Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Test PyInstaller analysis
+      run: |
+        # Test that PyInstaller can analyze the workflow_ui.py
+        pyinstaller --onefile --windowed --add-data "src:src" --analyze workflow_ui.py
+        echo "✅ PyInstaller analysis successful!"
+        
+    - name: Check spec file
+      run: |
+        # Verify the spec file is valid
+        python -c "exec(open('workflow_ui.spec').read()); print('✅ Spec file is valid!')"

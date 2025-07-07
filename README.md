@@ -16,6 +16,13 @@ An automated system for parsing Guild Wars 2 World vs World combat logs and gene
 
 ## 🚀 Quick Start
 
+### Option 1: GUI Application (Recommended for beginners)
+1. **Download** the executable for your platform from [Releases](https://github.com/pyrogw2/GW2LeaderBoard/releases)
+2. **Configure** by copying `sync_config.json.example` to `sync_config.json` and editing it
+3. **Run** the executable and use the graphical interface
+
+### Option 2: Command Line
+
 ```bash
 # 1. Check for new logs and process them automatically
 python sync_logs.py --auto-confirm
@@ -152,8 +159,24 @@ Combat Logs (TiddlyWiki) → Parser → Database (SQLite) → Rating Engine → 
 **Rating Engine**: Pure Glicko-2 algorithm with WvW-specific adaptations  
 **Guild Integration**: GW2 API v2 for member validation and filtering
 
-## GUI
-A graphical user interface is available for Windows users. It provides an easy way to run the workflow without using the command line. The executable is located in the `dist` folder.
+## 💻 Executable Distributions
+
+Pre-built executables are available for easy installation:
+
+- **Windows**: `workflow_ui.exe` - Single-file executable with GUI
+- **macOS**: `GW2 Leaderboard.app` - Native application bundle  
+- **Linux**: `gw2-leaderboard` - Standalone binary
+
+**Download from:** [GitHub Releases](https://github.com/pyrogw2/GW2LeaderBoard/releases)
+
+### Features:
+- ✅ No Python installation required
+- ✅ Graphical user interface for all operations
+- ✅ Built-in console output and progress tracking
+- ✅ Configuration editor with validation
+- ✅ All command-line functionality available
+
+For building executables yourself, see [EXECUTABLE_BUILD.md](EXECUTABLE_BUILD.md).
 
 ## 🤝 Contributing
 

@@ -1,0 +1,16 @@
+{
+  "log_aggregate_url": "https://pyrogw2.github.io",
+  "database_path": "gw2_comprehensive.db",
+  "extracted_logs_dir": "extracted_logs",
+  "web_ui_output": "web_ui_final",
+  "auto_confirm": false,
+  "max_logs_per_run": 5,
+  "guild": {
+    "api_key": "",
+    "guild_id": "",
+    "guild_name": "",
+    "guild_tag": "",
+    "filter_enabled": false,
+    "member_cache_hours": 6
+  }
+}

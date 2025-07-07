@@ -134,6 +134,29 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **Responsive Design**: Mobile-optimized layout with touch-friendly controls
 - **Color-Coded Deltas**: Green (+), Red (-), Gray (0) for rating changes
 
+## Executable Distributions
+
+### GUI Application
+- **`workflow_ui.py`**: Tkinter-based GUI for all workflow operations
+- **Cross-platform**: Windows (.exe), macOS (.app), Linux (binary)
+- **PyInstaller**: Automated builds via GitHub Actions
+- **Self-contained**: No Python installation required
+
+### Build Process
+```bash
+# Manual build (requires PyInstaller)
+pyinstaller workflow_ui.spec  # Windows
+pyinstaller --windowed --onefile --add-data "src:src" workflow_ui.py  # macOS/Linux
+
+# Automated builds
+git tag v1.0.0 && git push origin v1.0.0  # Triggers GitHub Actions
+```
+
+### GitHub Actions Workflows
+- **`build-executables.yml`**: Main build workflow for all platforms
+- **`test-build.yml`**: Validation and import testing
+- **Artifact uploads**: Automatic release creation on version tags
+
 ## Configuration
 
 ### Primary Config: `sync_config.json`

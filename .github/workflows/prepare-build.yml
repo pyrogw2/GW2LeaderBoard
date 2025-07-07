@@ -1,0 +1,17 @@
+name: Prepare Build Environment
+
+on:
+  workflow_call:
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create placeholder icon
+      run: |
+        # Create a simple placeholder icon if none exists
+        if [ ! -f "icon.icns" ]; then
+          echo "Creating placeholder icon..."
+          # This would need a proper icon file in production
+          touch icon.icns
+        fi
