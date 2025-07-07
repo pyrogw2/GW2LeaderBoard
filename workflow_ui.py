@@ -54,7 +54,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.14"  # Current version - should match release tags
+VERSION = "0.0.15"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -682,9 +682,12 @@ Would you like to download and install the update?
             self._create_update_script(extracted_path)
             
         except Exception as e:
-            print(f"❌ Update download failed: {e}")
+            error_msg = str(e)
+            print(f"❌ Update download failed: {error_msg}")
             if not self.update_cancelled:
-                self.after(0, lambda: self._show_update_error(str(e)))
+                def show_error():
+                    self._show_update_error(error_msg)
+                self.after(0, show_error)
     
     def _find_platform_asset(self, assets):
         """Find the appropriate download asset for current platform"""
@@ -822,7 +825,16 @@ del "%~f0" >nul 2>&1
         ))
         
         # Start update script and exit more gracefully
-        subprocess.Popen([script_path], shell=True, creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.DETACHED_PROCESS)
+        try:
+            if sys.platform == 'win32':
+                # Use CREATE_NEW_CONSOLE flag for Windows
+                subprocess.Popen([script_path], shell=True, creationflags=0x00000010)  # CREATE_NEW_CONSOLE
+            else:
+                subprocess.Popen([script_path], shell=True)
+        except Exception as proc_error:
+            print(f"⚠️ Failed to start update script with flags, trying simple approach: {proc_error}")
+            # Fallback to simple approach
+            subprocess.Popen([script_path], shell=True)
         
         # Schedule app exit after a brief delay
         self.after(500, self._safe_exit)

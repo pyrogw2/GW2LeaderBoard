@@ -66,6 +66,7 @@ a = Analysis(
         'webbrowser',
         'tempfile',
         'subprocess',
+        'subprocess.constants',
         'zipfile',
         'shutil',
         # Tkinter GUI modules
