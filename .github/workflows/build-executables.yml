@@ -39,13 +39,23 @@ jobs:
         # Test that the executable was created and can start
         if (Test-Path "dist/workflow_ui.exe") {
           Write-Host "✅ Executable created successfully"
-          # Quick test - just check if it exists and is a valid PE file
+          
+          # Check file size
           $file = Get-Item "dist/workflow_ui.exe"
           Write-Host "File size: $($file.Length) bytes"
-          if ($file.Length -gt 1MB) {
-            Write-Host "✅ Executable appears to be properly bundled"
+          if ($file.Length -gt 5MB) {
+            Write-Host "✅ Executable appears to be properly bundled (good size)"
           } else {
-            Write-Host "⚠️ Executable seems too small, may be missing dependencies"
+            Write-Host "⚠️ Executable seems small ($($file.Length) bytes), may be missing dependencies"
+          }
+          
+          # Test import capabilities by running a quick Python test
+          Write-Host "Testing critical imports..."
+          Start-Process -FilePath "dist/workflow_ui.exe" -ArgumentList "--version" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Executable runs without immediate crashes"
+          } else {
+            Write-Host "⚠️ Executable may have import issues (exit code: $LASTEXITCODE)"
           }
         } else {
           Write-Host "❌ Executable not found"
