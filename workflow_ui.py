@@ -54,7 +54,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.15"  # Current version - should match release tags
+VERSION = "0.0.16"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -128,7 +128,7 @@ class App(tk.Tk):
         controls_frame = ttk.LabelFrame(self.workflow_tab, text="Controls")
         controls_frame.pack(padx=10, pady=10, fill="x")
 
-        self.run_full_button = ttk.Button(controls_frame, text="Run Full Workflow", command=self.run_full_workflow)
+        self.run_full_button = ttk.Button(controls_frame, text="Run Complete Workflow", command=self.run_full_workflow)
         self.run_full_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
 
         # --- Individual Steps ---
