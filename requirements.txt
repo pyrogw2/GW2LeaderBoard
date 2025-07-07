@@ -1,6 +1,7 @@
 # Core dependencies
 requests>=2.25.0
 beautifulsoup4>=4.9.0
+packaging>=21.0
 
 # Development dependencies (optional)
 # pytest>=6.0

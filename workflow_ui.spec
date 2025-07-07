@@ -55,6 +55,16 @@ a = Analysis(
         'certifi',
         'charset_normalizer',
         'idna',
+        # Auto-update dependencies
+        'packaging',
+        'packaging.version',
+        'packaging.specifiers',
+        'packaging.requirements',
+        'webbrowser',
+        'tempfile',
+        'subprocess',
+        'zipfile',
+        'shutil',
         # Tkinter GUI modules
         'tkinter',
         'tkinter.ttk',
