@@ -14,6 +14,11 @@ import shutil
 import webbrowser
 import traceback
 try:
+    import requests
+except ImportError:
+    print("❌ Warning: requests module not found. Auto-update functionality disabled.")
+    requests = None
+try:
     from packaging import version
 except ImportError:
     # Fallback for basic version comparison
@@ -49,7 +54,7 @@ from gw2_leaderboard.web.generate_web_ui import main as generate_web_ui_main
 from gw2_leaderboard.core.guild_manager import main as guild_manager_main
 
 CONFIG_FILE = "sync_config.json"
-VERSION = "0.0.10"  # Current version - should match release tags
+VERSION = "0.0.11"  # Current version - should match release tags
 GITHUB_REPO = "pyrogw2/GW2LeaderBoard"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
@@ -455,6 +460,9 @@ class App(tk.Tk):
     def _check_for_updates_thread_silent(self):
         """Silent background check - only shows notification if update available"""
         try:
+            if requests is None:
+                return  # Silent failure
+                
             response = requests.get(GITHUB_API_URL, timeout=5)
             response.raise_for_status()
             
@@ -490,6 +498,9 @@ class App(tk.Tk):
     def _check_for_updates_thread(self):
         """Background thread for checking updates"""
         try:
+            if requests is None:
+                raise Exception("requests module not available - auto-update disabled")
+                
             print("🔍 Checking for updates...")
             print(f"GitHub API URL: {GITHUB_API_URL}")
             
@@ -536,13 +547,19 @@ class App(tk.Tk):
                 ))
                 
         except Exception as e:
-            print(f"❌ Error checking for updates: {e}")
-            import traceback
-            print(f"Full traceback: {traceback.format_exc()}")
-            self.after(0, lambda: messagebox.showerror(
-                "Update Check Failed", 
-                f"Could not check for updates:\n{str(e)}"
-            ))
+            error_msg = str(e)
+            error_traceback = traceback.format_exc()
+            print(f"❌ Error checking for updates: {error_msg}")
+            print(f"Full traceback: {error_traceback}")
+            
+            # Fix variable scope issue by capturing the values
+            def show_error():
+                messagebox.showerror(
+                    "Update Check Failed", 
+                    f"Could not check for updates:\n{error_msg}"
+                )
+            
+            self.after(0, show_error)
     
     def _handle_update_available(self, latest_release):
         """Handle when an update is available"""

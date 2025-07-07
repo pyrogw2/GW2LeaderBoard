@@ -56,6 +56,9 @@ a = Analysis(
         'charset_normalizer',
         'idna',
         # Auto-update dependencies
+        'requests',
+        'requests.packages',
+        'requests.packages.urllib3',
         'packaging',
         'packaging.version',
         'packaging.specifiers',
