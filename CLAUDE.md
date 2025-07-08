@@ -4,6 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Commands
 
+### Testing (Run Before Committing!)
+```bash
+# MANDATORY: Quick validation before commits (30 seconds)
+python run_tests.py quick
+
+# Comprehensive validation after major changes (40 seconds)
+python run_tests.py full
+
+# Complete test suite validation
+python run_tests.py all
+```
+
 ### Core Processing Pipeline
 ```bash
 # RECOMMENDED: Complete automated workflow
@@ -307,6 +319,12 @@ All fixes have been verified to work correctly:
 - Keep CLAUDE.md synchronized with new commands and capabilities
 - Document database schema changes in API_REFERENCE.md
 - Update metric lists in documentation when adding new performance metrics
+
+### Testing Requirements
+- **MANDATORY: Run tests before every commit** - Execute `python run_tests.py quick` before committing any changes
+- **Run comprehensive tests after major changes** - Execute `python run_tests.py full` after significant feature modifications
+- **All tests must pass** - Do not commit code that fails tests without fixing the issues first
+- **Add new tests for new features** - When adding functionality, create corresponding tests to prevent future regressions
 
 ### Automated Testing Framework
 
