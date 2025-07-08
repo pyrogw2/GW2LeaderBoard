@@ -146,7 +146,7 @@ METRIC_CATEGORIES = {
     'Distance to Tag': 'distance_from_tag_avg'
 }
 
-# Profession-specific metric weightings for composite scores
+# Profession-specific metric weightings for Glicko ratings
 PROFESSION_METRICS = {
     'Firebrand': {
         'metrics': ['Stability', 'Resistance'],
@@ -438,7 +438,7 @@ def get_current_glicko_rating(db_path: str, account_name: str, profession: str, 
 def calculate_profession_session_performance(db_path: str, timestamp: str, profession: str, guild_filter: bool = False) -> List[Dict]:
     """
     Calculate profession-specific performance for a session using weighted z-scores.
-    Returns list of player performance data with profession-specific composite z-scores.
+    Returns list of player performance data with profession-specific Glicko ratings.
     """
     if profession not in PROFESSION_METRICS:
         return []
@@ -648,7 +648,7 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
             weighted_rating,  # This is now the simple weighted average
             actual_games_played,  # Fixed: use max games played, not sum across metrics
             average_rank,
-            weighted_rating,  # Use the same value for composite score (no complex scoring)
+            weighted_rating,  # Use Glicko rating directly
             " ".join(stats_breakdown),
             apm_total,
             apm_no_auto
@@ -661,94 +661,21 @@ def calculate_simple_profession_ratings(db_path: str, profession: str, date_filt
     return results
 
 
-def calculate_composite_score(glicko_rating: float, average_rank_percentile: float, rd: float = 350.0, games_played: int = 0) -> float:
-    """
-    Calculate composite score combining Glicko rating (50%) and rank performance (50%) with participation bonus.
-    
-    Args:
-        glicko_rating: Base Glicko rating (around 1500 +/- 500)
-        average_rank_percentile: Average rank as percentile (0-100, lower is better)
-        rd: Rating Deviation (lower = more confident/experienced player)
-        games_played: Number of games played (for experience scaling)
-    
-    Returns:
-        Composite score where rank performance heavily influences final ranking, 
-        with significant bonus for frequent participation and experience scaling
-    """
-    if average_rank_percentile <= 0:
-        return glicko_rating  # No rank data yet
-    
-    # Convert rank percentile to bonus/penalty (increased impact)
-    # 0-5% rank = +250 to +200 bonus (elite performers)
-    # 5-15% rank = +200 to +100 bonus (very good)
-    # 15-35% rank = +100 to +25 bonus (above average)
-    # 35-65% rank = +25 to -25 penalty (average)
-    # 65-85% rank = -25 to -100 penalty (below average)
-    # 85-100% rank = -100 to -250 penalty (poor performers)
-    
-    if average_rank_percentile <= 5:
-        # Elite tier: 0-5% rank gets +200 to +250 bonus
-        rank_bonus = 250 - (average_rank_percentile * 10)  # 250 at 0%, 200 at 5%
-    elif average_rank_percentile <= 15:
-        # Very good: 5-15% rank gets +100 to +200 bonus
-        rank_bonus = 200 - ((average_rank_percentile - 5) * 10)
-    elif average_rank_percentile <= 35:
-        # Above average: 15-35% rank gets +25 to +100 bonus
-        rank_bonus = 100 - ((average_rank_percentile - 15) * 3.75)
-    elif average_rank_percentile <= 65:
-        # Average: 35-65% rank gets -25 to +25
-        rank_bonus = 25 - ((average_rank_percentile - 35) * 1.67)
-    elif average_rank_percentile <= 85:
-        # Below average: 65-85% rank gets -25 to -100 penalty
-        rank_bonus = -25 - ((average_rank_percentile - 65) * 3.75)
-    else:
-        # Poor: 85-100% rank gets -100 to -250 penalty
-        rank_bonus = -100 - ((average_rank_percentile - 85) * 10)
-    
-    # Calculate participation confidence multiplier based on Rating Deviation
-    # Much more significant bonus for experienced players
-    # RD starts at 350 (new player), decreases with more games
-    # Formula gives 0-10% bonus for experienced players (meaningful but not overwhelming)
-    confidence_multiplier = 1.0 + max(0, (350 - rd) / 350 * 0.10)
-    
-    # Experience scaling: reduce rank bonus impact for players with very few games
-    # Players with 1-2 games get reduced impact from extreme performances
-    experience_factor = 1.0
-    if games_played <= 2:
-        experience_factor = 0.5  # 50% of rank bonus impact
-    elif games_played <= 4:
-        experience_factor = 0.75  # 75% of rank bonus impact
-    elif games_played <= 8:
-        experience_factor = 0.9   # 90% of rank bonus impact
-    # games_played > 8 gets full impact (experience_factor = 1.0)
-    
-    # Apply experience scaling to rank bonus
-    scaled_rank_bonus = rank_bonus * experience_factor
-    
-    # Combine: 50% Glicko + 50% rank performance (with experience scaling)
-    base_composite = (glicko_rating * 0.5) + ((glicko_rating + scaled_rank_bonus) * 0.5)
-    
-    # Apply participation confidence multiplier (now much more significant)
-    composite = base_composite * confidence_multiplier
-    
-    return composite
+# Composite score calculation removed - system now uses pure Glicko ratings
 
 
 def update_glicko_rating(db_path: str, account_name: str, profession: str, metric_category: str,
                         rating: float, rd: float, volatility: float, games_played: int, 
                         total_rank_sum: float, average_rank: float, total_stat_value: float, average_stat_value: float):
-    """Update Glicko rating and composite score in database."""
-    # Calculate composite score with participation bonus
-    composite_score = calculate_composite_score(rating, average_rank, rd, games_played)
-    
+    """Update Glicko rating in database."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     cursor.execute('''
         INSERT OR REPLACE INTO glicko_ratings 
-        (account_name, profession, metric_category, rating, rd, volatility, games_played, total_rank_sum, average_rank, total_stat_value, average_stat_value, composite_score)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (account_name, profession, metric_category, rating, rd, volatility, games_played, total_rank_sum, average_rank, total_stat_value, average_stat_value, composite_score))
+        (account_name, profession, metric_category, rating, rd, volatility, games_played, total_rank_sum, average_rank, total_stat_value, average_stat_value)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (account_name, profession, metric_category, rating, rd, volatility, games_played, total_rank_sum, average_rank, total_stat_value, average_stat_value))
     
     conn.commit()
     conn.close()
@@ -774,7 +701,6 @@ def create_glicko_database(db_path: str):
             average_rank REAL DEFAULT 0.0,
             total_stat_value REAL DEFAULT 0.0,
             average_stat_value REAL DEFAULT 0.0,
-            composite_score REAL DEFAULT 1500.0,
             UNIQUE(account_name, profession, metric_category)
         )
     ''')
@@ -942,7 +868,7 @@ def calculate_rating_deltas_dual_glicko(db_path: str, metric_category: str = Non
             where_clause = " AND ".join(where_conditions)
             
             cursor.execute(f'''
-                SELECT account_name, profession, metric_category, composite_score
+                SELECT account_name, profession, metric_category, rating
                 FROM glicko_ratings 
                 WHERE {where_clause}
             ''', params)
@@ -1086,10 +1012,10 @@ def show_glicko_leaderboard(db_path: str, metric_category: str = None, limit: in
             
             # Show specific metric category leaderboard
             query = '''
-                SELECT account_name, profession, rating, rd, games_played, average_rank, composite_score, average_stat_value
+                SELECT account_name, profession, rating, rd, games_played, average_rank, rating as glicko_rating, average_stat_value
                 FROM glicko_ratings 
                 WHERE metric_category = ?
-                ORDER BY composite_score DESC
+                ORDER BY rating DESC
                 LIMIT ?
             '''
             cursor.execute(query, (metric_category, limit))
@@ -1110,17 +1036,17 @@ def show_glicko_leaderboard(db_path: str, metric_category: str = None, limit: in
             print("-" * 120)
             
             for i, row in enumerate(results, 1):
-                account, prof, rating, rd, games, avg_rank, composite, avg_stat = row
+                account, prof, rating, rd, games, avg_rank, glicko_rating, avg_stat = row
                 avg_rank_display = f"{avg_rank:.1f}%" if avg_rank > 0 else "N/A"
                 avg_stat_display = f"{avg_stat:.1f}" if avg_stat > 0 else "N/A"
-                print(f"{i:<4} {account:<25} {prof:<15} {composite:<6.0f} {rating:<6.0f} {games:<6} {avg_rank_display:<10} {avg_stat_display:<10}")
+                print(f"{i:<4} {account:<25} {prof:<15} {glicko_rating:<6.0f} {rating:<6.0f} {games:<6} {avg_rank_display:<10} {avg_stat_display:<10}")
             
             # Show overall leaderboard only if specifically requested
             if include_overall:
                 query = '''
-                    SELECT account_name, profession, metric_category, rating, rd, games_played, composite_score
+                    SELECT account_name, profession, metric_category, rating, rd, games_played, rating as glicko_rating
                     FROM glicko_ratings 
-                    ORDER BY composite_score DESC
+                    ORDER BY rating DESC
                     LIMIT ?
                 '''
                 cursor.execute(query, (limit,))
@@ -1132,14 +1058,14 @@ def show_glicko_leaderboard(db_path: str, metric_category: str = None, limit: in
                 print("-" * 90)
                 
                 for i, row in enumerate(overall_results, 1):
-                    account, prof, category, rating, rd, games, composite = row
-                    print(f"{i:<4} {account:<25} {prof:<15} {category:<10} {composite:<6.0f} {rating:<6.0f}")
+                    account, prof, category, rating, rd, games, glicko_rating = row
+                    print(f"{i:<4} {account:<25} {prof:<15} {category:<10} {glicko_rating:<6.0f} {rating:<6.0f}")
         else:
             # Show top players across all categories (when no specific metric is requested)
             query = '''
-                SELECT account_name, profession, metric_category, rating, rd, games_played, composite_score
+                SELECT account_name, profession, metric_category, rating, rd, games_played, rating as glicko_rating
                 FROM glicko_ratings 
-                ORDER BY composite_score DESC
+                ORDER BY rating DESC
                 LIMIT ?
             '''
             cursor.execute(query, (limit,))
@@ -1151,8 +1077,8 @@ def show_glicko_leaderboard(db_path: str, metric_category: str = None, limit: in
             print("-" * 90)
             
             for i, row in enumerate(results, 1):
-                account, prof, category, rating, rd, games, composite = row
-                print(f"{i:<4} {account:<25} {prof:<15} {category:<10} {composite:<6.0f} {rating:<6.0f}")
+                account, prof, category, rating, rd, games, glicko_rating = row
+                print(f"{i:<4} {account:<25} {prof:<15} {category:<10} {glicko_rating:<6.0f} {rating:<6.0f}")
     
     finally:
         conn.close()
@@ -1167,7 +1093,7 @@ def show_glicko_leaderboard(db_path: str, metric_category: str = None, limit: in
 
 
 def show_profession_leaderboard(db_path: str, profession: str, limit: int = 50, date_filter: str = None):
-    """Show profession-specific leaderboard using session-based weighted composite scores."""
+    """Show profession-specific leaderboard using session-based weighted Glicko ratings."""
     
     if profession not in PROFESSION_METRICS:
         print(f"No specific metrics defined for profession: {profession}")
@@ -1197,10 +1123,10 @@ def show_profession_leaderboard(db_path: str, profession: str, limit: int = 50, 
     print(f"{'Rank':<4} {'Account':<25} {'Comp':<6} {'Glicko':<6} {'Games':<6} {'Avg Prof Rank%':<14} {'Key Stats'}")
     print("-" * 120)
     
-    for i, (account, rating, games, avg_rank, composite, stats_breakdown) in enumerate(results, 1):
+    for i, (account, rating, games, avg_rank, glicko_rating, stats_breakdown) in enumerate(results, 1):
         # Show the actual average rank percentage from session-based performance within profession
         avg_rank_display = f"{avg_rank:.1f}%" if avg_rank > 0 else "N/A"
-        print(f"{i:<4} {account:<25} {composite:<6.0f} {rating:<6.0f} {games:<6} {avg_rank_display:<14} {stats_breakdown}")
+        print(f"{i:<4} {account:<25} {rating:<6.0f} {rating:<6.0f} {games:<6} {avg_rank_display:<14} {stats_breakdown}")
     
     # Show methodology explanation
     print(f"\nNote: Rankings use session-based z-score evaluation within {profession} players only.")
@@ -1213,10 +1139,10 @@ def show_glicko_player_profile(db_path: str, account_name: str):
     cursor = conn.cursor()
     
     cursor.execute('''
-        SELECT profession, metric_category, rating, rd, volatility, games_played, average_rank, composite_score, average_stat_value
+        SELECT profession, metric_category, rating, rd, volatility, games_played, average_rank, rating as glicko_rating, average_stat_value
         FROM glicko_ratings 
         WHERE account_name = ?
-        ORDER BY composite_score DESC
+        ORDER BY rating DESC
     ''', (account_name,))
     
     results = cursor.fetchall()
@@ -1229,10 +1155,10 @@ def show_glicko_player_profile(db_path: str, account_name: str):
     print(f"{'Profession':<15} {'Category':<10} {'Comp':<6} {'Glicko':<6} {'Avg Rank%':<10} {'Games':<6} {'Avg Stat':<10}")
     print("-" * 95)
     
-    for prof, category, rating, rd, volatility, games, avg_rank, composite, avg_stat in results:
+    for prof, category, rating, rd, volatility, games, avg_rank, glicko_rating, avg_stat in results:
         avg_rank_display = f"{avg_rank:.1f}%" if avg_rank > 0 else "N/A"
         avg_stat_display = f"{avg_stat:.1f}" if avg_stat > 0 else "N/A"
-        print(f"{prof:<15} {category:<10} {composite:<6.0f} {rating:<6.0f} {avg_rank_display:<10} {games:<6} {avg_stat_display:<10}")
+        print(f"{prof:<15} {category:<10} {glicko_rating:<6.0f} {rating:<6.0f} {avg_rank_display:<10} {games:<6} {avg_stat_display:<10}")
     
     # Show summary
     cursor.execute('''
@@ -1290,7 +1216,6 @@ def initialize_database_schema(db_path: str):
                 average_rank REAL DEFAULT 0.0,
                 total_stat_value REAL DEFAULT 0.0,
                 average_stat_value REAL DEFAULT 0.0,
-                composite_score REAL DEFAULT 1500.0,
                 UNIQUE(account_name, profession, metric_category)
             )
         ''')

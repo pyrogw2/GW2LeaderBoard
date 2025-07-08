@@ -112,7 +112,7 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
                 where_clause += " AND NOT (g.average_stat_value = 0 AND g.games_played = 1)"
             
             cursor.execute(f'''
-                SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                SELECT g.account_name, g.profession, g.rating, g.rating, g.games_played, 
                        g.average_rank, g.average_stat_value,
                        CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
                 FROM glicko_ratings g
@@ -128,7 +128,7 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
                 where_clause += " AND NOT (average_stat_value = 0 AND games_played = 1)"
             
             cursor.execute(f'''
-                SELECT account_name, profession, composite_score, rating, games_played, 
+                SELECT account_name, profession, rating, rating, games_played, 
                        average_rank, average_stat_value, 0 as is_guild_member
                 FROM glicko_ratings
                 {where_clause}
@@ -139,42 +139,39 @@ def get_glicko_leaderboard_data(db_path: str, metric_category: str = None, limit
         # Overall leaderboard with guild membership info
         if guild_table_exists:
             cursor.execute('''
-                SELECT g.account_name, g.profession, g.composite_score, g.rating, g.games_played, 
+                SELECT g.account_name, g.profession, g.rating, g.rating, g.games_played, 
                        g.average_rank, g.average_stat_value,
                        CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
                 FROM glicko_ratings g
                 LEFT JOIN guild_members gm ON g.account_name = gm.account_name
                 WHERE g.metric_category = 'Overall'
-                ORDER BY g.composite_score DESC
+                ORDER BY g.rating DESC
                 LIMIT ?
             ''', (limit,))
         else:
             cursor.execute('''
-                SELECT account_name, profession, composite_score, rating, games_played, 
+                SELECT account_name, profession, rating, rating, games_played, 
                        average_rank, average_stat_value, 0 as is_guild_member
                 FROM glicko_ratings
                 WHERE metric_category = 'Overall'
-                ORDER BY composite_score DESC
+                ORDER BY rating DESC
                 LIMIT ?
             ''', (limit,))
     
     results = cursor.fetchall()
     
     leaderboard_data = []
-    for i, (account_name, profession, composite_score, rating, games_played, average_rank, average_stat_value, is_guild_member) in enumerate(results, 1):
-        # For individual metrics, use Glicko rating as both composite score and rating
-        # For overall metrics, keep original composite score
-        if metric_category and metric_category != "Overall":
-            actual_composite_score = rating  # Use Glicko rating for individual metrics
-        else:
-            actual_composite_score = composite_score  # Use composite score for overall
+    for i, (account_name, profession, rating1, rating2, games_played, average_rank, average_stat_value, is_guild_member) in enumerate(results, 1):
+        # Use Glicko rating for both composite score and rating fields
+        # (rating1 and rating2 are the same value due to SQL query structure)
+        actual_rating = rating1
             
         entry = {
             'rank': i,
             'account_name': account_name,
             'profession': profession,
-            'composite_score': actual_composite_score,
-            'glicko_rating': rating,
+            'composite_score': actual_rating,
+            'glicko_rating': actual_rating,
             'games_played': games_played,
             'average_rank_percent': average_rank,
             'average_stat_value': average_stat_value,

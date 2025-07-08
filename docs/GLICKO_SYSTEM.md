@@ -92,16 +92,17 @@ def update_glicko_rating(rating, rd, volatility, z_score, opponent_rating=1500, 
 
 #### 4. Composite Score Calculation
 
-The final ranking score combines multiple factors:
+The final ranking score now uses pure Glicko ratings:
 
 ```python
-composite_score = glicko_rating + (100 - average_rank_percent) * 10
+# Composite scoring system removed - using pure Glicko ratings
+final_score = glicko_rating
 ```
 
-**Components:**
-- **Glicko Rating**: Base skill assessment (1200-1800+ range)
-- **Average Rank Percent**: How often the player ranks in top percentiles
-- **Scaling Factor**: 10x multiplier to balance the components
+**Pure Glicko System:**
+- **Glicko Rating**: Direct skill assessment (1200-1800+ range)
+- **No Additional Factors**: Eliminates complexity of composite scoring
+- **Simplified System**: Rankings based solely on statistical performance
 
 ### Metric Categories
 

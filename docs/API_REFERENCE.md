@@ -136,7 +136,7 @@ CREATE TABLE glicko_ratings (
     games_played INTEGER NOT NULL,              -- Number of sessions rated
     average_rank REAL NOT NULL,                 -- Average percentile rank (0-100)
     average_stat_value REAL NOT NULL,           -- Average raw metric value
-    composite_score REAL NOT NULL,              -- Final ranking score
+    -- composite_score column removed in favor of pure Glicko ratings
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Last calculation time
     UNIQUE(account_name, profession, metric_category)
 );
@@ -146,7 +146,7 @@ CREATE TABLE glicko_ratings (
 
 ```sql
 CREATE INDEX idx_metric_category ON glicko_ratings(metric_category);
-CREATE INDEX idx_composite_score ON glicko_ratings(composite_score DESC);
+CREATE INDEX idx_glicko_rating ON glicko_ratings(rating DESC);
 CREATE INDEX idx_account_profession_rating ON glicko_ratings(account_name, profession);
 ```
 
