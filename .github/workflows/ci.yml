@@ -1,0 +1,253 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest beautifulsoup4 requests
+    
+    - name: Create test database and config
+      run: |
+        # Create test configuration using GitHub secret
+        echo '${{ secrets.GW2_SYNC_CONFIG_JSON }}' > sync_config.json
+        
+        # Fallback test configuration if secret is not available
+        if [ ! -s sync_config.json ]; then
+          cat > sync_config.json << 'EOL'
+        {
+          "log_aggregate_url": "https://example.com/test",
+          "database_path": "gw2_comprehensive.db",
+          "guild": {
+            "api_key": "test-key",
+            "guild_id": "test-guild-id",
+            "guild_name": "Test Guild",
+            "guild_tag": "TEST",
+            "filter_enabled": true
+          }
+        }
+        EOL
+        fi
+        
+        # Create expanded test database for CI
+        python -c "
+        import sqlite3
+        import os
+        from datetime import datetime, timedelta
+        
+        # Create test database
+        conn = sqlite3.connect('gw2_comprehensive.db')
+        cursor = conn.cursor()
+        
+        # Create tables
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS player_performances (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_name TEXT NOT NULL,
+                profession TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                parsed_date TEXT NOT NULL,
+                target_dps REAL DEFAULT 0.0,
+                healing_per_sec REAL DEFAULT 0.0,
+                barrier_per_sec REAL DEFAULT 0.0,
+                condition_cleanses_per_sec REAL DEFAULT 0.0,
+                boon_strips_per_sec REAL DEFAULT 0.0,
+                stability_gen_per_sec REAL DEFAULT 0.0,
+                resistance_gen_per_sec REAL DEFAULT 0.0,
+                might_gen_per_sec REAL DEFAULT 0.0,
+                protection_gen_per_sec REAL DEFAULT 0.0,
+                down_contribution_per_sec REAL DEFAULT 0.0,
+                burst_consistency_1s REAL DEFAULT 0.0,
+                burst_damage_1s REAL DEFAULT 0.0,
+                distance_from_tag_avg REAL DEFAULT 0.0,
+                fight_time REAL DEFAULT 0.0,
+                apm_total REAL DEFAULT 0.0,
+                apm_no_auto REAL DEFAULT 0.0
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS glicko_ratings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_name TEXT NOT NULL,
+                profession TEXT NOT NULL,
+                metric_category TEXT NOT NULL,
+                rating REAL DEFAULT 1500.0,
+                rd REAL DEFAULT 350.0,
+                volatility REAL DEFAULT 0.06,
+                games_played INTEGER DEFAULT 0,
+                total_rank_sum REAL DEFAULT 0.0,
+                average_rank REAL DEFAULT 0.0,
+                total_stat_value REAL DEFAULT 0.0,
+                average_stat_value REAL DEFAULT 0.0,
+                UNIQUE(account_name, profession, metric_category)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS guild_members (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_name TEXT NOT NULL UNIQUE,
+                guild_id TEXT NOT NULL,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS player_rating_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_name TEXT NOT NULL,
+                profession TEXT NOT NULL,
+                metric_category TEXT NOT NULL,
+                rating REAL NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Insert more comprehensive test data for better test coverage
+        import random
+        professions = ['Firebrand', 'Chronomancer', 'Druid', 'Scourge', 'Weaver']
+        timestamps = ['202507081200', '202507071200', '202507061200', '202507051200', '202507041200']
+        
+        player_id = 1
+        for i, timestamp in enumerate(timestamps):
+            parsed_date = f'2025-07-0{8-i}'
+            for j in range(6):  # 6 players per session
+                account_name = f'TestPlayer{player_id:02d}.{1234+player_id}'
+                profession = professions[player_id % len(professions)]
+                
+                # Generate realistic performance data
+                base_dps = random.uniform(1800, 2800)
+                healing = random.uniform(800, 2200)
+                barrier = random.uniform(400, 1200)
+                apm_total = random.uniform(60, 85)
+                apm_no_auto = random.uniform(45, 70)
+                
+                cursor.execute('''
+                    INSERT INTO player_performances (
+                        account_name, profession, timestamp, parsed_date, target_dps, healing_per_sec, barrier_per_sec,
+                        condition_cleanses_per_sec, boon_strips_per_sec, stability_gen_per_sec, resistance_gen_per_sec,
+                        might_gen_per_sec, protection_gen_per_sec, down_contribution_per_sec, burst_consistency_1s,
+                        burst_damage_1s, distance_from_tag_avg, fight_time, apm_total, apm_no_auto
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    account_name, profession, timestamp, parsed_date, base_dps, healing, barrier,
+                    random.uniform(10, 30), random.uniform(5, 15), random.uniform(15, 35), random.uniform(8, 20),
+                    random.uniform(25, 45), random.uniform(15, 35), random.uniform(80, 200), random.uniform(0.5, 0.9),
+                    random.uniform(25000, 55000), random.uniform(150, 350), random.uniform(25, 45), apm_total, apm_no_auto
+                ))
+                
+                # Insert corresponding ratings
+                for metric in ['DPS', 'Healing', 'Barrier', 'Stability']:
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO glicko_ratings (
+                            account_name, profession, metric_category, rating, rd, volatility, games_played,
+                            total_rank_sum, average_rank, total_stat_value, average_stat_value
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        account_name, profession, metric, 
+                        random.uniform(1400, 1700), random.uniform(120, 200), 0.06,
+                        random.randint(3, 8), random.uniform(10, 25), random.uniform(2, 6),
+                        random.uniform(1000, 3000), random.uniform(1000, 3000)
+                    ))
+                
+                # Add some guild members
+                if player_id % 3 == 0:
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO guild_members (account_name, guild_id) VALUES (?, ?)
+                    ''', (account_name, '5DE91D07-EED0-4835-8CD8-B77A3EA3CB1D'))
+                
+                player_id += 1
+        
+        conn.commit()
+        conn.close()
+        print('Enhanced test database created successfully')
+        "
+    
+    - name: Run tests
+      run: |
+        python -m pytest tests/ -v --tb=short
+    
+    - name: Test web UI generation
+      run: |
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, 'src')
+        from gw2_leaderboard.web.generate_web_ui import main
+        
+        # Test web UI generation with test database
+        sys.argv = ['generate_web_ui', 'gw2_comprehensive.db', '-o', 'test_output', '--skip-recalc']
+        try:
+            main()
+            print('✅ Web UI generation test passed')
+        except Exception as e:
+            print(f'❌ Web UI generation test failed: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Test database operations
+      run: |
+        python -c "
+        import sqlite3
+        
+        # Test database integrity
+        conn = sqlite3.connect('gw2_comprehensive.db')
+        cursor = conn.cursor()
+        
+        # Check tables exist
+        cursor.execute('SELECT COUNT(*) FROM player_performances')
+        perf_count = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM glicko_ratings')
+        rating_count = cursor.fetchone()[0]
+        
+        cursor.execute('SELECT COUNT(*) FROM guild_members')
+        guild_count = cursor.fetchone()[0]
+        
+        print(f'Database integrity check:')
+        print(f'  - Player performances: {perf_count} records')
+        print(f'  - Glicko ratings: {rating_count} records')
+        print(f'  - Guild members: {guild_count} records')
+        
+        if perf_count > 0 and rating_count > 0 and guild_count > 0:
+            print('✅ Database operations test passed')
+        else:
+            print('❌ Database operations test failed')
+            sys.exit(1)
+        
+        conn.close()
+        "
+    
+    - name: Test imports
+      run: |
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        
+        # Test core imports
+        try:
+            from gw2_leaderboard.core.glicko_rating_system import GlickoSystem, GlickoRating
+            from gw2_leaderboard.web.data_processing import get_glicko_leaderboard_data
+            from gw2_leaderboard.web.parallel_processing import generate_all_leaderboard_data
+            print('✅ Core imports test passed')
+        except Exception as e:
+            print(f'❌ Core imports test failed: {e}')
+            sys.exit(1)
+        "
