@@ -308,6 +308,44 @@ All fixes have been verified to work correctly:
 - Document database schema changes in API_REFERENCE.md
 - Update metric lists in documentation when adding new performance metrics
 
+### Automated Testing Framework
+
+To prevent regressions during development, a comprehensive test suite is available:
+
+#### Quick Regression Tests (30 seconds)
+```bash
+python run_tests.py quick
+```
+Fast validation of core functionality:
+- Database schema integrity and recent data validation
+- APM data exists and calculations work correctly
+- Date filtering logic and profession metrics configuration
+- Module imports and system health checks
+
+#### Comprehensive Functionality Tests (2-3 minutes)
+```bash
+python run_tests.py full
+```
+Full end-to-end validation by generating test web UI:
+- **Date filtering differences**: Validates 30d/60d/all show different data across individual metrics, profession leaderboards, and high scores
+- **APM calculation accuracy**: Ensures APM displays actual values instead of hardcoded 0.0/0.0
+- **UI feature validation**: Tests modal data structure, guild filtering, and latest change functionality
+- **Data integrity**: Validates overall JSON structure and required fields
+
+#### Development Workflow Integration
+```bash
+# Before committing changes
+python run_tests.py quick
+
+# After major feature changes  
+python run_tests.py full
+
+# Complete validation
+python run_tests.py all
+```
+
+The test suite specifically validates the critical fixes from July 2025 (date filtering, APM calculation, profession leaderboards) to prevent future regressions.
+
 ## Adding New Performance Metrics
 
 This guide walks through the complete process of adding a new performance metric to the leaderboard system.
