@@ -23,9 +23,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest beautifulsoup4 requests
     
-    - name: Create test database
+    - name: Create test database and config
       run: |
-        # Create a minimal test database for CI
+        # Create test configuration
+        cat > sync_config.json << 'EOL'
+        {
+          "log_aggregate_url": "https://example.com/test",
+          "database_path": "gw2_comprehensive.db",
+          "guild_enabled": true,
+          "guild_name": "Test Guild",
+          "guild_tag": "TEST",
+          "guild_api_key": "test-key",
+          "guild_id": "test-guild-id"
+        }
+        EOL
+        
+        # Create expanded test database for CI
         python -c "
         import sqlite3
         import os
@@ -100,46 +113,64 @@ jobs:
             )
         ''')
         
-        # Insert test data
-        test_data = [
-            ('TestPlayer1.1234', 'Firebrand', '202507081200', '2025-07-08', 2500.0, 1200.0, 800.0, 15.0, 8.0, 25.0, 12.0, 40.0, 20.0, 180.0, 0.8, 45000.0, 250.0, 30.0, 68.0, 55.0),
-            ('TestPlayer2.5678', 'Chronomancer', '202507081200', '2025-07-08', 2200.0, 800.0, 1200.0, 20.0, 12.0, 15.0, 8.0, 30.0, 25.0, 150.0, 0.7, 38000.0, 180.0, 25.0, 72.0, 58.0),
-            ('TestPlayer3.9012', 'Druid', '202507081200', '2025-07-08', 1800.0, 2000.0, 600.0, 25.0, 5.0, 20.0, 15.0, 35.0, 30.0, 100.0, 0.6, 28000.0, 320.0, 35.0, 65.0, 52.0),
-        ]
+        # Insert more comprehensive test data for better test coverage
+        import random
+        professions = ['Firebrand', 'Chronomancer', 'Druid', 'Scourge', 'Weaver']
+        timestamps = ['202507081200', '202507071200', '202507061200', '202507051200', '202507041200']
         
-        for data in test_data:
-            cursor.execute('''
-                INSERT INTO player_performances (
-                    account_name, profession, timestamp, parsed_date, target_dps, healing_per_sec, barrier_per_sec,
-                    condition_cleanses_per_sec, boon_strips_per_sec, stability_gen_per_sec, resistance_gen_per_sec,
-                    might_gen_per_sec, protection_gen_per_sec, down_contribution_per_sec, burst_consistency_1s,
-                    burst_damage_1s, distance_from_tag_avg, fight_time, apm_total, apm_no_auto
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', data)
-        
-        # Insert test ratings
-        test_ratings = [
-            ('TestPlayer1.1234', 'Firebrand', 'DPS', 1650.0, 150.0, 0.06, 5, 15.0, 3.0, 2500.0, 2500.0),
-            ('TestPlayer2.5678', 'Chronomancer', 'DPS', 1580.0, 160.0, 0.06, 4, 18.0, 4.5, 2200.0, 2200.0),
-            ('TestPlayer3.9012', 'Druid', 'Healing', 1620.0, 140.0, 0.06, 6, 12.0, 2.0, 2000.0, 2000.0),
-        ]
-        
-        for rating_data in test_ratings:
-            cursor.execute('''
-                INSERT INTO glicko_ratings (
-                    account_name, profession, metric_category, rating, rd, volatility, games_played,
-                    total_rank_sum, average_rank, total_stat_value, average_stat_value
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', rating_data)
-        
-        # Insert test guild members
-        cursor.execute('''
-            INSERT INTO guild_members (account_name, guild_id) VALUES (?, ?)
-        ''', ('TestPlayer1.1234', 'test-guild-id'))
+        player_id = 1
+        for i, timestamp in enumerate(timestamps):
+            parsed_date = f'2025-07-0{8-i}'
+            for j in range(6):  # 6 players per session
+                account_name = f'TestPlayer{player_id:02d}.{1234+player_id}'
+                profession = professions[player_id % len(professions)]
+                
+                # Generate realistic performance data
+                base_dps = random.uniform(1800, 2800)
+                healing = random.uniform(800, 2200)
+                barrier = random.uniform(400, 1200)
+                apm_total = random.uniform(60, 85)
+                apm_no_auto = random.uniform(45, 70)
+                
+                cursor.execute('''
+                    INSERT INTO player_performances (
+                        account_name, profession, timestamp, parsed_date, target_dps, healing_per_sec, barrier_per_sec,
+                        condition_cleanses_per_sec, boon_strips_per_sec, stability_gen_per_sec, resistance_gen_per_sec,
+                        might_gen_per_sec, protection_gen_per_sec, down_contribution_per_sec, burst_consistency_1s,
+                        burst_damage_1s, distance_from_tag_avg, fight_time, apm_total, apm_no_auto
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    account_name, profession, timestamp, parsed_date, base_dps, healing, barrier,
+                    random.uniform(10, 30), random.uniform(5, 15), random.uniform(15, 35), random.uniform(8, 20),
+                    random.uniform(25, 45), random.uniform(15, 35), random.uniform(80, 200), random.uniform(0.5, 0.9),
+                    random.uniform(25000, 55000), random.uniform(150, 350), random.uniform(25, 45), apm_total, apm_no_auto
+                ))
+                
+                # Insert corresponding ratings
+                for metric in ['DPS', 'Healing', 'Barrier', 'Stability']:
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO glicko_ratings (
+                            account_name, profession, metric_category, rating, rd, volatility, games_played,
+                            total_rank_sum, average_rank, total_stat_value, average_stat_value
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        account_name, profession, metric, 
+                        random.uniform(1400, 1700), random.uniform(120, 200), 0.06,
+                        random.randint(3, 8), random.uniform(10, 25), random.uniform(2, 6),
+                        random.uniform(1000, 3000), random.uniform(1000, 3000)
+                    ))
+                
+                # Add some guild members
+                if player_id % 3 == 0:
+                    cursor.execute('''
+                        INSERT OR REPLACE INTO guild_members (account_name, guild_id) VALUES (?, ?)
+                    ''', (account_name, 'test-guild-id'))
+                
+                player_id += 1
         
         conn.commit()
         conn.close()
-        print('Test database created successfully')
+        print('Enhanced test database created successfully')
         "
     
     - name: Run tests
