@@ -267,6 +267,16 @@ git tag v1.0.0 && git push origin v1.0.0  # Triggers GitHub Actions
 - **Solution**: Changed from sum to max of `games_played` across metrics since same raids generate all metrics
 - **Files Modified**: `src/gw2_leaderboard/web/parallel_processing.py` (`calculate_simple_profession_ratings_fast_filter()`)
 
+#### 7. APM Data Calculation in Profession Leaderboards (July 8, 2025)
+- **Issue**: APM data showed 0.0/0.0 for all players in profession leaderboards despite actual data existing in database
+- **Root Cause**: Hardcoded 0.0 values in `calculate_simple_profession_ratings_fast_filter()` function and incorrect date filtering logic
+- **Solution**: 
+  - Replaced hardcoded values with actual database queries calculating average APM per player/profession
+  - Fixed date filtering to use proper `datetime` calculations matching other parts of codebase
+  - Applied correct timestamp format filtering (`YYYYMMDDHHMM`) with 30d/60d/90d periods
+- **Files Modified**: `src/gw2_leaderboard/web/parallel_processing.py` (lines 291-347)
+- **Verification**: Players now show actual APM values (e.g., "64.2/38.0") instead of "0.0/0.0" when data exists
+
 ### Testing and Validation
 All fixes have been verified to work correctly:
 - Profession leaderboards show different data for each time period
@@ -275,6 +285,7 @@ All fixes have been verified to work correctly:
 - Web UI loads and displays profession data properly
 - Player Stats (Most Played Professions) now shows different session counts across time periods
 - Profession raid counts are accurate (e.g., 5 raids instead of inflated 25 for 5-metric professions)
+- APM data displays actual calculated values (e.g., "64.2/38.0") instead of hardcoded "0.0/0.0"
 - All sections provide data across all time periods (30d, 60d, 90d, overall)
 
 ### Development Guidelines

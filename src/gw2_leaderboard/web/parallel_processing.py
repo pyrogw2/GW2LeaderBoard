@@ -288,13 +288,59 @@ def calculate_simple_profession_ratings_fast_filter(db_path: str, profession: st
                 average_rank,         # average_rank
                 weighted_rating,      # glicko_rating (same as composite for professions)
                 key_stats,            # key_stats
-                0.0,                 # apm_total (will be filled later)
-                0.0                  # apm_no_auto (will be filled later)
+                0.0,                 # apm_total (will be calculated)
+                0.0                  # apm_no_auto (will be calculated)
             ))
         
         # Sort by weighted rating (descending)
         results.sort(key=lambda x: x[1], reverse=True)
         
+        # Calculate APM data for each player
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Build date filter condition (timestamp format is YYYYMMDDHHMM)
+        date_condition = ""
+        if date_filter and date_filter != "overall":
+            try:
+                days = int(date_filter.rstrip('d'))
+                # Calculate cutoff timestamp in YYYYMMDDHHMM format
+                from datetime import datetime, timedelta
+                cutoff_date = datetime.now() - timedelta(days=days)
+                cutoff_timestamp = cutoff_date.strftime('%Y%m%d%H%M')
+                date_condition = f"AND pp.timestamp >= '{cutoff_timestamp}'"
+            except (ValueError, AttributeError):
+                # If date_filter is invalid, ignore it
+                date_condition = ""
+        
+        # Get APM data for players with proper date filtering
+        for i, result_tuple in enumerate(results):
+            account_name = result_tuple[0]
+            
+            # Calculate average APM for this player in the target profession
+            cursor.execute(f"""
+                SELECT AVG(pp.apm_total), AVG(pp.apm_no_auto)
+                FROM player_performances pp
+                WHERE pp.account_name = ? AND pp.profession = ?
+                {date_condition}
+                AND pp.apm_total > 0
+            """, (account_name, profession))
+            
+            apm_result = cursor.fetchone()
+            if apm_result and apm_result[0] is not None:
+                apm_total = round(apm_result[0], 1)
+                apm_no_auto = round(apm_result[1], 1)
+            else:
+                apm_total = 0.0
+                apm_no_auto = 0.0
+            
+            # Update the result tuple with actual APM values
+            result_list = list(result_tuple)
+            result_list[6] = apm_total    # apm_total
+            result_list[7] = apm_no_auto  # apm_no_auto
+            results[i] = tuple(result_list)
+        
+        conn.close()
         return results
         
     except Exception as e:
