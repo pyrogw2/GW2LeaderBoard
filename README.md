@@ -1,5 +1,7 @@
 # GW2 WvW Leaderboard System
 
+[![CI](https://github.com/pyrogw2/GW2LeaderBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/pyrogw2/GW2LeaderBoard/actions/workflows/ci.yml)
+
 An automated system for parsing Guild Wars 2 World vs World combat logs and generating skill-based rankings using the Glicko-2 rating system with advanced statistical analysis.
 
 ## 🏆 Features
@@ -180,14 +182,34 @@ For building executables yourself, see [EXECUTABLE_BUILD.md](EXECUTABLE_BUILD.md
 
 ## 🤝 Contributing
 
-This system is designed for the Guild Wars 2 WvW community. Contributions welcome for:
+We welcome contributions to the GW2 WvW Leaderboards project! This system is designed for the Guild Wars 2 WvW community.
 
-- New metrics and profession support
-- Performance optimizations  
-- UI improvements and accessibility
-- Documentation enhancements
-- Bug fixes and testing
-- Guild and API integrations
+### How to Contribute
+
+1. **Read our [Contributing Guide](CONTRIBUTING.md)** for development standards and workflow
+2. **Check out our [Issues](https://github.com/pyrogw2/GW2LeaderBoard/issues)** for tasks to work on
+3. **Follow our git workflow** with conventional commits and feature branches
+4. **Run tests** locally before submitting PRs
+5. **Update documentation** for any new features
+
+### Areas We Need Help With
+
+- 🏆 New metrics and profession support
+- ⚡ Performance optimizations  
+- 🎨 UI improvements and accessibility
+- 📚 Documentation enhancements
+- 🐛 Bug fixes and testing
+- 🔗 Guild and API integrations
+- 🧪 Test coverage improvements
+
+### Development Standards
+
+- **Git Workflow**: Feature branches with conventional commits
+- **Testing**: All PRs must pass CI tests
+- **Code Quality**: Follow Python best practices
+- **Documentation**: Update docs for user-facing changes
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
