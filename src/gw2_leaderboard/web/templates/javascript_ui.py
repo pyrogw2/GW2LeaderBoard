@@ -1357,6 +1357,9 @@ function populatePlayerModal(accountName, playerData) {{
     // Set modal title
     document.getElementById('player-modal-title').textContent = `Player Details: ${{accountName}}`;
     
+    // Clear any previous modal state
+    clearModalState();
+    
     // Populate overview section
     populatePlayerOverview(accountName, playerData);
     
@@ -1371,6 +1374,26 @@ function populatePlayerModal(accountName, playerData) {{
     
     // Set up rating history chart
     setupRatingHistoryChart(accountName, playerData);
+}}
+
+function clearModalState() {{
+    // Clear any existing chart
+    if (window.currentPlayerChart) {{
+        window.currentPlayerChart.destroy();
+        window.currentPlayerChart = null;
+    }}
+    
+    // Clear chart status
+    const chartStatus = document.getElementById('chart-status');
+    if (chartStatus) {{
+        chartStatus.textContent = '';
+    }}
+    
+    // Reset profession filter
+    const professionFilter = document.getElementById('profession-filter');
+    if (professionFilter) {{
+        professionFilter.innerHTML = '';
+    }}
 }}
 
 function populatePlayerOverview(accountName, playerData) {{
@@ -1568,16 +1591,23 @@ function setupRatingHistoryChart(accountName, playerData) {{
         // Set first profession as default
         professionSelect.value = professions[0];
     
-    let currentChart = null;
+    // Use global variable for chart state management
+    let currentChart = window.currentPlayerChart || null;
     
     async function fetchRatingHistory(accountName, metric, profession) {{
-        // In a real implementation, this would call a backend API
-        // For now, simulate historical data based on current data
-        const currentData = playerData.find(entry => 
-            entry.category === 'individual' && 
-            entry.metric === metric && 
-            entry.profession === profession
-        );
+        try {{
+            // In a real implementation, this would call a backend API
+            // For now, simulate historical data based on current data
+            if (!playerData || !Array.isArray(playerData)) {{
+                console.warn('No player data available for rating history');
+                return [];
+            }}
+            
+            const currentData = playerData.find(entry => 
+                entry.category === 'individual' && 
+                entry.metric === metric && 
+                entry.profession === profession
+            );
         
         if (!currentData) {{
             return [];
@@ -1608,6 +1638,10 @@ function setupRatingHistoryChart(accountName, playerData) {{
         }}
         
         return history;
+        }} catch (error) {{
+            console.error('Error in fetchRatingHistory:', error);
+            return [];
+        }}
     }}
     
     async function updateChart() {{
@@ -1629,6 +1663,7 @@ function setupRatingHistoryChart(accountName, playerData) {{
                 if (currentChart) {{
                     currentChart.destroy();
                     currentChart = null;
+                    window.currentPlayerChart = null;
                 }}
                 return;
             }}
@@ -1761,6 +1796,7 @@ function setupRatingHistoryChart(accountName, playerData) {{
             
             // Create new chart
             currentChart = new Chart(ctx, config);
+            window.currentPlayerChart = currentChart;
             
             const currentRating = ratings[ratings.length - 1];
             const startRating = ratings[0];
