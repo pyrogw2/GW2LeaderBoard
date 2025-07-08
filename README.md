@@ -1,6 +1,7 @@
 # GW2 WvW Leaderboard System
 
 [![CI](https://github.com/pyrogw2/GW2LeaderBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/pyrogw2/GW2LeaderBoard/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/pyrogw2/GW2LeaderBoard)](https://github.com/pyrogw2/GW2LeaderBoard/releases/latest)
 
 An automated system for parsing Guild Wars 2 World vs World combat logs and generating skill-based rankings using the Glicko-2 rating system with advanced statistical analysis.
 
