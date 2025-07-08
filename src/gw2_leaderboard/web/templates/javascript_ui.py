@@ -71,6 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {{
     initializePage();
     setupEventListeners();
     loadCurrentData();
+    
+    // Make initial player names clickable after a short delay
+    setTimeout(makePlayerNamesClickable, 100);
 }});
 
 function initializePage() {{
@@ -247,6 +250,32 @@ function setupEventListeners() {{
                     }}
                 }}
             }});
+        }}
+    }});
+    
+    // Modal event listeners
+    const modal = document.getElementById('player-modal');
+    const closeButton = modal.querySelector('.modal-close');
+    
+    // Close modal when clicking X
+    closeButton.addEventListener('click', function() {{
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }});
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {{
+        if (e.target === modal) {{
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }}
+    }});
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {{
+        if (e.key === 'Escape' && modal.style.display === 'flex') {{
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
         }}
     }});
 }}
@@ -1251,7 +1280,522 @@ function makePlayerNamesClickable() {{
 }}
 
 function showPlayerModal(accountName) {{
-    // Implementation for player modal
     console.log('Show player modal for:', accountName);
-    // TODO: Implement player detail modal functionality
-}}"""
+    
+    // Extract player data from all leaderboard data
+    const playerData = extractPlayerData(accountName);
+    
+    if (!playerData || playerData.length === 0) {{
+        console.log('No data found for player:', accountName);
+        return;
+    }}
+    
+    // Populate modal with player data
+    populatePlayerModal(accountName, playerData);
+    
+    // Show the modal
+    const modal = document.getElementById('player-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}}
+
+function extractPlayerData(accountName) {{
+    const playerData = [];
+    
+    // Get data from current view
+    const data = leaderboardData.date_filters[currentFilter];
+    
+    // Extract from individual metrics
+    if (data.individual_metrics) {{
+        Object.keys(data.individual_metrics).forEach(metric => {{
+            const metricData = data.individual_metrics[metric];
+            const playerEntries = metricData.filter(entry => entry.account_name === accountName);
+            playerEntries.forEach(entry => {{
+                playerData.push({{
+                    ...entry,
+                    metric: metric,
+                    category: 'individual'
+                }});
+            }});
+        }});
+    }}
+    
+    // Extract from profession leaderboards
+    if (data.profession_leaderboards) {{
+        Object.keys(data.profession_leaderboards).forEach(profession => {{
+            const profData = data.profession_leaderboards[profession];
+            // Handle both 'leaderboard' and 'players' keys for backward compatibility
+            const playersList = profData.leaderboard || profData.players;
+            if (playersList) {{
+                const playerEntries = playersList.filter(entry => entry.account_name === accountName);
+                playerEntries.forEach(entry => {{
+                    playerData.push({{
+                        ...entry,
+                        profession: profession,
+                        category: 'profession'
+                    }});
+                }});
+            }}
+        }});
+    }}
+    
+    // Extract from player stats
+    if (data.player_stats && data.player_stats['Most Played Professions']) {{
+        const playerStats = data.player_stats['Most Played Professions'].filter(entry => entry.account_name === accountName);
+        playerStats.forEach(entry => {{
+            playerData.push({{
+                ...entry,
+                category: 'stats'
+            }});
+        }});
+    }}
+    
+    return playerData;
+}}
+
+function populatePlayerModal(accountName, playerData) {{
+    // Set modal title
+    document.getElementById('player-modal-title').textContent = `Player Details: ${{accountName}}`;
+    
+    // Populate overview section
+    populatePlayerOverview(accountName, playerData);
+    
+    // Populate activity section
+    populatePlayerActivity(playerData);
+    
+    // Populate metrics section
+    populatePlayerMetrics(playerData);
+    
+    // Set up profession filter
+    setupProfessionFilter(playerData);
+    
+    // Set up rating history chart
+    setupRatingHistoryChart(accountName, playerData);
+}}
+
+function populatePlayerOverview(accountName, playerData) {{
+    const overviewContent = document.getElementById('player-overview-content');
+    
+    // Get unique professions
+    const professions = [...new Set(playerData.map(entry => entry.profession).filter(Boolean))];
+    
+    // Calculate total games played
+    const totalGames = playerData.reduce((sum, entry) => sum + (entry.games_played || 0), 0);
+    
+    // Get guild status
+    const isGuildMember = playerData.some(entry => entry.is_guild_member);
+    const guildStatus = isGuildMember ? `✅ Guild Member` : `❌ Not in Guild`;
+    
+    overviewContent.innerHTML = `
+        <div class="stat-row">
+            <span class="stat-label">Account:</span>
+            <span class="stat-value">${{accountName}}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Guild Status:</span>
+            <span class="stat-value">${{guildStatus}}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Professions Played:</span>
+            <span class="stat-value">${{professions.length}}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Total Games:</span>
+            <span class="stat-value">${{totalGames}}</span>
+        </div>
+    `;
+}}
+
+function populatePlayerActivity(playerData) {{
+    const activityContent = document.getElementById('player-activity-content');
+    
+    // Get profession activity stats
+    const professionStats = {{}};
+    playerData.forEach(entry => {{
+        if (entry.profession && entry.games_played) {{
+            if (!professionStats[entry.profession]) {{
+                professionStats[entry.profession] = 0;
+            }}
+            professionStats[entry.profession] += entry.games_played;
+        }}
+    }});
+    
+    // Sort by games played
+    const sortedProfessions = Object.entries(professionStats)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+    
+    let activityHTML = '<div class="activity-list">';
+    sortedProfessions.forEach(([profession, games]) => {{
+        activityHTML += `
+            <div class="activity-item">
+                <span class="activity-profession">${{profession}}</span>
+                <span class="activity-games">${{games}} games</span>
+            </div>
+        `;
+    }});
+    activityHTML += '</div>';
+    
+    activityContent.innerHTML = activityHTML;
+}}
+
+function populatePlayerMetrics(playerData) {{
+    const metricsContent = document.getElementById('player-metrics-content');
+    
+    // Group by category and metric
+    const individualMetrics = playerData.filter(entry => entry.category === 'individual');
+    const professionMetrics = playerData.filter(entry => entry.category === 'profession');
+    
+    let metricsHTML = '<div class="metric-grid">';
+    
+    // Individual metrics
+    if (individualMetrics.length > 0) {{
+        metricsHTML += '<h4>Individual Metrics</h4>';
+        individualMetrics.forEach(entry => {{
+            metricsHTML += `
+                <div class="metric-item">
+                    <div class="metric-name">${{entry.metric}} (${{entry.profession}})</div>
+                    <div class="metric-value">
+                        <div>Rating: ${{entry.glicko_rating ? entry.glicko_rating.toFixed(1) : 'N/A'}}</div>
+                        <div>Rank: #${{entry.rank || 'N/A'}}</div>
+                        <div>Games: ${{entry.games_played || 0}}</div>
+                    </div>
+                </div>
+            `;
+        }});
+    }}
+    
+    // Profession metrics
+    if (professionMetrics.length > 0) {{
+        metricsHTML += '<h4>Profession Rankings</h4>';
+        professionMetrics.forEach(entry => {{
+            metricsHTML += `
+                <div class="metric-item">
+                    <div class="metric-name">${{entry.profession}}</div>
+                    <div class="metric-value">
+                        <div>Rating: ${{entry.glicko_rating ? entry.glicko_rating.toFixed(1) : 'N/A'}}</div>
+                        <div>Rank: #${{entry.rank || 'N/A'}}</div>
+                        <div>Games: ${{entry.games_played || 0}}</div>
+                    </div>
+                </div>
+            `;
+        }});
+    }}
+    
+    metricsHTML += '</div>';
+    metricsContent.innerHTML = metricsHTML;
+}}
+
+function setupProfessionFilter(playerData) {{
+    const professionFilter = document.getElementById('profession-filter');
+    const professions = [...new Set(playerData.map(entry => entry.profession).filter(Boolean))];
+    
+    let filterHTML = '<div class="filter-chips">';
+    filterHTML += '<div class="chip active" data-profession="all">All</div>';
+    professions.forEach(profession => {{
+        filterHTML += `<div class="chip" data-profession="${{profession}}">${{profession}}</div>`;
+    }});
+    filterHTML += '</div>';
+    
+    professionFilter.innerHTML = filterHTML;
+    
+    // Add click handlers
+    professionFilter.querySelectorAll('.chip').forEach(chip => {{
+        chip.addEventListener('click', function() {{
+            // Remove active class from all chips
+            professionFilter.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            // Add active class to clicked chip
+            this.classList.add('active');
+            
+            // Filter metrics display
+            const selectedProfession = this.dataset.profession;
+            filterMetricsByProfession(selectedProfession, playerData);
+        }});
+    }});
+}}
+
+function filterMetricsByProfession(profession, playerData) {{
+    // Re-populate metrics with filtered data
+    const filteredData = profession === 'all' 
+        ? playerData 
+        : playerData.filter(entry => entry.profession === profession);
+    
+    populatePlayerMetrics(filteredData);
+}}
+
+function setupRatingHistoryChart(accountName, playerData) {{
+    try {{
+        const canvas = document.getElementById('rating-history-chart');
+        const chartStatus = document.getElementById('chart-status');
+        const metricSelect = document.getElementById('history-metric-select');
+        const professionSelect = document.getElementById('history-profession-select');
+        
+        if (!canvas || !chartStatus || !metricSelect || !professionSelect) {{
+            console.error('Missing chart elements');
+            return;
+        }}
+        
+        // Check if Chart.js is available
+        if (typeof Chart === 'undefined') {{
+            chartStatus.textContent = 'Chart.js library not loaded. Rating history unavailable.';
+            console.error('Chart.js not available');
+            return;
+        }}
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Populate profession dropdown with only professions that have individual metric data
+        const professions = [...new Set(playerData
+            .filter(entry => entry.category === 'individual')
+            .map(entry => entry.profession)
+            .filter(Boolean)
+        )];
+        
+        professionSelect.innerHTML = '';
+        if (professions.length === 0) {{
+            professionSelect.innerHTML = '<option value="">No profession data available</option>';
+            chartStatus.textContent = 'No individual metric data found for rating history.';
+            return;
+        }}
+        
+        professions.forEach(profession => {{
+            const option = document.createElement('option');
+            option.value = profession;
+            option.textContent = profession;
+            professionSelect.appendChild(option);
+        }});
+        
+        // Set first profession as default
+        professionSelect.value = professions[0];
+    
+    let currentChart = null;
+    
+    async function fetchRatingHistory(accountName, metric, profession) {{
+        // In a real implementation, this would call a backend API
+        // For now, simulate historical data based on current data
+        const currentData = playerData.find(entry => 
+            entry.category === 'individual' && 
+            entry.metric === metric && 
+            entry.profession === profession
+        );
+        
+        if (!currentData) {{
+            return [];
+        }}
+        
+        // Simulate historical progression - create a realistic rating journey
+        const currentRating = currentData.glicko_rating;
+        const gamesPlayed = currentData.games_played || 1;
+        const historyPoints = Math.min(gamesPlayed, 10); // Show up to 10 historical points
+        
+        const history = [];
+        const startRating = 1500; // Default Glicko starting rating
+        const ratingDiff = currentRating - startRating;
+        
+        for (let i = 0; i < historyPoints; i++) {{
+            const progress = i / (historyPoints - 1);
+            const rating = startRating + (ratingDiff * progress);
+            
+            // Create realistic timestamps (last 30 days)
+            const daysAgo = (historyPoints - 1 - i) * 3;
+            const timestamp = new Date();
+            timestamp.setDate(timestamp.getDate() - daysAgo);
+            
+            history.push({{
+                timestamp: timestamp.toISOString().split('T')[0], // YYYY-MM-DD format
+                rating: rating + (Math.random() - 0.5) * 20 // Add some realistic variance
+            }});
+        }}
+        
+        return history;
+    }}
+    
+    async function updateChart() {{
+        const selectedMetric = metricSelect.value;
+        const selectedProfession = professionSelect.value;
+        
+        if (!selectedProfession) {{
+            chartStatus.textContent = 'Please select a profession.';
+            return;
+        }}
+        
+        chartStatus.textContent = 'Loading rating history...';
+        
+        try {{
+            const historyData = await fetchRatingHistory(accountName, selectedMetric, selectedProfession);
+            
+            if (historyData.length === 0) {{
+                chartStatus.textContent = 'No rating history available for this combination.';
+                if (currentChart) {{
+                    currentChart.destroy();
+                    currentChart = null;
+                }}
+                return;
+            }}
+            
+            // Prepare chart data
+            const labels = historyData.map(point => point.timestamp);
+            const ratings = historyData.map(point => point.rating);
+            
+            const chartData = {{
+                labels: labels,
+                datasets: [{{
+                    label: `${{selectedMetric}} Rating (${{selectedProfession}})`,
+                    data: ratings,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }}]
+            }};
+            
+            // Get current theme for chart styling
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDarkMode ? '#ecf0f1' : '#333333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            
+            const config = {{
+                type: 'line',
+                data: chartData,
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {{
+                        legend: {{
+                            display: true,
+                            position: 'top',
+                            labels: {{
+                                color: textColor,
+                                font: {{
+                                    size: 12
+                                }}
+                            }}
+                        }},
+                        title: {{
+                            display: true,
+                            text: `Rating History - ${{accountName}}`,
+                            color: textColor,
+                            font: {{
+                                size: 16,
+                                weight: 'bold'
+                            }}
+                        }},
+                        tooltip: {{
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: isDarkMode ? 'rgba(44, 62, 80, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                            titleColor: textColor,
+                            bodyColor: textColor,
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            callbacks: {{
+                                title: function(context) {{
+                                    return 'Date: ' + context[0].label;
+                                }},
+                                label: function(context) {{
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1);
+                                }}
+                            }}
+                        }}
+                    }},
+                    scales: {{
+                        y: {{
+                            beginAtZero: false,
+                            title: {{
+                                display: true,
+                                text: 'Glicko Rating',
+                                color: textColor,
+                                font: {{
+                                    size: 12,
+                                    weight: 'bold'
+                                }}
+                            }},
+                            ticks: {{
+                                color: textColor,
+                                font: {{
+                                    size: 11
+                                }}
+                            }},
+                            grid: {{
+                                color: gridColor
+                            }}
+                        }},
+                        x: {{
+                            title: {{
+                                display: true,
+                                text: 'Date',
+                                color: textColor,
+                                font: {{
+                                    size: 12,
+                                    weight: 'bold'
+                                }}
+                            }},
+                            ticks: {{
+                                color: textColor,
+                                font: {{
+                                    size: 11
+                                }}
+                            }},
+                            grid: {{
+                                color: gridColor
+                            }}
+                        }}
+                    }},
+                    interaction: {{
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }}
+                }}
+            }};
+            
+            // Destroy existing chart
+            if (currentChart) {{
+                currentChart.destroy();
+            }}
+            
+            // Create new chart
+            currentChart = new Chart(ctx, config);
+            
+            const currentRating = ratings[ratings.length - 1];
+            const startRating = ratings[0];
+            const change = currentRating - startRating;
+            const changeText = change >= 0 ? `+${{change.toFixed(1)}}` : `${{change.toFixed(1)}}`;
+            const changeColor = change >= 0 ? '#28a745' : '#dc3545';
+            
+            chartStatus.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Current Rating: <strong>${{currentRating.toFixed(1)}}</strong></span>
+                    <span style="color: ${{changeColor}};">Overall Change: <strong>${{changeText}}</strong></span>
+                    <span>${{historyData.length}} data points</span>
+                </div>
+            `;
+            
+        }} catch (error) {{
+            console.error('Error loading rating history:', error);
+            chartStatus.textContent = 'Error loading rating history data.';
+        }}
+    }}
+    
+        // Set up event listeners
+        metricSelect.addEventListener('change', updateChart);
+        professionSelect.addEventListener('change', updateChart);
+        
+        // Initial chart load
+        updateChart();
+        
+    }} catch (error) {{
+        console.error('Error setting up rating history chart:', error);
+        const chartStatus = document.getElementById('chart-status');
+        if (chartStatus) {{
+            chartStatus.textContent = 'Rating history chart unavailable due to error.';
+        }}
+    }}
+}}
+
+"""

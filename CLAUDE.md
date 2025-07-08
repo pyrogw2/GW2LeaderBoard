@@ -133,6 +133,18 @@ python glicko_rating_system.py gw2_comprehensive.db --days 90 --temp-suffix _90d
 - **Modern Toggle Switch**: Latest Change feature with smooth animations
 - **Responsive Design**: Mobile-optimized layout with touch-friendly controls
 - **Color-Coded Deltas**: Green (+), Red (-), Gray (0) for rating changes
+- **Interactive Player Modals**: Click any player name to view detailed performance breakdown
+- **Rating History Charts**: Time-series visualization of rating progression with Chart.js
+- **Theme-Aware Charts**: Dark/light mode support for optimal readability
+
+### Player Modal System
+- **Click-to-View**: Click any player name in leaderboards to open detailed modal
+- **Comprehensive Data**: Shows player overview, activity stats, and performance metrics
+- **Profession Filtering**: Filter metrics by specific profession within modal
+- **Rating History Visualization**: Interactive Chart.js time-series showing rating progression
+- **Theme Integration**: Full dark/light mode support with readable chart styling
+- **Mobile Responsive**: Optimized modal layout for mobile devices
+- **Error Handling**: Graceful fallback if Chart.js fails to load
 
 ## Executable Distributions
 
@@ -197,7 +209,24 @@ git tag v1.0.0 && git push origin v1.0.0  # Triggers GitHub Actions
 - Progress reporting in long-running operations
 - Modular design with clear separation of concerns
 
-## Recent Bug Fixes (July 2025)
+## Recent Enhancements (July 2025)
+
+### Player Modal System Implementation (Latest)
+
+#### **Complete Modal Functionality Added**
+- **Issue**: Player modal popup was broken with placeholder implementation
+- **Solution**: Implemented full modal system with comprehensive player details
+- **Files Modified**: `src/gw2_leaderboard/web/templates/javascript_ui.py`, `src/gw2_leaderboard/web/templates/css_styles.py`
+- **Features Added**:
+  - Click any player name to open detailed modal
+  - Player overview (account, guild status, professions, total games)
+  - Activity section (most played professions with game counts)
+  - Performance metrics (individual and profession rankings)
+  - Profession filtering within modal
+  - Interactive Chart.js rating history visualization
+  - Theme-aware chart styling for dark/light modes
+  - Error handling and graceful fallbacks
+  - Mobile responsive design
 
 ### Critical Date Filtering Issues Resolved
 

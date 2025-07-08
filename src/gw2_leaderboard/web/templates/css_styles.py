@@ -989,6 +989,57 @@ h2 {
     font-size: 0.9rem;
 }
 
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.stat-value {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-profession {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.activity-games {
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+}
+
 .profession-tabs {
     display: flex;
     gap: 10px;
