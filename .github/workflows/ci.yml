@@ -25,18 +25,25 @@ jobs:
     
     - name: Create test database and config
       run: |
-        # Create test configuration
-        cat > sync_config.json << 'EOL'
+        # Create test configuration using GitHub secret
+        echo '${{ secrets.GW2_SYNC_CONFIG_JSON }}' > sync_config.json
+        
+        # Fallback test configuration if secret is not available
+        if [ ! -s sync_config.json ]; then
+          cat > sync_config.json << 'EOL'
         {
           "log_aggregate_url": "https://example.com/test",
           "database_path": "gw2_comprehensive.db",
-          "guild_enabled": true,
-          "guild_name": "Test Guild",
-          "guild_tag": "TEST",
-          "guild_api_key": "test-key",
-          "guild_id": "test-guild-id"
+          "guild": {
+            "api_key": "test-key",
+            "guild_id": "test-guild-id",
+            "guild_name": "Test Guild",
+            "guild_tag": "TEST",
+            "filter_enabled": true
+          }
         }
         EOL
+        fi
         
         # Create expanded test database for CI
         python -c "
@@ -164,7 +171,7 @@ jobs:
                 if player_id % 3 == 0:
                     cursor.execute('''
                         INSERT OR REPLACE INTO guild_members (account_name, guild_id) VALUES (?, ?)
-                    ''', (account_name, 'test-guild-id'))
+                    ''', (account_name, '5DE91D07-EED0-4835-8CD8-B77A3EA3CB1D'))
                 
                 player_id += 1
         
