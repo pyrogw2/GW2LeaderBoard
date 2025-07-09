@@ -293,47 +293,63 @@ jobs:
         zip -r ../GW2-Leaderboard-Linux.zip .
         cd ..
         
-    - name: Delete existing release if exists
+    - name: Check if release exists and preserve notes
       run: |
-        # Delete the release if it already exists (handles 403 errors from duplicate releases)
-        gh release delete ${{ github.ref_name }} --yes || echo "Release doesn't exist or couldn't be deleted"
+        # Check if release already exists and get existing notes
+        if gh release view ${{ github.ref_name }} > /dev/null 2>&1; then
+          echo "Release exists, preserving existing notes"
+          gh release view ${{ github.ref_name }} --json body -q '.body' > existing_notes.md
+          echo "RELEASE_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "Release doesn't exist, will create with default notes"
+          echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          GW2-Leaderboard-Windows.zip
-          GW2-Leaderboard-macOS.zip  
-          GW2-Leaderboard-Linux.zip
-        generate_release_notes: true
-        draft: false
-        prerelease: true
-        fail_on_unmatched_files: false
-        body: |
-          ## GW2 WvW Leaderboard v${{ github.ref_name }}
-          
-          Cross-platform executables for the GW2 WvW Leaderboard system.
-          
-          ### Downloads
-          - **Windows**: `GW2-Leaderboard-Windows.zip` - Contains `workflow_ui.exe`
-          - **macOS**: `GW2-Leaderboard-macOS.zip` - Contains `GW2 Leaderboard.app` 
-          - **Linux**: `GW2-Leaderboard-Linux.zip` - Contains `gw2-leaderboard` binary
-          
-          ### First Time Setup
-          1. Download the appropriate file for your platform
-          2. Extract the archive
-          3. Copy `sync_config.json.example` to `sync_config.json` 
-          4. Edit `sync_config.json` with your settings
-          5. Run the executable
-          
-          ### Features
-          - No Python installation required
-          - Graphical interface for all operations  
-          - Built-in configuration editor
-          - Progress tracking and console output
-          
-          **Note**: This is a test release. Please report any issues!
+    - name: Create or update GitHub Release
+      run: |
+        if [ "$RELEASE_EXISTS" = "true" ]; then
+          echo "Adding files to existing release..."
+          gh release upload ${{ github.ref_name }} \
+            GW2-Leaderboard-Windows.zip \
+            GW2-Leaderboard-macOS.zip \
+            GW2-Leaderboard-Linux.zip \
+            --clobber
+        else
+          echo "Creating new release with default notes..."
+          gh release create ${{ github.ref_name }} \
+            GW2-Leaderboard-Windows.zip \
+            GW2-Leaderboard-macOS.zip \
+            GW2-Leaderboard-Linux.zip \
+            --title "GW2 WvW Leaderboard ${{ github.ref_name }}" \
+            --notes "$(cat <<'EOF'
+        ## GW2 WvW Leaderboard ${{ github.ref_name }}
+        
+        Cross-platform executables for the GW2 WvW Leaderboard system.
+        
+        ### Downloads
+        - **Windows**: \`GW2-Leaderboard-Windows.zip\` - Contains \`workflow_ui.exe\`
+        - **macOS**: \`GW2-Leaderboard-macOS.zip\` - Contains \`GW2 Leaderboard.app\` 
+        - **Linux**: \`GW2-Leaderboard-Linux.zip\` - Contains \`gw2-leaderboard\` binary
+        
+        ### First Time Setup
+        1. Download the appropriate file for your platform
+        2. Extract the archive
+        3. Copy \`sync_config.json.example\` to \`sync_config.json\` 
+        4. Edit \`sync_config.json\` with your settings
+        5. Run the executable
+        
+        ### Features
+        - No Python installation required
+        - Graphical interface for all operations  
+        - Built-in configuration editor
+        - Progress tracking and console output
+        
+        **Note**: This is a test release. Please report any issues!
+        EOF
+        )" \
+            --prerelease
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
