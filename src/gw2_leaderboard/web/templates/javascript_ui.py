@@ -636,6 +636,11 @@ function loadHighScores(metric) {{
                 type: 'account'
             }},
             {{
+                key: 'player_name',
+                label: 'Character',
+                type: 'stats'
+            }},
+            {{
                 key: 'profession',
                 label: 'Profession',
                 type: 'profession'
@@ -659,9 +664,14 @@ function loadHighScores(metric) {{
                 type: 'rank'
             }},
             {{
-                key: 'player_name',
-                label: 'Player',
+                key: 'account_name',
+                label: 'Account',
                 type: 'account'
+            }},
+            {{
+                key: 'player_name',
+                label: 'Character',
+                type: 'stats'
             }},
             {{
                 key: 'profession',
@@ -692,9 +702,14 @@ function loadHighScores(metric) {{
                 type: 'rank'
             }},
             {{
-                key: 'player_name',
-                label: 'Player',
+                key: 'account_name',
+                label: 'Account',
                 type: 'account'
+            }},
+            {{
+                key: 'player_name',
+                label: 'Character',
+                type: 'stats'
             }},
             {{
                 key: 'profession',
