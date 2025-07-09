@@ -622,7 +622,7 @@ def get_new_high_scores_data(db_path: str, limit: int = 100, date_filter: str = 
 
 
 def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None) -> Dict[str, List[Dict]]:
-    """Get top burst damage records for High Scores section."""
+    """Get high scores data for all metrics: burst damage and skill-based records."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -630,41 +630,58 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='guild_members'")
     guild_table_exists = cursor.fetchone() is not None
     
-    # Build date filter clause
-    date_clause = ""
+    # Build date filter clause for player_performances table
+    perf_date_clause = ""
     if date_filter and date_filter != "overall":
         days = int(date_filter.rstrip('d'))
-        date_clause = f"AND p.parsed_date >= date('now', '-{days} days')"
+        perf_date_clause = f"AND p.parsed_date >= date('now', '-{days} days')"
+    
+    # Build date filter clause for high_scores table
+    hs_date_clause = ""
+    if date_filter and date_filter != "overall":
+        days = int(date_filter.rstrip('d'))
+        hs_date_clause = f"AND hs.parsed_date >= strftime('%Y%m%d', date('now', '-{days} days'))"
     
     high_scores_data = {}
     
-    # Get highest 1-second burst damage
+    # 1. Get highest 1-second burst damage from player_performances table
     if guild_table_exists:
         cursor.execute(f'''
-            SELECT p.account_name, p.profession, p.burst_damage_1s, p.timestamp,
+            SELECT p.account_name, 
+                   COALESCE(hs.player_name, p.account_name) as player_name,
+                   p.profession, p.burst_damage_1s, p.timestamp,
                    CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
             FROM player_performances p
             LEFT JOIN guild_members gm ON p.account_name = gm.account_name
-            WHERE p.burst_damage_1s > 0 {date_clause}
+            LEFT JOIN high_scores hs ON p.account_name = hs.player_account 
+                                    AND p.profession = hs.profession
+                                    AND p.timestamp = hs.timestamp
+            WHERE p.burst_damage_1s > 0 {perf_date_clause}
             ORDER BY p.burst_damage_1s DESC
             LIMIT ?
         ''', (limit,))
     else:
         cursor.execute(f'''
-            SELECT account_name, profession, burst_damage_1s, timestamp, 0 as is_guild_member
-            FROM player_performances
-            WHERE burst_damage_1s > 0 {date_clause}
-            ORDER BY burst_damage_1s DESC
+            SELECT p.account_name, 
+                   COALESCE(hs.player_name, p.account_name) as player_name,
+                   p.profession, p.burst_damage_1s, p.timestamp, 0 as is_guild_member
+            FROM player_performances p
+            LEFT JOIN high_scores hs ON p.account_name = hs.player_account 
+                                    AND p.profession = hs.profession
+                                    AND p.timestamp = hs.timestamp
+            WHERE p.burst_damage_1s > 0 {perf_date_clause}
+            ORDER BY p.burst_damage_1s DESC
             LIMIT ?
         ''', (limit,))
     
     results = cursor.fetchall()
     burst_scores = []
     
-    for i, (account_name, profession, burst_damage, timestamp, is_guild_member) in enumerate(results, 1):
+    for i, (account_name, player_name, profession, burst_damage, timestamp, is_guild_member) in enumerate(results, 1):
         burst_scores.append({
             'rank': i,
             'account_name': account_name,
+            'player_name': player_name,
             'profession': profession,
             'burst_damage': burst_damage,
             'timestamp': timestamp,
@@ -672,6 +689,54 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
         })
     
     high_scores_data['Highest 1 Sec Burst'] = burst_scores
+    
+    # 2. Get other high scores from high_scores table
+    high_score_metrics = {
+        'highest_outgoing_skill_damage': 'Highest Outgoing Skill Damage',
+        'highest_incoming_skill_damage': 'Highest Incoming Skill Damage', 
+        'highest_single_fight_dps': 'Highest Single Fight DPS'
+    }
+    
+    for metric_key, display_name in high_score_metrics.items():
+        if guild_table_exists:
+            cursor.execute(f'''
+                SELECT hs.player_account, hs.player_name, hs.profession, hs.score_value, hs.timestamp,
+                       hs.skill_name, hs.skill_icon_url, hs.fight_number,
+                       CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
+                FROM high_scores hs
+                LEFT JOIN guild_members gm ON hs.player_account = gm.account_name
+                WHERE hs.metric_type = ? {hs_date_clause}
+                ORDER BY hs.score_value DESC
+                LIMIT ?
+            ''', (metric_key, limit))
+        else:
+            cursor.execute(f'''
+                SELECT player_account, player_name, profession, score_value, timestamp,
+                       skill_name, skill_icon_url, fight_number, 0 as is_guild_member
+                FROM high_scores
+                WHERE metric_type = ? {hs_date_clause}
+                ORDER BY score_value DESC
+                LIMIT ?
+            ''', (metric_key, limit))
+        
+        results = cursor.fetchall()
+        metric_scores = []
+        
+        for i, (account_name, player_name, profession, score_value, timestamp, skill_name, skill_icon_url, fight_number, is_guild_member) in enumerate(results, 1):
+            metric_scores.append({
+                'rank': i,
+                'account_name': account_name,
+                'player_name': player_name,
+                'profession': profession,
+                'score_value': score_value,
+                'skill_name': skill_name,
+                'skill_icon_url': skill_icon_url,
+                'fight_number': fight_number,
+                'timestamp': timestamp,
+                'is_guild_member': bool(is_guild_member)
+            })
+        
+        high_scores_data[display_name] = metric_scores
     
     conn.close()
     return high_scores_data
