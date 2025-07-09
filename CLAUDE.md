@@ -221,6 +221,26 @@ git tag v1.0.0 && git push origin v1.0.0  # Triggers GitHub Actions
 - Progress reporting in long-running operations
 - Modular design with clear separation of concerns
 
+### Distance to Tag Metric Special Handling
+**Important**: Distance to Tag is the only metric where **lower values are better** (closer to commander = better performance).
+
+**Special Requirements**:
+- **Database Filtering**: Use `>= 0` instead of `> 0` (tag drivers have legitimate 0 distance)
+- **Ranking Sort Order**: Use `ASC` instead of `DESC` (lower distance = better rank)
+- **Z-Score Inversion**: Apply `z_score = -z_score` for proper Glicko rating calculation
+- **Outlier Filtering**: Use minimum 600 seconds fight time (vs 5 seconds for other metrics) to exclude brief playtime outliers
+- **Expected Behavior**: Players with 0 distance (tag drivers) should typically rank #1
+
+**Implementation Locations**:
+- `src/gw2_leaderboard/core/glicko_rating_system.py:244,333,360,400` - Main Glicko system
+- `src/gw2_leaderboard/web/data_processing.py:249,321,375` - Date-filtered calculations
+- `src/gw2_leaderboard/parsers/parse_logs_enhanced.py:516` - Raw data parsing (stores distance values)
+
+**Common Issues**:
+- High average ranks occur when most players have 0 distance (tied for rank 1)
+- Verify ranking with sessions that have actual distance variation (not all 0.0)
+- Check sessions like `202505280122` which show proper distance spread (0, 26, 200, 270, etc.)
+
 ## Recent Enhancements (July 2025)
 
 ### Player Modal System Implementation (Latest)

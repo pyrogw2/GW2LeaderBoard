@@ -245,6 +245,10 @@ def calculate_glicko_ratings_for_date_filter(db_path: str, metric_category: str 
         metric_column = metric_column_map[metric_category]
     
     # Get all performance data for the date range and metric
+    # For Distance to Tag, include values >= 0 (tag drivers have 0 distance)
+    value_filter = ">= 0" if metric_category == 'Distance to Tag' else "> 0"
+    # For Distance to Tag, use minimum 600 seconds (10 minutes) to filter out outliers
+    min_fight_time = 600 if metric_category == 'Distance to Tag' else 5
     cursor.execute(f'''
         SELECT 
             account_name,
@@ -254,8 +258,8 @@ def calculate_glicko_ratings_for_date_filter(db_path: str, metric_category: str 
             fight_time
         FROM player_performances
         {date_clause}
-            AND {metric_column} > 0
-            AND fight_time >= 5
+            AND {metric_column} {value_filter}
+            AND fight_time >= {min_fight_time}
         ORDER BY timestamp, account_name
     ''')
     
@@ -315,6 +319,10 @@ def calculate_glicko_ratings_for_date_filter(db_path: str, metric_category: str 
             # Calculate z-score
             z_score = (player['metric_value'] - mean_value) / std_value
             
+            # For Distance to Tag, lower values are better, so invert the z-score
+            if metric_category == 'Distance to Tag':
+                z_score = -z_score
+            
             session_results.append({
                 'key': key,
                 'z_score': z_score,
@@ -354,8 +362,8 @@ def calculate_glicko_ratings_for_date_filter(db_path: str, metric_category: str 
             {date_clause}
                 AND account_name = ?
                 AND profession = ?
-                AND {metric_column} > 0
-                AND fight_time >= 5
+                AND {metric_column} {value_filter}
+                AND fight_time >= {min_fight_time}
         ''', (account_name, profession))
         
         result = cursor.fetchone()
@@ -365,6 +373,9 @@ def calculate_glicko_ratings_for_date_filter(db_path: str, metric_category: str 
             # Calculate average rank position across sessions (1st, 2nd, 3rd, etc.)
             avg_rank_percent = 25.0  # Default (roughly middle rank for typical squad size)
             if games_played > 0:
+                # For Distance to Tag, lower values are better, so use ASC order
+                sort_order = "ASC" if metric_category == 'Distance to Tag' else "DESC"
+                
                 cursor.execute(f'''
                     WITH session_stats AS (
                         SELECT 
@@ -373,7 +384,7 @@ def calculate_glicko_ratings_for_date_filter(db_path: str, metric_category: str 
                             p.profession,
                             p.{metric_column} as player_value,
                             COUNT(*) OVER (PARTITION BY p.timestamp) as session_size,
-                            RANK() OVER (PARTITION BY p.timestamp ORDER BY {metric_column} DESC) as player_rank
+                            RANK() OVER (PARTITION BY p.timestamp ORDER BY {metric_column} {sort_order}) as player_rank
                         FROM player_performances p
                         WHERE p.timestamp IN (
                             SELECT DISTINCT timestamp 
@@ -381,11 +392,11 @@ def calculate_glicko_ratings_for_date_filter(db_path: str, metric_category: str 
                             {date_clause}
                                 AND account_name = ?
                                 AND profession = ?
-                                AND {metric_column} > 0
-                                AND fight_time >= 5
+                                AND {metric_column} {value_filter}
+                                AND fight_time >= {min_fight_time}
                         )
-                        AND p.{metric_column} > 0
-                        AND p.fight_time >= 5
+                        AND p.{metric_column} {value_filter}
+                        AND p.fight_time >= {min_fight_time}
                     )
                     SELECT AVG(player_rank) as avg_rank_position
                     FROM session_stats ss
