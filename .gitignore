@@ -11,12 +11,22 @@ ENV/
 
 # Database files
 *.db
+*.db.backup*
+*.db.bak*
+*_backup.db
+*_filtered.db
+test_*.db
 
 # Test directories
 test_*/
 
 # Web output directories (generated)
 web_ui*/
+web_ui_*/
+
+# Build directories
+build/
+dist/
 
 # Configuration with API keys
 sync_config.json
@@ -25,6 +35,7 @@ sync_config.json
 *.log
 logs/
 extracted_logs/*
+!extracted_logs/.gitkeep
 
 # IDE files
 .vscode/

@@ -90,6 +90,7 @@ pip install requests beautifulsoup4
 
 Comprehensive documentation is available in the `docs/` directory:
 
+### User Documentation
 - **[Getting Started](docs/GETTING_STARTED.md)** - Complete setup walkthrough
 - **[Daily Usage](docs/DAILY_USAGE.md)** - Routine operations and maintenance  
 - **[System Overview](docs/SYSTEM_OVERVIEW.md)** - Architecture and design
@@ -97,6 +98,14 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Configuration](docs/CONFIGURATION.md)** - All settings and options
 - **[API Reference](docs/API_REFERENCE.md)** - Database schema and technical details
+
+### Development Documentation
+- **[Contributing Guide](docs/development/CONTRIBUTING.md)** - Code contribution guidelines
+- **[Development Summary](docs/development/DEVELOPMENT_SUMMARY.md)** - Recent development progress
+- **[Executable Build Guide](docs/development/EXECUTABLE_BUILD.md)** - Creating standalone executables
+- **[AI Assistant Notes](docs/development/GEMINI.md)** - AI development context
+
+**📚 Full Documentation Index**: [docs/README.md](docs/README.md)
 
 ## 🔧 Core Components
 

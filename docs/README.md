@@ -105,6 +105,60 @@ Welcome to the GW2 WvW Leaderboard System documentation. This system provides co
 - You want to prevent future issues
 - You need to debug system problems
 
+### 🚀 Development Documentation
+
+#### [Contributing Guide](development/CONTRIBUTING.md)
+**What it covers:**
+- Code contribution guidelines
+- Development setup and workflow
+- Testing requirements and procedures
+- Code style and quality standards
+
+**Read this if:**
+- You want to contribute to the project
+- You're setting up a development environment
+- You need to understand the development process
+- You're writing tests or documentation
+
+#### [Development Summary](development/DEVELOPMENT_SUMMARY.md)
+**What it covers:**
+- Recent development progress
+- Feature implementation details
+- Technical decisions and rationale
+- Development timeline and milestones
+
+**Read this if:**
+- You want to understand recent changes
+- You're continuing previous development work
+- You need context for design decisions
+- You're reviewing the development history
+
+#### [Executable Build Guide](development/EXECUTABLE_BUILD.md)
+**What it covers:**
+- Creating standalone executables
+- Build system configuration
+- Cross-platform distribution
+- GitHub Actions automation
+
+**Read this if:**
+- You need to create executable releases
+- You're setting up automated builds
+- You want to distribute the application
+- You're working with the CI/CD pipeline
+
+#### [AI Assistant Notes](development/GEMINI.md)
+**What it covers:**
+- AI assistant interaction history
+- Development context and decisions
+- Technical implementation notes
+- Collaborative development insights
+
+**Read this if:**
+- You're working with AI assistants on the project
+- You want to understand previous AI interactions
+- You need context for development decisions
+- You're continuing AI-assisted development
+
 ## Document Navigation
 
 ### By User Type

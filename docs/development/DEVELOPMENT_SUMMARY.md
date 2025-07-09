@@ -100,7 +100,7 @@ gh pr create --title "feat(component): add new functionality"
 ### Core System
 - `src/gw2_leaderboard/core/glicko_rating_system.py` - Removed composite scoring
 - `src/gw2_leaderboard/web/data_processing.py` - Updated SQL queries
-- `migrate_remove_composite.py` - Database migration script
+- `scripts/migration/migrate_remove_composite.py` - Database migration script
 
 ### Documentation
 - `README.md` - Added CI badge and contributing section
