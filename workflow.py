@@ -15,6 +15,7 @@ Common usage:
     python workflow.py --latest-only     # Download only latest log and process
     python workflow.py --parse-only      # Only parse existing logs
     python workflow.py --ui-only         # Only generate web UI
+    python workflow.py --refresh-guild   # Refresh guild member cache
 """
 
 import json
@@ -305,6 +306,8 @@ def main():
                         help='Force complete rating history rebuild')
     parser.add_argument('--config-only', action='store_true',
                         help='Only create/update configuration')
+    parser.add_argument('--refresh-guild', action='store_true',
+                        help='Refresh guild member cache')
     
     args = parser.parse_args()
     
@@ -355,6 +358,29 @@ def main():
                         print("❌ Guild member refresh failed.")
                 finally:
                     sys.argv = sys_argv_backup
+    
+    # Handle guild refresh
+    if args.refresh_guild:
+        if not config['guild']['filter_enabled']:
+            print("❌ Guild filtering is not enabled in configuration")
+            return 1
+        
+        print_step("🛡️ ", "Refreshing guild members")
+        sys_argv_backup = sys.argv[:]
+        sys.argv = ['guild_manager.py', '--sync', '--force']
+        try:
+            guild_manager_main()
+            print("✅ Guild member cache refreshed successfully")
+            return 0
+        except SystemExit as e:
+            if e.code == 0:
+                print("✅ Guild member cache refreshed successfully")
+                return 0
+            else:
+                print("❌ Guild member refresh failed")
+                return 1
+        finally:
+            sys.argv = sys_argv_backup
     
     # Determine what operations to run
     operations = []

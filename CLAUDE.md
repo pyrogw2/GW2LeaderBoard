@@ -31,6 +31,7 @@ python generate_web_ui.py gw2_comprehensive.db -o web_ui_output
 python workflow.py --ui-only           # Just regenerate UI
 python workflow.py --parse-only        # Just parse logs
 python workflow.py --force-rebuild     # Rebuild rating history
+python workflow.py --refresh-guild     # Refresh guild member cache
 ```
 
 ### Development and Testing
