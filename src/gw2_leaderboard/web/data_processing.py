@@ -636,39 +636,49 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
         days = int(date_filter.rstrip('d'))
         perf_date_clause = f"AND p.parsed_date >= date('now', '-{days} days')"
     
-    # Build date filter clause for high_scores table
+    # Build date filter clause for high_scores table (parsed_date is in YYYYMMDD format)
     hs_date_clause = ""
     if date_filter and date_filter != "overall":
         days = int(date_filter.rstrip('d'))
-        hs_date_clause = f"AND hs.parsed_date >= strftime('%Y%m%d', date('now', '-{days} days'))"
+        hs_date_clause = f"AND parsed_date >= strftime('%Y%m%d', date('now', '-{days} days'))"
     
     high_scores_data = {}
     
     # 1. Get highest 1-second burst damage from player_performances table
     if guild_table_exists:
         cursor.execute(f'''
-            SELECT p.account_name, 
+            SELECT DISTINCT p.account_name, 
                    COALESCE(hs.player_name, p.account_name) as player_name,
                    p.profession, p.burst_damage_1s, p.timestamp,
                    CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
             FROM player_performances p
             LEFT JOIN guild_members gm ON p.account_name = gm.account_name
-            LEFT JOIN high_scores hs ON p.account_name = hs.player_account 
-                                    AND p.profession = hs.profession
-                                    AND p.timestamp = hs.timestamp
+            LEFT JOIN (
+                SELECT DISTINCT player_account, profession, timestamp, 
+                       MAX(player_name) as player_name
+                FROM high_scores 
+                GROUP BY player_account, profession, timestamp
+            ) hs ON p.account_name = hs.player_account 
+                   AND p.profession = hs.profession
+                   AND p.timestamp = hs.timestamp
             WHERE p.burst_damage_1s > 0 {perf_date_clause}
             ORDER BY p.burst_damage_1s DESC
             LIMIT ?
         ''', (limit,))
     else:
         cursor.execute(f'''
-            SELECT p.account_name, 
+            SELECT DISTINCT p.account_name, 
                    COALESCE(hs.player_name, p.account_name) as player_name,
                    p.profession, p.burst_damage_1s, p.timestamp, 0 as is_guild_member
             FROM player_performances p
-            LEFT JOIN high_scores hs ON p.account_name = hs.player_account 
-                                    AND p.profession = hs.profession
-                                    AND p.timestamp = hs.timestamp
+            LEFT JOIN (
+                SELECT DISTINCT player_account, profession, timestamp, 
+                       MAX(player_name) as player_name
+                FROM high_scores 
+                GROUP BY player_account, profession, timestamp
+            ) hs ON p.account_name = hs.player_account 
+                   AND p.profession = hs.profession
+                   AND p.timestamp = hs.timestamp
             WHERE p.burst_damage_1s > 0 {perf_date_clause}
             ORDER BY p.burst_damage_1s DESC
             LIMIT ?
@@ -703,18 +713,26 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
                 SELECT hs.player_account, hs.player_name, hs.profession, hs.score_value, hs.timestamp,
                        hs.skill_name, hs.skill_icon_url, hs.fight_number,
                        CASE WHEN gm.account_name IS NOT NULL THEN 1 ELSE 0 END as is_guild_member
-                FROM high_scores hs
+                FROM (
+                    SELECT player_account, MAX(player_name) as player_name, profession, 
+                           MAX(score_value) as score_value, timestamp, skill_name, skill_icon_url, 
+                           fight_number, metric_type
+                    FROM high_scores
+                    WHERE metric_type = ? {hs_date_clause}
+                    GROUP BY player_account, profession, timestamp, skill_name, fight_number
+                ) hs
                 LEFT JOIN guild_members gm ON hs.player_account = gm.account_name
-                WHERE hs.metric_type = ? {hs_date_clause}
                 ORDER BY hs.score_value DESC
                 LIMIT ?
             ''', (metric_key, limit))
         else:
             cursor.execute(f'''
-                SELECT player_account, player_name, profession, score_value, timestamp,
-                       skill_name, skill_icon_url, fight_number, 0 as is_guild_member
+                SELECT player_account, MAX(player_name) as player_name, profession, 
+                       MAX(score_value) as score_value, timestamp, skill_name, skill_icon_url, 
+                       fight_number, 0 as is_guild_member
                 FROM high_scores
                 WHERE metric_type = ? {hs_date_clause}
+                GROUP BY player_account, profession, timestamp, skill_name, fight_number
                 ORDER BY score_value DESC
                 LIMIT ?
             ''', (metric_key, limit))
@@ -728,7 +746,7 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
                 'account_name': account_name,
                 'player_name': player_name,
                 'profession': profession,
-                'score_value': score_value,
+                'value': score_value,  # Standardize to 'value' for consistency with tests
                 'skill_name': skill_name,
                 'skill_icon_url': skill_icon_url,
                 'fight_number': fight_number,
