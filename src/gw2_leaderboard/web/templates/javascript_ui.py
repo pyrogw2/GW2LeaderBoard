@@ -684,7 +684,7 @@ function loadHighScores(metric) {{
                 type: 'stats'
             }},
             {{
-                key: 'score_value',
+                key: 'value',
                 label: 'Damage',
                 type: 'number'
             }},
@@ -717,7 +717,7 @@ function loadHighScores(metric) {{
                 type: 'profession'
             }},
             {{
-                key: 'score_value',
+                key: 'value',
                 label: 'DPS',
                 type: 'number'
             }},
@@ -751,7 +751,7 @@ function loadHighScores(metric) {{
                 type: 'profession'
             }},
             {{
-                key: 'score_value',
+                key: 'value',
                 label: 'Score',
                 type: 'number'
             }},
@@ -845,7 +845,7 @@ function loadPlayerStats(metric) {{
                 type: 'account'
             }},
             {{
-                key: 'score_value',
+                key: 'value',
                 label: 'Score',
                 type: 'number'
             }}
