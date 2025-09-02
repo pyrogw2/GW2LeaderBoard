@@ -173,8 +173,8 @@ PROFESSION_METRICS = {
         'weights': [0.5, 0.3, 0.2]  # Stability most important, then cleanses
     },
     'Support Spb': {
-        'metrics': ['Might', 'Resistance', 'Stability', 'Cleanses'],
-        'weights': [0.4, 0.3, 0.2, 0.1]  # Might most important
+        'metrics': ['Strips', 'Might', 'Resistance', 'Stability', 'Cleanses'],
+        'weights': [0.35, 0.26, 0.195, 0.13, 0.065]  # Strips most important at 35%
     },
     'Boon Vindi': {
         'metrics': ['Protection', 'DPS'],
