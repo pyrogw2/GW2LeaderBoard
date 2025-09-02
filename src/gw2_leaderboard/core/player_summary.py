@@ -530,6 +530,53 @@ class PlayerSummaryGenerator:
             trends=trends,
             rankings=rankings
         )
+    
+    def generate_summaries(self, limit: int = None, days_filter: int = None) -> Dict[str, PlayerSummary]:
+        """Generate summaries for multiple players."""
+        # Create a new generator with date filter if specified
+        if days_filter:
+            date_filter = f"{days_filter}d"
+            generator = PlayerSummaryGenerator(self.db_path, date_filter)
+        else:
+            generator = self
+        
+        try:
+            cursor = generator.conn.cursor()
+            
+            # Get all unique account names with recent activity
+            if generator.date_clause:
+                cursor.execute(f"""
+                    SELECT DISTINCT account_name
+                    FROM player_performances 
+                    WHERE 1=1 {generator.date_clause}
+                    ORDER BY account_name
+                    {f'LIMIT {limit}' if limit else ''}
+                """, tuple(generator.date_params))
+            else:
+                cursor.execute(f"""
+                    SELECT DISTINCT account_name
+                    FROM player_performances 
+                    ORDER BY account_name
+                    {f'LIMIT {limit}' if limit else ''}
+                """)
+            
+            account_names = [row[0] for row in cursor.fetchall()]
+            
+            summaries = {}
+            for account_name in account_names:
+                try:
+                    summary = generator.generate_summary(account_name)
+                    if summary:
+                        summaries[account_name] = summary
+                except Exception as e:
+                    print(f"  Warning: Failed to generate summary for {account_name}: {e}")
+                    continue
+            
+            return summaries
+        
+        finally:
+            if generator != self:
+                generator.close()
 
 
 def format_console_output(summary: PlayerSummary) -> str:
