@@ -46,7 +46,7 @@ class HighScoresParser:
     def __init__(self):
         # Regex patterns for parsing TiddlyWiki markup
         self.player_pattern = re.compile(
-            r"<span data-tooltip='([^']+)'>\s*{{([^}]+)}}([^<]+)\s*</span>-(\d+)"
+            r"<span[^>]*data-tooltip='([^']+)'>\s*{{([^}]+)}}([^<]+)\s*</span>-(\d+)"
         )
         self.skill_pattern = re.compile(
             r"\[img width=24 \[([^|]+)\|([^]]+)\]\]-([^|]+)"
@@ -206,7 +206,22 @@ class HighScoresParser:
                 data = json.load(f)
             
             # Extract timestamp from filename
-            timestamp = file_path.stem.split('-')[0]
+            # Handle both old format (202509152315-High-Scores) and new format (2025-12-15-22_39_17-High-Scores)
+            filename_stem = file_path.stem
+            if filename_stem.replace('-High-Scores', '').replace('-Scores', '').isdigit():
+                # Old format: 202509152315-High-Scores
+                timestamp = filename_stem.split('-')[0]
+            else:
+                # New format: 2025-12-15-22_39_17-High-Scores
+                # Extract the timestamp part before -High-Scores
+                timestamp_part = filename_stem.replace('-High-Scores', '').replace('-Scores', '')
+                # Convert 2025-12-15-22_39_17 to 202512152239 (normalize to old format)
+                match = re.match(r'(\d{4})-(\d{2})-(\d{2})-(\d{2})_(\d{2})_(\d{2})', timestamp_part)
+                if match:
+                    timestamp = f"{match.group(1)}{match.group(2)}{match.group(3)}{match.group(4)}{match.group(5)}"
+                else:
+                    # Fallback to original behavior
+                    timestamp = filename_stem.split('-')[0]
             
             # Get the HTML content
             html_content = data.get('text', '')

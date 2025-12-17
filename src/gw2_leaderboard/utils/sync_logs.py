@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, List, Set, Optional
 from datetime import datetime
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote
 import subprocess
 from bs4 import BeautifulSoup
 
@@ -32,6 +32,48 @@ DEFAULT_CONFIG = {
 }
 
 CONFIG_FILE = "sync_config.json"
+
+
+def normalize_timestamp_for_directory(timestamp: str) -> str:
+    """Convert timestamp to filesystem-safe format (old format: YYYYMMDDHHMM)."""
+    try:
+        # Already in old format
+        if len(timestamp) == 12 and timestamp.isdigit():
+            return timestamp
+        
+        # New format with colons (YYYY-MM-DD-HH:MM:SS)
+        if re.match(r'^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}$', timestamp):
+            # Parse and convert to old format (ignoring seconds)
+            dt = datetime.strptime(timestamp, '%Y-%m-%d-%H:%M:%S')
+            return dt.strftime('%Y%m%d%H%M')
+        
+        # If neither format matches, sanitize for filesystem
+        # Replace colons with underscores as fallback
+        return timestamp.replace(':', '_')
+        
+    except Exception:
+        return timestamp.replace(':', '_')
+
+
+def format_timestamp_for_display(timestamp: str) -> str:
+    """Format timestamp for display, handling both old and new formats."""
+    try:
+        # Try old format first (YYYYMMDDHHMM)
+        if len(timestamp) == 12 and timestamp.isdigit():
+            dt = datetime.strptime(timestamp, '%Y%m%d%H%M')
+            return dt.strftime('%Y-%m-%d %H:%M')
+        
+        # Try new format with colons (YYYY-MM-DD-HH:MM:SS)
+        if re.match(r'^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}$', timestamp):
+            dt = datetime.strptime(timestamp, '%Y-%m-%d-%H:%M:%S')
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # If neither format matches, return as-is
+        return timestamp
+        
+    except Exception:
+        return timestamp
+
 
 # Global cache for TiddlyWiki content to avoid multiple downloads per sync run
 _tiddlywiki_cache = {
@@ -74,7 +116,10 @@ def get_existing_logs(extracted_logs_dir: str) -> Set[str]:
     
     existing = set()
     for item in logs_path.iterdir():
-        if item.is_dir() and re.match(r'^\d{12}$', item.name):
+        # Match both old format (12 digits) and new format (YYYY-MM-DD-HH:MM:SS)
+        # Note: Colons in directory names may be replaced with underscores or other characters on some filesystems
+        if item.is_dir() and (re.match(r'^\d{12}$', item.name) or 
+                             re.match(r'^\d{4}-\d{2}-\d{2}-\d{2}[_:]?\d{2}[_:]?\d{2}$', item.name)):
             existing.add(item.name)
     
     return existing
@@ -109,11 +154,16 @@ def fetch_logs_from_tiddlywiki(base_url: str, content: str) -> List[Dict]:
     # Look for tiddler data with timestamps
     # TiddlyWiki stores data in JSON format within the HTML
     patterns = [
-        # Look for timestamp patterns in tiddler titles or content
+        # Look for timestamp patterns in tiddler titles or content (old format)
         r'"title":"([^"]*(\d{12})[^"]*)"',
         r'"(\d{12})"[^}]*"title"',
-        # Look for tiddlers that might contain log data
-        r'"title":"([^"]*(?:log|summary|session)[^"]*(\d{8,12})[^"]*)"'
+        # Look for new timestamp format (YYYY-MM-DD-HH:MM:SS)
+        r'"title":"([^"]*(\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2})[^"]*)"',
+        r'"(\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2})"[^}]*"title"',
+        # Look for tiddlers that might contain log data (old format)
+        r'"title":"([^"]*(?:log|summary|session)[^"]*(\d{8,12})[^"]*)"',
+        # Look for tiddlers that might contain log data (new format)
+        r'"title":"([^"]*(?:log|summary|session)[^"]*(\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2})[^"]*)"'
     ]
     
     for pattern in patterns:
@@ -124,29 +174,38 @@ def fetch_logs_from_tiddlywiki(base_url: str, content: str) -> List[Dict]:
                 timestamp_text = match.group(2)
             else:
                 title = match.group(1)
-                # Extract timestamp from title
+                # Extract timestamp from title (try both formats)
                 timestamp_match = re.search(r'(\d{12})', title)
+                if not timestamp_match:
+                    timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2})', title)
                 if not timestamp_match:
                     continue
                 timestamp_text = timestamp_match.group(1)
             
-            # Validate timestamp format (YYYYMMDDHHMM)
-            if len(timestamp_text) == 12 and timestamp_text.isdigit():
+            # Validate timestamp format (old: YYYYMMDDHHMM, new: YYYY-MM-DD-HH:MM:SS)
+            is_old_format = len(timestamp_text) == 12 and timestamp_text.isdigit()
+            is_new_format = re.match(r'^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2}$', timestamp_text)
+            
+            if is_old_format or is_new_format:
                 # For TiddlyWiki, we'll need to construct export URLs
                 # This assumes the site supports exporting individual tiddlers
                 export_url = f"{base_url}#{title}"
                 
+                # Normalize timestamp for directory name
+                normalized_timestamp = normalize_timestamp_for_directory(timestamp_text)
+                
                 log_info = {
-                    'timestamp': timestamp_text,
+                    'timestamp': normalized_timestamp,  # Use normalized for comparison
+                    'original_timestamp': timestamp_text,  # Keep original for reference
                     'url': export_url,
-                    'filename': f"{timestamp_text}_tiddler.json",
+                    'filename': f"{normalized_timestamp}_tiddler.json",
                     'source_page': base_url,
                     'tiddler_title': title,
                     'is_tiddlywiki': True
                 }
                 
-                # Avoid duplicates
-                if not any(log['timestamp'] == timestamp_text for log in available_logs):
+                # Avoid duplicates (check using normalized timestamp)
+                if not any(log['timestamp'] == normalized_timestamp for log in available_logs):
                     available_logs.append(log_info)
     
     # Sort by timestamp (newest first)
@@ -164,7 +223,8 @@ def fetch_logs_from_static_site(base_url: str, content: str) -> List[Dict]:
     
     # Look for downloadable log files
     patterns = [
-        r'href=["\']([^"\']*(\d{12})[^"\']*\.(?:html|zip|tw|json))["\']',  # Timestamped files
+        r'href=["\']([^"\']*(\d{12})[^"\']*\.(?:html|zip|tw|json))["\']',  # Timestamped files (old format)
+        r'href=["\']([^"\']*(\d{4}-\d{2}-\d{2}-\d{2}%3A\d{2}%3A\d{2})[^"\']*\.(?:html|zip|tw|json))["\']',  # Timestamped files (new format)
         r'href=["\']([^"\']*log[^"\']*\.(?:html|zip|tw|json))["\']',       # Files with "log" in name
         r'href=["\']([^"\']*(?:2025|2024)\d{8}[^"\']*)["\']',            # Files with date patterns
     ]
@@ -174,8 +234,11 @@ def fetch_logs_from_static_site(base_url: str, content: str) -> List[Dict]:
         for match in matches:
             file_url = match.group(1)
             
-            # Extract timestamp if possible
+            # Extract timestamp if possible (try both formats)
             timestamp_match = re.search(r'(\d{12})', file_url)
+            if not timestamp_match:
+                timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2}-\d{2}%3A\d{2}%3A\d{2})', file_url)
+            
             if timestamp_match:
                 timestamp = timestamp_match.group(1)
                 
@@ -324,10 +387,11 @@ def get_tiddlywiki_tiddlers(base_url: str) -> Optional[List[Dict]]:
 
 def extract_tiddlywiki_tiddler_new(log_info: Dict, extract_dir: str) -> bool:
     """Extract data from a specific TiddlyWiki tiddler using BeautifulSoup."""
-    timestamp = log_info['timestamp']
+    timestamp = log_info['timestamp']  # Normalized timestamp for directory
+    original_timestamp = log_info.get('original_timestamp', timestamp)  # Original timestamp from tiddler
     base_url = log_info['source_page']
     
-    print(f"📜 Extracting TiddlyWiki tiddlers for timestamp: {timestamp}")
+    print(f"📜 Extracting TiddlyWiki tiddlers for timestamp: {original_timestamp}")
     
     # Get all tiddlers from TiddlyWiki
     tiddlers = get_tiddlywiki_tiddlers(base_url)
@@ -335,10 +399,11 @@ def extract_tiddlywiki_tiddler_new(log_info: Dict, extract_dir: str) -> bool:
         return False
     
     # Find all tiddlers related to this timestamp
+    # Use the original timestamp to match tiddler titles
     related_tiddlers = []
     for tiddler in tiddlers:
         title = tiddler.get('title', '')
-        if title.startswith(timestamp):
+        if title.startswith(original_timestamp):
             related_tiddlers.append(tiddler)
     
     if not related_tiddlers:
@@ -675,11 +740,7 @@ def main():
     for i, log in enumerate(new_logs, 1):
         timestamp = log['timestamp']
         # Format timestamp for display
-        try:
-            dt = datetime.strptime(timestamp, '%Y%m%d%H%M')
-            formatted_date = dt.strftime('%Y-%m-%d %H:%M')
-        except:
-            formatted_date = timestamp
+        formatted_date = format_timestamp_for_display(timestamp)
         
         print(f"  {i}. {log['filename']} ({formatted_date})")
     

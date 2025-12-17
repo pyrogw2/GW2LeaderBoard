@@ -1,6 +1,33 @@
 
 import sqlite3
+import re
 from typing import List, Tuple
+from urllib.parse import unquote
+
+
+def format_timestamp_for_display(timestamp: str) -> str:
+    """Format timestamp for display, handling both old and new formats."""
+    try:
+        from datetime import datetime
+        
+        # Try old format first (YYYYMMDDHHMM)
+        if len(timestamp) == 12 and timestamp.isdigit():
+            dt = datetime.strptime(timestamp, '%Y%m%d%H%M')
+            return dt.strftime('%Y-%m-%d %H:%M')
+        
+        # Try new format (YYYY-MM-DD-HH%3AMM%3ASS)
+        if re.match(r'^\d{4}-\d{2}-\d{2}-\d{2}%3A\d{2}%3A\d{2}$', timestamp):
+            # URL decode the timestamp and parse
+            decoded = unquote(timestamp)  # Convert %3A back to :
+            dt = datetime.strptime(decoded, '%Y-%m-%d-%H:%M:%S')
+            return dt.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # If neither format matches, return as-is
+        return timestamp
+        
+    except Exception:
+        return timestamp
+
 
 def create_rating_history_table(db_path: str):
     """Creates the player_rating_history table if it doesn't exist."""
@@ -138,12 +165,8 @@ def get_player_rating_history(db_path: str, account_name: str, profession: str =
             professions_set.add(prof)
             timestamps.append(timestamp)
             
-            # Format timestamp for display (YYYYMMDDHHMM -> YYYY-MM-DD HH:MM)
-            try:
-                dt = datetime.strptime(timestamp, '%Y%m%d%H%M')
-                formatted_date = dt.strftime('%Y-%m-%d %H:%M')
-            except ValueError:
-                formatted_date = timestamp  # Fallback to raw timestamp
+            # Format timestamp for display
+            formatted_date = format_timestamp_for_display(timestamp)
             
             # Initialize metric category if not exists
             if metric not in history_data['metrics']:
@@ -170,19 +193,16 @@ def get_player_rating_history(db_path: str, account_name: str, profession: str =
 
 def format_timestamp_for_chart(timestamp: str) -> str:
     """
-    Convert YYYYMMDDHHMM timestamp to human-readable format for chart display.
+    Convert timestamp to human-readable format for chart display.
+    Handles both old (YYYYMMDDHHMM) and new (YYYY-MM-DD-HH%3AMM%3ASS) formats.
     
     Args:
-        timestamp: Timestamp in YYYYMMDDHHMM format
+        timestamp: Timestamp in either format
         
     Returns:
         Formatted string like "2025-07-04 18:30" or original if parsing fails
     """
-    try:
-        dt = datetime.strptime(timestamp, '%Y%m%d%H%M')
-        return dt.strftime('%Y-%m-%d %H:%M')
-    except (ValueError, ImportError):
-        return timestamp
+    return format_timestamp_for_display(timestamp)
 
 
 if __name__ == '__main__':

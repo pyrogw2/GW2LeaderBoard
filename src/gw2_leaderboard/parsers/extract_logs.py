@@ -37,17 +37,27 @@ def extract_log_summaries(tiddler_data, output_dir):
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True)
     
-    # Pattern to match log summary timestamps
-    log_pattern = re.compile(r'^(\d{12})-Log-Summary$')
+    # Pattern to match log summary timestamps (both old and new formats)
+    # Old format: 202506200210-Log-Summary
+    # New format: 2025-10-06-22:36:56-Log-Summary
+    old_log_pattern = re.compile(r'^(\d{12})-Log-Summary$')
+    new_log_pattern = re.compile(r'^(\d{4}-\d{2}-\d{2}-\d{2}:\d{2}:\d{2})-Log-Summary$')
     
     # Find all log summaries
     log_summaries = []
     for tiddler in tiddler_data:
         title = tiddler.get('title', '')
-        match = log_pattern.match(title)
+        # Try old format first
+        match = old_log_pattern.match(title)
         if match:
             timestamp = match.group(1)
             log_summaries.append((timestamp, tiddler))
+        else:
+            # Try new format
+            match = new_log_pattern.match(title)
+            if match:
+                timestamp = match.group(1)
+                log_summaries.append((timestamp, tiddler))
     
     print(f"Found {len(log_summaries)} log summaries")
     

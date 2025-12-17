@@ -14,7 +14,7 @@ const leaderboardData = {json.dumps(data, indent=2)};
 let currentFilter = '30d';
 let currentTab = 'individual';
 let currentMetric = 'DPS';
-let currentProfession = 'Firebrand';
+let currentProfession = 'Luminary';
 let currentHighScore = 'Highest 1 Sec Burst';
 let currentPlayerStat = 'Most Played Professions';
 let currentGuildFilter = 'all_players';

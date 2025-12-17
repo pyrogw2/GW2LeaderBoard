@@ -118,11 +118,14 @@ def get_main_html_template() -> str:
                 <p class="description">Role-specific rankings with weighted metrics for each profession.</p>
                 
                 <div class="profession-selector">
-                    <button class="profession-button active" data-profession="Firebrand">Firebrand</button>
+                    <button class="profession-button active" data-profession="Luminary">Luminary</button>
+                    <button class="profession-button" data-profession="Troubadour">Troubadour</button>
+                    <button class="profession-button" data-profession="Ritualist">Ritualist</button>
+                    <button class="profession-button" data-profession="Paragon">Paragon</button>
+                    <button class="profession-button" data-profession="Firebrand">Firebrand</button>
                     <button class="profession-button" data-profession="Chronomancer">Chronomancer</button>
                     <button class="profession-button" data-profession="Scourge">Scourge</button>
                     <button class="profession-button" data-profession="Druid">Druid</button>
-                    <button class="profession-button" data-profession="Condi Firebrand">Condi Firebrand</button>
                     <button class="profession-button" data-profession="Support Spb">Support Spb</button>
                 </div>
                 

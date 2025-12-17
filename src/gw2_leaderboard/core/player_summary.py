@@ -230,7 +230,7 @@ class PlayerSummaryGenerator:
         """, tuple(self.date_params) + (stats_row['avg_value'],))
         
         better_players = cursor.fetchone()['better_players']
-        percentile_rank = ((total_players - better_players) / total_players) * 100
+        percentile_rank = ((total_players - better_players) / total_players) * 100 if total_players > 0 else 0
         overall_rank = better_players + 1
         
         return MetricSummary(

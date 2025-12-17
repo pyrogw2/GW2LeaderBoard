@@ -573,16 +573,46 @@ def parse_skill_usage_apm(skill_usage_text: str) -> Dict[str, Dict]:
     return apm_data
 
 
+def get_file_prefix(log_dir: Path) -> Optional[str]:
+    """
+    Detect the actual file prefix used in a log directory.
+
+    Handles two formats:
+    - Old format: Directory name matches file prefix (e.g., 202510022252)
+    - New format: Directory normalized but files use original format (e.g., 2025-12-15-22_39_17)
+
+    Returns the prefix to use for finding files, or None if no damage file exists.
+    """
+    timestamp = log_dir.name
+
+    # Try old format first (directory name matches file prefix)
+    if (log_dir / f"{timestamp}-Damage.json").exists():
+        return timestamp
+
+    # Try to detect new format by looking for Damage.json files
+    # New format uses YYYY-MM-DD-HH_MM_SS (underscores instead of colons)
+    for damage_file in log_dir.glob("*-Damage.json"):
+        # Extract the prefix from the filename
+        prefix = damage_file.name.replace("-Damage.json", "")
+        # Verify it looks like a new format timestamp
+        if re.match(r'^\d{4}-\d{2}-\d{2}-\d{2}_\d{2}_\d{2}$', prefix):
+            return prefix
+
+    return None
+
+
 def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     """Parse a single log directory and extract comprehensive player performance data."""
-    timestamp = log_dir.name
-    
-    # Read damage data (base data)
-    damage_file = log_dir / f"{timestamp}-Damage.json"
-    if not damage_file.exists():
+    timestamp = log_dir.name  # Normalized timestamp for database
+
+    # Detect the actual file prefix (may differ from directory name for new format)
+    file_prefix = get_file_prefix(log_dir)
+    if not file_prefix:
         print(f"No damage file found for {timestamp}")
         return []
-    
+
+    # Read damage data (base data)
+    damage_file = log_dir / f"{file_prefix}-Damage.json"
     with open(damage_file, 'r', encoding='utf-8') as f:
         damage_data = json.load(f)
     
@@ -591,7 +621,7 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read offensive data for downContribution
     offensive_stats = {}
-    offensive_file = log_dir / f"{timestamp}-Offensive.json"
+    offensive_file = log_dir / f"{file_prefix}-Offensive.json"
     if offensive_file.exists():
         with open(offensive_file, 'r', encoding='utf-8') as f:
             offensive_data = json.load(f)
@@ -599,15 +629,15 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read healing data
     heal_stats = {}
-    heal_file = log_dir / f"{timestamp}-Heal-Stats.json"
+    heal_file = log_dir / f"{file_prefix}-Heal-Stats.json"
     if heal_file.exists():
         with open(heal_file, 'r', encoding='utf-8') as f:
             heal_data = json.load(f)
         heal_stats = parse_heal_table(heal_data.get('text', ''))
     
-    # Read support data
+    # Read support data (cleanses, strips)
     support_stats = {}
-    support_file = log_dir / f"{timestamp}-Support.json"
+    support_file = log_dir / f"{file_prefix}-Support-Summary.json"
     if support_file.exists():
         with open(support_file, 'r', encoding='utf-8') as f:
             support_data = json.load(f)
@@ -615,7 +645,7 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read boon generation data
     boon_stats = {}
-    boon_file = log_dir / f"{timestamp}-Squad-Generation.json"
+    boon_file = log_dir / f"{file_prefix}-Squad-Generation.json"
     if boon_file.exists():
         with open(boon_file, 'r', encoding='utf-8') as f:
             boon_data = json.load(f)
@@ -623,7 +653,7 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read burst damage data (Bur-Total)
     burst_damage_stats = {}
-    burst_damage_file = log_dir / f"{timestamp}-DPS-Stats-Bur-Total.json"
+    burst_damage_file = log_dir / f"{file_prefix}-DPS-Stats-Bur-Total.json"
     if burst_damage_file.exists():
         with open(burst_damage_file, 'r', encoding='utf-8') as f:
             burst_damage_data = json.load(f)
@@ -631,7 +661,7 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read burst consistency data (Ch5Ca-Total)
     burst_consistency_stats = {}
-    burst_consistency_file = log_dir / f"{timestamp}-DPS-Stats-Ch5Ca-Total.json"
+    burst_consistency_file = log_dir / f"{file_prefix}-DPS-Stats-Ch5Ca-Total.json"
     if burst_consistency_file.exists():
         with open(burst_consistency_file, 'r', encoding='utf-8') as f:
             burst_consistency_data = json.load(f)
@@ -639,7 +669,7 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read on-tag review data
     on_tag_stats = {}
-    on_tag_file = log_dir / f"{timestamp}-On-Tag-Review.json"
+    on_tag_file = log_dir / f"{file_prefix}-On-Tag-Review.json"
     if on_tag_file.exists():
         with open(on_tag_file, 'r', encoding='utf-8') as f:
             on_tag_data = json.load(f)
@@ -647,14 +677,14 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read skill usage data for APM
     apm_stats = {}
-    skill_usage_file = log_dir / f"{timestamp}-Skill-Usage.json"
+    skill_usage_file = log_dir / f"{file_prefix}-Skill-Usage.json"
     if skill_usage_file.exists():
         with open(skill_usage_file, 'r', encoding='utf-8') as f:
             skill_usage_data = json.load(f)
         # The main skill usage file is a macro, we need to check individual profession files
         
         # Try to get profession-specific skill usage files
-        for skill_usage_prof_file in log_dir.glob(f"{timestamp}-Skill-Usage-*.json"):
+        for skill_usage_prof_file in log_dir.glob(f"{file_prefix}-Skill-Usage-*.json"):
             try:
                 with open(skill_usage_prof_file, 'r', encoding='utf-8') as f:
                     prof_skill_data = json.load(f)
@@ -967,6 +997,10 @@ def store_high_scores(high_scores: List, db_path: str):
     cursor = conn.cursor()
     
     for entry in high_scores:
+        # Convert timestamp to parsed_date in YYYY-MM-DD format (to match player_performances table)
+        ts = entry.timestamp
+        parsed_date = f"{ts[:4]}-{ts[4:6]}-{ts[6:8]}" if len(ts) >= 8 else ts[:8]
+
         cursor.execute('''
             INSERT OR REPLACE INTO high_scores (
                 timestamp, parsed_date, player_account, player_name, profession,
@@ -974,7 +1008,7 @@ def store_high_scores(high_scores: List, db_path: str):
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             entry.timestamp,
-            str(entry.timestamp[:8]),  # Convert YYYYMMDDHHMM to YYYYMMDD
+            parsed_date,  # Now in YYYY-MM-DD format
             entry.player_account,
             entry.player_name,
             entry.profession,
@@ -1050,13 +1084,18 @@ def main():
             performances = parse_log_directory(log_dir)
             all_performances.extend(performances)
             print(f"  Found {len(performances)} player performances")
-            
+
             # Process high scores for this log directory
-            high_scores_file = log_dir / f"{log_dir.name}-High-Scores.json"
-            if high_scores_file.exists():
-                high_scores = high_scores_parser.parse_high_scores_file(high_scores_file)
-                all_high_scores.extend(high_scores)
-                print(f"  Found {len(high_scores)} high score entries")
+            # Detect the file prefix (may differ from directory name for new format)
+            file_prefix = get_file_prefix(log_dir)
+            if file_prefix:
+                high_scores_file = log_dir / f"{file_prefix}-High-Scores.json"
+                if high_scores_file.exists():
+                    high_scores = high_scores_parser.parse_high_scores_file(high_scores_file)
+                    all_high_scores.extend(high_scores)
+                    print(f"  Found {len(high_scores)} high score entries")
+                else:
+                    print(f"  No High-Scores.json found")
             else:
                 print(f"  No High-Scores.json found")
     

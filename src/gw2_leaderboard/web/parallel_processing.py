@@ -250,26 +250,34 @@ def calculate_simple_profession_ratings_fast_filter(db_path: str, profession: st
         # Calculate weighted ratings for each player
         results = []
         for account_name, player_data in players_with_ratings.items():
-            # Only include players who have ratings for all required metrics
-            if len(player_data['metrics']) != len(metrics):
+            # Require at least one metric (previously required ALL metrics)
+            if len(player_data['metrics']) == 0:
                 continue
                 
             weighted_rating = 0.0
             games_played_list = []
             total_rank_sum = 0.0
             stats_breakdown = []
-            
+
+            # Calculate which metrics this player has and re-normalize weights
+            available_metrics = [(m, w) for m, w in zip(metrics, weights) if m in player_data['metrics']]
+            if not available_metrics:
+                continue
+
+            # Re-normalize weights to sum to 1.0 based on available metrics
+            total_weight = sum(w for _, w in available_metrics)
+
             # Calculate weighted average of individual metric ratings
-            for metric, weight in zip(metrics, weights):
-                if metric in player_data['metrics']:
-                    metric_data = player_data['metrics'][metric]
-                    weighted_rating += metric_data['rating'] * weight
-                    games_played_list.append(metric_data['games_played'])
-                    total_rank_sum += (metric_data['average_rank'] or 0) * metric_data['games_played']
-                    
-                    # Store stat for display (first 3 metrics)
-                    if len(stats_breakdown) < 3:
-                        stats_breakdown.append(f"{metric[:4]}:{metric_data['average_stat_value']:.1f}")
+            for metric, weight in available_metrics:
+                normalized_weight = weight / total_weight if total_weight > 0 else weight
+                metric_data = player_data['metrics'][metric]
+                weighted_rating += metric_data['rating'] * normalized_weight
+                games_played_list.append(metric_data['games_played'])
+                total_rank_sum += (metric_data['average_rank'] or 0) * metric_data['games_played']
+
+                # Store stat for display (first 3 metrics)
+                if len(stats_breakdown) < 3:
+                    stats_breakdown.append(f"{metric[:4]}:{metric_data['average_stat_value']:.1f}")
             
             # Use max games played across metrics (not sum) since same raids generate all metrics
             actual_games_played = max(games_played_list) if games_played_list else 0
@@ -399,17 +407,11 @@ def _process_single_profession_fast(args):
         
         # Use fast date filtering for profession ratings
         # This filters by players who were active in the specified time period
-        # For fast processing, use existing ratings but filter by recent activity
-        if date_filter and date_filter != "overall":
-            profession_data = calculate_simple_profession_ratings_fast_filter(
-                db_path, profession, date_filter, guild_enabled
-            )
-        else:
-            profession_data = calculate_simple_profession_ratings(
-                db_path, profession, 
-                date_filter=None,
-                guild_filter=guild_enabled
-            )
+        # Always use the fast filter version which supports partial metrics
+        # (players don't need ALL metrics to be included)
+        profession_data = calculate_simple_profession_ratings_fast_filter(
+            db_path, profession, date_filter, guild_enabled
+        )
         
         if not profession_data:
             return profession, None
@@ -631,7 +633,7 @@ def generate_data_for_filter_fast(db_path: str, date_filter: str, guild_enabled:
     
     # Profession leaderboards - use reduced parallelism
     print(f"  Processing profession leaderboards for {date_filter}...")
-    professions = list(PROFESSION_METRICS.keys()) + ["Condi Firebrand", "Support Spb"]
+    professions = list(PROFESSION_METRICS.keys())
     
     # Process professions sequentially to eliminate database contention
     for profession in professions:
@@ -698,7 +700,7 @@ def generate_data_for_filter(db_path: str, date_filter: str, guild_enabled: bool
     
     # Profession leaderboards - process in parallel
     print(f"  Processing profession leaderboards for {date_filter}...")
-    professions = list(PROFESSION_METRICS.keys()) + ["Condi Firebrand", "Support Spb"]
+    professions = list(PROFESSION_METRICS.keys())
     
     with ThreadPoolExecutor(max_workers=12) as executor:
         profession_args = [(db_path, profession, date_filter, guild_enabled) for profession in professions]

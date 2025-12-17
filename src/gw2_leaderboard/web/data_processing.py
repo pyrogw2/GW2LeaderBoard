@@ -636,11 +636,11 @@ def get_high_scores_data(db_path: str, limit: int = 100, date_filter: str = None
         days = int(date_filter.rstrip('d'))
         perf_date_clause = f"AND p.parsed_date >= date('now', '-{days} days')"
     
-    # Build date filter clause for high_scores table (parsed_date is in YYYYMMDD format)
+    # Build date filter clause for high_scores table (parsed_date is now in YYYY-MM-DD format)
     hs_date_clause = ""
     if date_filter and date_filter != "overall":
         days = int(date_filter.rstrip('d'))
-        hs_date_clause = f"AND parsed_date >= strftime('%Y%m%d', date('now', '-{days} days'))"
+        hs_date_clause = f"AND parsed_date >= date('now', '-{days} days')"
     
     high_scores_data = {}
     

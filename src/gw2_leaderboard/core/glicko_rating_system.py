@@ -179,6 +179,22 @@ PROFESSION_METRICS = {
     'Boon Vindi': {
         'metrics': ['Protection', 'DPS'],
         'weights': [0.7, 0.3]  # Protection much more important for Boon Vindi
+    },
+    'Luminary': {
+        'metrics': ['Stability', 'Cleanses', 'Resistance'],
+        'weights': [0.5, 0.3, 0.2]  # Stability most important
+    },
+    'Troubadour': {
+        'metrics': ['Healing', 'Stability', 'Barrier', 'Might'],
+        'weights': [0.35, 0.30, 0.20, 0.15]  # Heal/support focused
+    },
+    'Ritualist': {
+        'metrics': ['DPS', 'Strips'],
+        'weights': [0.6, 0.4]  # DPS primary, Strips secondary
+    },
+    'Paragon': {
+        'metrics': ['Might', 'Barrier', 'Resistance', 'Stability'],
+        'weights': [0.35, 0.30, 0.20, 0.15]  # Boon/barrier support
     }
 }
 
