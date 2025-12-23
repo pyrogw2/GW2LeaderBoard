@@ -171,24 +171,30 @@ def parse_offensive_table(offensive_text: str) -> Dict[str, Dict]:
             
         cells = [cell.strip() for cell in row.split('|') if cell.strip()]
         
-        if len(cells) < 22:  # Need at least 22 columns for downContribution
+        if len(cells) < 20:  # Need at least 20 columns for downContribution
             continue
-            
+
         try:
             # Parse player name and account
             name_cell = cells[1]
             account_name = extract_tooltip(name_cell)
             if not account_name:
                 continue
-                
+
             # Parse profession
             prof_cell = cells[2]
             prof_match = re.search(r'{{(\w+)}}', prof_cell)
             profession = prof_match.group(1) if prof_match else ""
-            
-            
-            # Extract downContribution from column 21 (0-based indexing)
-            down_contribution = int(cells[21].replace(',', '')) if len(cells) > 21 and cells[21].replace(',', '').isdigit() else 0
+
+            # Extract downContribution from column 19 (0-based indexing)
+            # New format has downContribution at column 19, old format had it at 21
+            down_contribution = 0
+            for col_idx in [19, 21]:  # Try both possible columns
+                if len(cells) > col_idx:
+                    val = cells[col_idx].replace(',', '')
+                    if val.isdigit():
+                        down_contribution = int(val)
+                        break
             
             
             key = f"{account_name}_{profession}"
@@ -621,7 +627,10 @@ def parse_log_directory(log_dir: Path) -> List[PlayerPerformance]:
     
     # Read offensive data for downContribution
     offensive_stats = {}
-    offensive_file = log_dir / f"{file_prefix}-Offensive.json"
+    # Try new format first (Offensive-Summary.json), fall back to old format (Offensive.json)
+    offensive_file = log_dir / f"{file_prefix}-Offensive-Summary.json"
+    if not offensive_file.exists():
+        offensive_file = log_dir / f"{file_prefix}-Offensive.json"
     if offensive_file.exists():
         with open(offensive_file, 'r', encoding='utf-8') as f:
             offensive_data = json.load(f)
