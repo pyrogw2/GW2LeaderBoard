@@ -71,7 +71,7 @@ def extract_tooltip(text: str) -> str:
     """Extract account name from tooltip attribute."""
     # Try both single and double quotes
     match = re.search(r'data-tooltip=["\']([^"\']+)["\']', text)
-    return match.group(1) if match else ""
+    return match.group(1).strip() if match else ""
 
 
 def extract_span_value(text: str) -> float:
